@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: neuromotion-backend
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: FRONTEND_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+
+  - type: web
+    name: neuromotion-frontend
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: neuromotion-backend
+          envVar: RENDER_EXTERNAL_URL

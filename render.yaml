@@ -22,4 +22,4 @@ services:
         fromService:
           type: web
           name: neuromotion-backend
-          envVar: RENDER_EXTERNAL_URL
+          envVarKey: RENDER_EXTERNAL_URL

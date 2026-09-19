@@ -22,7 +22,10 @@ def create_app():
 
     # Allow cross-origin requests with credentials for local dev and production
     frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5173")
-    CORS(app, supports_credentials=True, origins=[frontend_url, "http://localhost:3000"])
+    if frontend_url == "*":
+        CORS(app, supports_credentials=False, origins="*")
+    else:
+        CORS(app, supports_credentials=True, origins=[frontend_url, "http://localhost:3000"])
 
     # Initialize Database
     db.init_app(app)

@@ -1,12 +1,13 @@
 import axios from 'axios';
 
 // The Vite development server proxy forwards /api requests to http://localhost:5000/api
-// For production, use VITE_API_URL env variable
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+// For production, use VITE_API_URL env variable (the backend's root URL from Render)
+const rawUrl = import.meta.env.VITE_API_URL;
+const API_BASE = rawUrl ? `${rawUrl.replace(/\/$/, '')}/api` : '/api';
 
 const api = axios.create({
   baseURL: API_BASE,
-  withCredentials: true, // Allow cookies for session auth
+  withCredentials: !rawUrl, // credentials only in local dev (same-origin proxy)
   headers: {
     'Content-Type': 'application/json',
   }

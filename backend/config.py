@@ -28,9 +28,14 @@ class Config:
     if _database_url.startswith("postgres://"):
         _database_url = _database_url.replace("postgres://", "postgresql://", 1)
     # Drop `channel_binding=require`: it is optional hardening that can break
-    # connections depending on the libpq bundled with psycopg2, and a failed
+    # connections depending on the libpq bundled with the driver, and a failed
     # startup is far worse than skipping this extra TLS check.
     _database_url = _database_url.replace("&channel_binding=require", "").replace("?channel_binding=require", "")
+    if _database_url.startswith("postgresql://"):
+        # Pin the psycopg v3 driver explicitly — SQLAlchemy otherwise resolves
+        # `postgresql://` to this dialect at import time, and a missing driver
+        # then crashes the whole service at boot (ModuleNotFoundError: psycopg).
+        _database_url = "postgresql+psycopg://" + _database_url[len("postgresql://"):]
     SQLALCHEMY_DATABASE_URI = _database_url or f"sqlite:///{os.path.join(BASE_DIR, 'rehab_system.db')}"
 
     # pool_pre_ping drops dead connections before use — needed for serverless

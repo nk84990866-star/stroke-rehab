@@ -5,4 +5,8 @@ Flask-Login==0.6.3
 Flask-Bcrypt==1.0.1
 numpy==2.2.2
 gunicorn==21.2.0
-psycopg2-binary==2.9.11
+# Postgres driver (psycopg v3 with prebuilt binary wheels).
+# SQLAlchemy 2.x selects the `psycopg` (v3) dialect for `postgresql://` URLs,
+# so this driver must be present — psycopg2 alone caused ModuleNotFoundError
+# at engine creation on Render.
+psycopg[binary]==3.3.6

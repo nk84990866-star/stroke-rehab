@@ -1,3 +1,7 @@
+# Database: managed Postgres via DATABASE_URL (Neon free tier recommended —
+# Render's own free Postgres expires 30 days after creation and deletes data).
+# Set DATABASE_URL in the Render dashboard to the provider's connection string.
+# Locally, leave DATABASE_URL unset and the app falls back to SQLite.
 services:
   - type: web
     name: neuromotion-backend
@@ -6,6 +10,8 @@ services:
     buildCommand: pip install -r backend/requirements.txt
     startCommand: PYTHONPATH=. gunicorn backend.app:app --bind 0.0.0.0:$PORT
     envVars:
+      - key: DATABASE_URL
+        sync: false   # paste your Postgres connection string in the Render dashboard
       - key: FRONTEND_URL
         sync: false
       - key: SECRET_KEY

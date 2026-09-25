@@ -17,7 +17,23 @@ IS_PRODUCTION = _is_https_frontend or _on_render
 
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "neuromotion-ai-dev-secret-key-2026")
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BASE_DIR, 'rehab_system.db')}"
+
+    # --- Database ---
+    # Production (Render/Neon): DATABASE_URL points at managed Postgres so data
+    # survives deploys and free-tier restarts. Local dev (no DATABASE_URL):
+    # falls back to the SQLite file so the app runs with zero setup.
+    # Some providers (older Heroku-style URLs) emit `postgres://` — SQLAlchemy
+    # requires the `postgresql://` scheme, so normalize it here.
+    _database_url = os.environ.get("DATABASE_URL", "").strip()
+    if _database_url.startswith("postgres://"):
+        _database_url = _database_url.replace("postgres://", "postgresql://", 1)
+    SQLALCHEMY_DATABASE_URI = _database_url or f"sqlite:///{os.path.join(BASE_DIR, 'rehab_system.db')}"
+
+    # pool_pre_ping drops dead connections before use — needed for serverless
+    # Postgres (Neon) which closes idle connections while a free-tier web
+    # service is waking up.
+    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # NOTE: "None" here is the SameSite *string*, not Python None.
     SESSION_COOKIE_SAMESITE = "None" if IS_PRODUCTION else "Lax"

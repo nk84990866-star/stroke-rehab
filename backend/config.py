@@ -22,11 +22,15 @@ class Config:
     # Production (Render/Neon): DATABASE_URL points at managed Postgres so data
     # survives deploys and free-tier restarts. Local dev (no DATABASE_URL):
     # falls back to the SQLite file so the app runs with zero setup.
+    _database_url = os.environ.get("DATABASE_URL", "").strip().strip('"').strip("'")
     # Some providers (older Heroku-style URLs) emit `postgres://` — SQLAlchemy
     # requires the `postgresql://` scheme, so normalize it here.
-    _database_url = os.environ.get("DATABASE_URL", "").strip()
     if _database_url.startswith("postgres://"):
         _database_url = _database_url.replace("postgres://", "postgresql://", 1)
+    # Drop `channel_binding=require`: it is optional hardening that can break
+    # connections depending on the libpq bundled with psycopg2, and a failed
+    # startup is far worse than skipping this extra TLS check.
+    _database_url = _database_url.replace("&channel_binding=require", "").replace("?channel_binding=require", "")
     SQLALCHEMY_DATABASE_URI = _database_url or f"sqlite:///{os.path.join(BASE_DIR, 'rehab_system.db')}"
 
     # pool_pre_ping drops dead connections before use — needed for serverless

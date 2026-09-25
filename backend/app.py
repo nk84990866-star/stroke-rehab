@@ -57,15 +57,29 @@ def create_app():
     app.register_blueprint(sessions_bp, url_prefix="/api/sessions")
     app.register_blueprint(patients_bp, url_prefix="/api/patients")
 
-    # Global status route
+    # Global status route — also reports database connectivity so a bad
+    # DATABASE_URL is visible from outside without digging through logs.
     @app.route("/api/health")
     def health():
-        return jsonify({"status": "healthy", "service": "NeuroMotion AI API"})
+        db_status = "connected"
+        try:
+            db.session.execute(db.text("SELECT 1"))
+        except Exception:
+            db_status = "unavailable"
+        return jsonify({"status": "healthy", "service": "NeuroMotion AI API", "database": db_status})
 
-    # Setup database and seed exercises
+    # Setup database and seed exercises.
+    # A bad/unreachable DATABASE_URL must NOT crash-loop the whole service:
+    # log the real cause loudly (visible in Render logs) and keep serving so
+    # /api/health can report `database: unavailable` for easy diagnosis.
     with app.app_context():
-        db.create_all()
-        seed_exercises(db, Exercise)
+        try:
+            db.create_all()
+            seed_exercises(db, Exercise)
+        except Exception as exc:
+            import sys
+            print(f"[STARTUP WARNING] Database setup failed — check DATABASE_URL!", file=sys.stderr, flush=True)
+            print(f"[STARTUP WARNING] {exc!r}", file=sys.stderr, flush=True)
 
     return app
 

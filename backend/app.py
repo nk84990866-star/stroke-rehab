@@ -59,14 +59,25 @@ def create_app():
 
     # Global status route — also reports database connectivity so a bad
     # DATABASE_URL is visible from outside without digging through logs.
+    # The error detail is credential-redacted before exposure.
     @app.route("/api/health")
     def health():
         db_status = "connected"
+        db_error = None
         try:
             db.session.execute(db.text("SELECT 1"))
-        except Exception:
+        except Exception as exc:
             db_status = "unavailable"
-        return jsonify({"status": "healthy", "service": "NeuroMotion AI API", "database": db_status})
+            import re
+            msg = str(exc)
+            # Redact anything credential-shaped: URI userinfo and key=value pairs
+            msg = re.sub(r"[a-z+]+://[^@/\s]+@", "***@", msg)
+            msg = re.sub(r"(password|user)[=:]\S+", r"\1=***", msg, flags=re.IGNORECASE)
+            db_error = f"{type(exc).__name__}: {msg[:300]}"
+        payload = {"status": "healthy", "service": "NeuroMotion AI API", "database": db_status}
+        if db_error:
+            payload["database_error"] = db_error
+        return jsonify(payload)
 
     # Setup database and seed exercises.
     # A bad/unreachable DATABASE_URL must NOT crash-loop the whole service:

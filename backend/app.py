@@ -20,12 +20,21 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Allow cross-origin requests with credentials for local dev and production
-    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5173")
-    if frontend_url == "*":
-        CORS(app, supports_credentials=False, origins="*")
-    else:
-        CORS(app, supports_credentials=True, origins=[frontend_url, "http://localhost:3000"])
+    # Allow cross-origin requests with credentials for local dev and production.
+    # NOTE: Browsers REQUIRE an exact origin echo + `Access-Control-Allow-Credentials: true`
+    # for credentialed requests — wildcard ("*") origins can never work here. If
+    # FRONTEND_URL is unset or misconfigured to "*", we fall back to known origins
+    # instead of silently disabling credential support.
+    frontend_url = os.environ.get("FRONTEND_URL", "").strip().rstrip("/")
+    if not frontend_url or frontend_url == "*":
+        frontend_url = None
+    origins = [
+        frontend_url,
+        "https://neuromotion-frontend.onrender.com",  # deployed frontend fallback
+        "http://localhost:5173",                       # Vite dev server
+        "http://localhost:3000",
+    ]
+    CORS(app, supports_credentials=True, origins=[o for o in origins if o])
 
     # Initialize Database
     db.init_app(app)

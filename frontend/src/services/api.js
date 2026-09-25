@@ -7,7 +7,10 @@ const API_BASE = rawUrl ? `${rawUrl.replace(/\/$/, '')}/api` : '/api';
 
 const api = axios.create({
   baseURL: API_BASE,
-  withCredentials: !rawUrl, // credentials only in local dev (same-origin proxy)
+  // MUST be true in production: the backend lives on a different onrender.com
+  // subdomain, so the login session cookie is only stored/sent when the request
+  // is credentialed AND the backend sets it with SameSite=None; Secure.
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   }

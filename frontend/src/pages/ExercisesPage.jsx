@@ -40,12 +40,11 @@ const ExercisesPage = () => {
 
   const filteredExercises = exercises.filter(ex => {
     if (selectedStrokeType === 'all') return true;
-    try {
-      const types = JSON.parse(ex.suitable_stroke_types_json);
-      return types.includes(selectedStrokeType);
-    } catch (e) {
-      return true;
-    }
+    // API returns a parsed array (`suitable_stroke_types`), not raw JSON
+    const types = Array.isArray(ex.suitable_stroke_types)
+      ? ex.suitable_stroke_types
+      : (() => { try { return JSON.parse(ex.suitable_stroke_types_json || '[]'); } catch { return []; } })();
+    return types.includes(selectedStrokeType);
   });
 
   return (

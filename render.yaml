@@ -11,6 +11,11 @@ services:
       - key: SECRET_KEY
         generateValue: true
 
+# NOTE: The backend reads RENDER=true automatically on Render, which switches
+# session cookies to SameSite=None; Secure. FRONTEND_URL must be set to the
+# exact frontend origin (e.g. https://neuromotion-frontend.onrender.com) — it
+# drives both CORS and the cookie policy.
+
   - type: web
     name: neuromotion-frontend
     env: static

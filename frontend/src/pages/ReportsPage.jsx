@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getSessions } from '../services/api';
-import { Calendar, ChevronRight, FileText, CheckCircle } from 'lucide-react';
+import { Calendar, ChevronRight, FileText, CheckCircle, ArrowLeft } from 'lucide-react';
 
 const ReportsPage = () => {
   const [sessions, setSessions] = useState([]);
@@ -32,6 +32,11 @@ const ReportsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Back navigation */}
+        <Link to="/dashboard" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 gap-1.5">
+          <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+        </Link>
+
         <div>
           <h1 className="text-3xl font-extrabold text-gray-900">Session Reports</h1>
           <p className="text-gray-600 mt-1">Review performance tracking metrics, ROM, and AI analysis for each finished session.</p>

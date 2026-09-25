@@ -33,6 +33,13 @@ const ReportDetailPage = () => {
 
   if (!report) return null;
 
+  // Format metric numbers to a fixed number of decimals (older sessions were
+  // stored with full float precision, e.g. 178.1310772640824).
+  const fmt = (v, decimals = 2) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n.toFixed(decimals) : "0";
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -58,17 +65,20 @@ const ReportDetailPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h3 className="text-sm font-medium text-gray-500">Max ROM Achieved</h3>
-            <p className="text-3xl font-extrabold text-gray-900 mt-2">{report.metrics?.max_rom_achieved}°</p>
+            <p className="text-3xl font-extrabold text-gray-900 mt-2">{fmt(report.metrics?.max_rom_achieved)}°</p>
             <p className="text-xs text-gray-500 mt-1">Maximum extension reached during reaching sequences</p>
           </div>
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h3 className="text-sm font-medium text-gray-500">Movement Smoothness</h3>
-            <p className="text-3xl font-extrabold text-gray-900 mt-2">{report.metrics?.smoothness_score}/100</p>
+            <p className="text-3xl font-extrabold text-gray-900 mt-2">{fmt(report.metrics?.smoothness_score, 1)}/100</p>
             <p className="text-xs text-gray-500 mt-1">Clinical jerk index calculation (Higher is smoother)</p>
           </div>
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h3 className="text-sm font-medium text-gray-500">Reaching Accuracy</h3>
             <p className="text-3xl font-extrabold text-gray-900 mt-2">{report.metrics?.targets_hit_ratio}</p>
+            {report.metrics?.accuracy_score != null && (
+              <p className="text-xs text-gray-500 mt-1">Precision score: {fmt(report.metrics.accuracy_score, 1)}%</p>
+            )}
             <p className="text-xs text-gray-500 mt-1">Targets successfully reached / overall targets presented</p>
           </div>
         </div>

@@ -272,7 +272,12 @@ const ExerciseRunnerPage = () => {
             ctx.beginPath(); ctx.moveTo(mappedElbowX, mappedElbowY); ctx.lineTo(handX, handY); ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 6; ctx.stroke();
             ctx.beginPath(); ctx.arc(handX, handY, 8, 0, 2 * Math.PI); ctx.fillStyle = '#10b981'; ctx.fill(); 
             
-            anglesHistory.current.push([dx, dy]); 
+            // Convert normalized landmark offsets to approximate joint angles
+            // (degrees). Only the magnitude matters for ROM/smoothness metrics;
+            // scaling keeps values in a realistic 0-180° clinical range instead
+            // of raw pixel-space numbers like 178.1310772640824.
+            const toDeg = (v) => Math.min(180, Math.abs(v) * 0.6);
+            anglesHistory.current.push([toDeg(dx), toDeg(dy)]);
           }
 
           // Target Hit Logic

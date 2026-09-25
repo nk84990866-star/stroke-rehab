@@ -49,12 +49,13 @@ def save_session():
         t2_diff = abs(joint_angles[i][1] - joint_angles[i-1][1])
         # simple speed approximation at 30 fps
         velocities.append((t1_diff + t2_diff) * 30.0)
-    avg_velocity = sum(velocities) / len(velocities) if velocities else 0.0
+    avg_velocity = round(sum(velocities) / len(velocities), 2) if velocities else 0.0
 
     # Compute maximum Joint ROM reached (shoulder and elbow)
     max_rom = 0.0
     if joint_angles:
         max_rom = max(max(pair[0] for pair in joint_angles), max(pair[1] for pair in joint_angles))
+    max_rom = round(float(max_rom), 2)
 
     # Overall session score combining accuracy, target efficiency, and movement smoothness
     hit_ratio = (targets_hit / total_targets) if total_targets > 0 else 0.0

@@ -31,6 +31,9 @@ const ExerciseRunnerPage = () => {
   const currentTargetIndex = useRef(0);
   const holdStartTime = useRef(null);
   const lastVideoTime = useRef(-1);
+  const smoothedStateRef = useRef(null);   // EMA smoothing state for twin movement
+  const activeSideRef = useRef(null);      // which arm is tracked: 'left' | 'right'
+  const containerRef = useRef(null);       // webcam box — aspect set from the real stream
 
   // Load exercise and model
   useEffect(() => {
@@ -99,7 +102,16 @@ const ExerciseRunnerPage = () => {
         setCoachHint("Raise your arm toward the green target!");
         currentTargetIndex.current = 0;
         anglesHistory.current = [];
+        smoothedStateRef.current = null;   // fresh smoothing per session
+        activeSideRef.current = null;      // re-select tracked arm
+        lastVideoTime.current = -1;
         setTargetsHit(0);
+        // Match the webcam box to the real stream aspect ratio so the overlay
+        // skeleton lines up with the video (no stretch/crop mismatch).
+        const v = videoRef.current;
+        if (containerRef.current && v && v.videoWidth && v.videoHeight) {
+          containerRef.current.style.aspectRatio = `${v.videoWidth} / ${v.videoHeight}`;
+        }
       };
     } catch (err) {
       setError('Could not access camera device. Ensure camera permissions are allowed.');
@@ -157,55 +169,73 @@ const ExerciseRunnerPage = () => {
         ctx.fillStyle = '#065f46';
         ctx.font = 'bold 12px sans-serif';
         ctx.fillText(`Target ${currentTargetIndex.current + 1}`, targetX - 25, targetY - 25);
-      }
+      }          let startTimeMs = performance.now();
+          try {
+            if (videoRef.current.readyState >= 2 && videoRef.current.currentTime !== lastVideoTime.current) {
+              lastVideoTime.current = videoRef.current.currentTime;
+              const results = landmarkerRef.current.detectForVideo(videoRef.current, startTimeMs);
 
-      let startTimeMs = performance.now();
-      try {
-        if (videoRef.current.readyState >= 2 && videoRef.current.currentTime !== lastVideoTime.current) {
-          lastVideoTime.current = videoRef.current.currentTime;
-          const results = landmarkerRef.current.detectForVideo(videoRef.current, startTimeMs);
-          
-          // Draw webcam overlay
-          const overlayCtx = overlayRef.current?.getContext('2d');
-          if (overlayCtx && videoRef.current.videoWidth) {
-            overlayRef.current.width = videoRef.current.videoWidth;
-            overlayRef.current.height = videoRef.current.videoHeight;
-            overlayCtx.clearRect(0, 0, overlayRef.current.width, overlayRef.current.height);
-            
-            if (results.landmarks && results.landmarks.length > 0) {
-              const lm = results.landmarks[0];
-              
-              // Draw joints
-              overlayCtx.fillStyle = '#10b981';
-              const drawJoint = (idx) => {
-                if(lm[idx]) {
-                  overlayCtx.beginPath();
-                  overlayCtx.arc(lm[idx].x * overlayRef.current.width, lm[idx].y * overlayRef.current.height, 8, 0, 2 * Math.PI);
-                  overlayCtx.fill();
+              const lm = (results.landmarks && results.landmarks.length > 0) ? results.landmarks[0] : null;
+
+              // Pick the arm actually being exercised: the one whose wrist is
+              // raised highest. Sticky (hysteresis) so it doesn't flicker
+              // between arms — switching needs a clear 0.06 advantage.
+              let sideIdx = { s: 12, e: 14, w: 16 }; // default: right arm
+              if (lm && lm[11] && lm[12] && lm[15] && lm[16]) {
+                const rightScore = Math.max(0, lm[12].y - lm[16].y); // wrist above shoulder?
+                const leftScore  = Math.max(0, lm[11].y - lm[15].y);
+                let side = activeSideRef.current;
+                if (!side) {
+                  side = leftScore > rightScore ? 'left' : 'right';
+                } else if (side === 'right' && leftScore > rightScore + 0.06) {
+                  side = 'left';
+                } else if (side === 'left' && rightScore > leftScore + 0.06) {
+                  side = 'right';
                 }
-              };
-              drawJoint(12); drawJoint(14); drawJoint(16);
-              
-              if(lm[12] && lm[14] && lm[16]) {
-                overlayCtx.strokeStyle = '#10b981';
-                overlayCtx.lineWidth = 4;
-                overlayCtx.beginPath();
-                overlayCtx.moveTo(lm[12].x * overlayRef.current.width, lm[12].y * overlayRef.current.height);
-                overlayCtx.lineTo(lm[14].x * overlayRef.current.width, lm[14].y * overlayRef.current.height);
-                overlayCtx.lineTo(lm[16].x * overlayRef.current.width, lm[16].y * overlayRef.current.height);
-                overlayCtx.stroke();
+                activeSideRef.current = side;
+                sideIdx = side === 'left' ? { s: 11, e: 13, w: 15 } : { s: 12, e: 14, w: 16 };
               }
-            }
-          }
+
+              // Draw webcam overlay (raw landmark coords; CSS mirrors both
+              // video and canvas identically, so they stay aligned).
+              const overlayCtx = overlayRef.current?.getContext('2d');
+              if (overlayCtx && videoRef.current.videoWidth) {
+                if (overlayRef.current.width !== videoRef.current.videoWidth) {
+                  overlayRef.current.width = videoRef.current.videoWidth;
+                  overlayRef.current.height = videoRef.current.videoHeight;
+                }
+                overlayCtx.clearRect(0, 0, overlayRef.current.width, overlayRef.current.height);
+
+                if (lm) {
+                  overlayCtx.fillStyle = '#10b981';
+                  const drawJoint = (idx) => {
+                    if (lm[idx]) {
+                      overlayCtx.beginPath();
+                      overlayCtx.arc(lm[idx].x * overlayRef.current.width, lm[idx].y * overlayRef.current.height, 8, 0, 2 * Math.PI);
+                      overlayCtx.fill();
+                    }
+                  };
+                  drawJoint(sideIdx.s); drawJoint(sideIdx.e); drawJoint(sideIdx.w);
+
+                  if (lm[sideIdx.s] && lm[sideIdx.e] && lm[sideIdx.w]) {
+                    overlayCtx.strokeStyle = '#10b981';
+                    overlayCtx.lineWidth = 4;
+                    overlayCtx.beginPath();
+                    overlayCtx.moveTo(lm[sideIdx.s].x * overlayRef.current.width, lm[sideIdx.s].y * overlayRef.current.height);
+                    overlayCtx.lineTo(lm[sideIdx.e].x * overlayRef.current.width, lm[sideIdx.e].y * overlayRef.current.height);
+                    overlayCtx.lineTo(lm[sideIdx.w].x * overlayRef.current.width, lm[sideIdx.w].y * overlayRef.current.height);
+                    overlayCtx.stroke();
+                  }
+                }
+              }
 
           let handX = shoulderX;
           let handY = shoulderY;
 
-          if (results.landmarks && results.landmarks.length > 0) {
-            const lm = results.landmarks[0];
-            const shoulder = lm[12];
-            const elbow = lm[14];
-            const wrist = lm[16];
+          if (lm && lm[sideIdx.s] && lm[sideIdx.e] && lm[sideIdx.w]) {
+            const shoulder = lm[sideIdx.s];
+            const elbow = lm[sideIdx.e];
+            const wrist = lm[sideIdx.w];
 
             const rawDx = (shoulder.x - wrist.x) * 300; 
             const rawDy = (shoulder.y - wrist.y) * 300; // Fixed inverted Y axis
@@ -214,9 +244,10 @@ const ExerciseRunnerPage = () => {
             const rawElbowDy = (shoulder.y - elbow.y) * 300; // Fixed inverted Y axis
 
             // EMA Smoothing to reduce jiggling (0.0 to 1.0, higher is faster, lower is smoother)
+            // Reset whenever the tracked arm switches so old offsets don't smear.
             const smoothing = 0.35;
-            if (!smoothedStateRef.current) {
-              smoothedStateRef.current = { dx: rawDx, dy: rawDy, elbowDx: rawElbowDx, elbowDy: rawElbowDy };
+            if (!smoothedStateRef.current || smoothedStateRef.current.side !== activeSideRef.current) {
+              smoothedStateRef.current = { side: activeSideRef.current, dx: rawDx, dy: rawDy, elbowDx: rawElbowDx, elbowDy: rawElbowDy };
             } else {
               smoothedStateRef.current.dx = smoothedStateRef.current.dx * (1 - smoothing) + rawDx * smoothing;
               smoothedStateRef.current.dy = smoothedStateRef.current.dy * (1 - smoothing) + rawDy * smoothing;
@@ -341,7 +372,7 @@ const ExerciseRunnerPage = () => {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col items-center">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Webcam Tracking</h3>
             {error && <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded text-sm text-red-700 w-full mb-4">{error}</div>}
-            <div className="relative w-full aspect-video bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+            <div ref={containerRef} className="relative w-full aspect-video bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
               <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover transform -scale-x-100" />
               <canvas ref={overlayRef} className="absolute inset-0 w-full h-full transform -scale-x-100 pointer-events-none" />
               {!running && (

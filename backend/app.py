@@ -73,7 +73,7 @@ def create_app():
             # Redact anything credential-shaped: URI userinfo and key=value pairs
             msg = re.sub(r"[a-z+]+://[^@/\s]+@", "***@", msg)
             msg = re.sub(r"(password|user)[=:]\S+", r"\1=***", msg, flags=re.IGNORECASE)
-            db_error = f"{type(exc).__name__}: {msg[:300]}"
+            db_error = f"{type(exc).__name__}: {msg[:1200]}"
         payload = {"status": "healthy", "service": "NeuroMotion AI API", "database": db_status}
         if db_error:
             payload["database_error"] = db_error

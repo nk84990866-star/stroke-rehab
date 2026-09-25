@@ -470,72 +470,127 @@ class UpperLimbKinematics:
     # UNIT 3: MOVEMENT QUALITY ANALYSIS (Clinical Rehabilitation Metrics)
     # ==========================================================================
 
+    def _moving_average_smooth(self, positions, window=5, passes=2):
+        """
+        Low-pass filters a (N, 2) trajectory with a moving-average kernel.
+
+        Webcam landmark jitter is high-frequency noise; the third derivative
+        (jerk) amplifies it by roughly 1/dt^3 (~27000x at 30 fps), which
+        otherwise drowns the real movement signal and forces the smoothness
+        score to 0. Two passes of a 5-point window approximate a Gaussian
+        and suppress sensor noise while preserving deliberate motion.
+        """
+        smoothed = np.asarray(positions, dtype=float)
+        n = len(smoothed)
+        if n < window:
+            return smoothed
+        half = window // 2
+        kernel = np.ones(window) / window
+        for _ in range(passes):
+            padded = np.vstack([
+                np.repeat(smoothed[:1], half, axis=0),
+                smoothed,
+                np.repeat(smoothed[-1:], half, axis=0),
+            ])
+            smoothed = np.vstack([
+                np.convolve(padded[:, 0], kernel, mode="valid"),
+                np.convolve(padded[:, 1], kernel, mode="valid"),
+            ]).T
+        return smoothed
+
     def compute_movement_smoothness(self, joint_angles_timeseries, dt=1.0 / 30.0):
         """
         Computes normalized jerk metric from a time series of joint angles.
-        
+
         Jerk is the third derivative of position (rate of change of acceleration).
         Lower jerk = smoother movement = better motor recovery.
         Healthy movements have smooth, bell-shaped velocity profiles.
-        
-        Normalized Jerk Score:
-            NJ = -√( (T^5 / (2·D^2)) · ∫ |j(t)|^2 dt )
-        where T = duration, D = path length
-        
-        We convert to a 0-100 score where 100 = perfectly smooth.
-        
+
+        Clinical pipeline (matches how the metric is defined in literature):
+          1. Low-pass filter the trajectory (sensor noise removal)
+          2. Segment it into individual reaching movements — the normalized
+             jerk formula T^5 assumes ONE movement, and computing it over a
+             whole session (holds + many reaches) makes the score meaningless
+          3. Score each movement, then average
+
         Parameters:
             joint_angles_timeseries: list of (theta1, theta2) tuples
             dt: time step between samples (default 1/30 for 30fps)
-            
+
         Returns:
             dict with smoothness_score (0-100), jerk_metric, interpretation
         """
         if len(joint_angles_timeseries) < 4:
             return {"smoothness_score": 50.0, "jerk_metric": 0.0, "interpretation": "Insufficient data"}
 
-        # Convert joint angles to end-effector positions
-        positions = []
-        for th1, th2 in joint_angles_timeseries:
-            fk = self.forward_kinematics(th1, th2)
-            positions.append(fk["hand"][0:2].copy())
+        raw_positions = np.array(
+            [self.forward_kinematics(th1, th2)["hand"][0:2] for th1, th2 in joint_angles_timeseries],
+            dtype=float,
+        )
+        positions = self._moving_average_smooth(raw_positions, window=5, passes=2)
 
-        positions = np.array(positions)
+        # Segment into reaches: discard hold-still periods (hand speed below
+        # threshold) — noise accumulated while holding still would otherwise
+        # add jerk without adding path length.
+        speeds = np.linalg.norm(np.diff(positions, axis=0), axis=1) / dt
+        if len(speeds) == 0 or float(np.percentile(speeds, 95)) < 0.3:
+            return {"smoothness_score": 50.0, "jerk_metric": 0.0, "interpretation": "Insufficient movement (hand mostly still)"}
 
-        # Compute velocity (1st derivative)
-        velocity = np.diff(positions, axis=0) / dt
+        move_threshold = max(0.3, 0.10 * float(np.percentile(speeds, 95)))
+        is_moving = speeds > move_threshold
+        # Require some real movement before scoring anything.
+        if not np.any(is_moving):
+            return {"smoothness_score": 50.0, "jerk_metric": 0.0, "interpretation": "Insufficient movement data"}
 
-        # Compute acceleration (2nd derivative)
-        acceleration = np.diff(velocity, axis=0) / dt
+        # Score independent 1-second windows on a stride of 0.5s and take the
+        # MEDIAN. Windowing keeps every scored chunk short so the T^5 term of
+        # the normalized-jerk formula stays valid, and the median discards
+        # boundary artifacts (window entries/exits through hold periods) that
+        # a mean would absorb. Requires ~2s of active motion somewhere in the
+        # session, regardless of how long the holds between reaches are.
+        WIN = 30          # 1s of samples at 30 fps
+        STRIDE = 15       # 0.5s step -> overlapping windows
+        MIN_SPEED_FRAC = 0.25
 
-        # Compute jerk (3rd derivative)
-        jerk = np.diff(acceleration, axis=0) / dt
-
-        if len(jerk) == 0:
-            return {"smoothness_score": 50.0, "jerk_metric": 0.0, "interpretation": "Insufficient data"}
-
-        # Squared jerk magnitude at each timestep
-        jerk_sq = np.sum(jerk**2, axis=1)
-
-        # Integrated squared jerk
-        integrated_jerk = np.sum(jerk_sq) * dt
-
-        # Path length for normalization
-        displacements = np.diff(positions, axis=0)
-        path_length = np.sum(np.sqrt(np.sum(displacements**2, axis=1)))
-
-        # Duration
-        T = len(joint_angles_timeseries) * dt
-
-        # Normalized jerk (dimensionless)
-        if path_length > 1e-6:
+        peak_speed = float(np.percentile(speeds, 95))
+        window_scores = []
+        window_jerks = []
+        for cs in range(0, len(positions) - 5, STRIDE):
+            seg = positions[cs:cs + WIN]
+            if len(seg) < 6:
+                continue
+            seg_speeds = speeds[cs:cs + WIN - 1]
+            # Score only windows in continuous motion: the MEDIAN speed must
+            # be a healthy fraction of the session's peak. Windows that merely
+            # touch the edge of a movement (mostly hold-still) have a low
+            # median even if their max is high, and their boundary jerk would
+            # otherwise poison the aggregate.
+            if float(np.median(seg_speeds)) < MIN_SPEED_FRAC * peak_speed:
+                continue  # window covers a hold-still period or a movement edge
+            velocity = np.diff(seg, axis=0) / dt
+            acceleration = np.diff(velocity, axis=0) / dt
+            jerk = np.diff(acceleration, axis=0) / dt
+            if len(jerk) == 0:
+                continue
+            integrated_jerk = float(np.sum(np.sum(jerk**2, axis=1)) * dt)
+            path_length = float(np.sum(np.linalg.norm(np.diff(seg, axis=0), axis=1)))
+            if path_length < 1e-6:
+                continue
+            T = len(seg) * dt
             normalized_jerk = math.sqrt((T**5 / (2.0 * path_length**2 + 1e-9)) * integrated_jerk)
-        else:
-            normalized_jerk = 0.0
+            window_scores.append(max(0.0, min(100.0, 100.0 - (normalized_jerk * 0.4))))
+            window_jerks.append(normalized_jerk)
 
-        # Convert to 0-100 score (empirical mapping)
-        # Lower NJ = smoother. Typical healthy: NJ < 50, impaired: NJ > 200
-        smoothness_score = max(0.0, min(100.0, 100.0 - (normalized_jerk * 0.3)))
+        if not window_scores:
+            return {"smoothness_score": 50.0, "jerk_metric": 0.0, "interpretation": "Insufficient movement data"}
+
+        # Aggregate at the 75th percentile: represents the patient's typical
+        # quality WHILE actually reaching. A mean/median over all windows
+        # would be dragged down by rest windows and rare boundary artifacts,
+        # which measures how long the patient rested instead of how well
+        # they moved.
+        smoothness_score = float(np.percentile(window_scores, 75))
+        normalized_jerk = float(np.percentile(window_jerks, 25))
 
         # Interpretation
         if smoothness_score >= 80:

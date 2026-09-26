@@ -158,7 +158,7 @@ const AchievementsPage = () => {
 
   if (error) {
     return (
-      <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <ErrorState
             title="We couldn't load your achievements"
@@ -176,7 +176,7 @@ const AchievementsPage = () => {
   /* ---- Fully empty account ---- */
   if (stats && stats.total_sessions === 0) {
     return (
-      <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <SectionHeader
             icon={Trophy}
@@ -201,9 +201,9 @@ const AchievementsPage = () => {
   const celebration = recentBadge ? (
     <div
       role="status"
-      className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3.5"
+      className="flex items-center gap-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3.5"
     >
-      <span className="inline-flex items-center justify-center p-2.5 rounded-xl bg-amber-100 text-amber-600 border border-amber-200 shrink-0">
+      <span className="inline-flex items-center justify-center p-2.5 rounded-xl bg-amber-100 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 shrink-0">
         <Award className="h-5 w-5" aria-hidden="true" />
       </span>
       <div>
@@ -217,7 +217,7 @@ const AchievementsPage = () => {
   ) : null;
 
   return (
-    <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <SectionHeader
           icon={Trophy}
@@ -244,28 +244,28 @@ const AchievementsPage = () => {
               valueText={`${earnedCount} of ${totalBadges} badges`}
               variant="warning"
             />
-            <p className="text-xs text-slate-500 mt-3">
-              Trophy points: <strong className="text-slate-600 tabular-nums">{stats?.points || 0} XP</strong>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">
+              Trophy points: <strong className="text-slate-600 dark:text-slate-300 tabular-nums">{stats?.points || 0} XP</strong>
             </p>
           </Card>
           <Card className="p-5">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Personal Best</h2>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Personal Best</h2>
             {personalBest ? (
               <>
                 <p className="text-2xl font-extrabold text-primary-600 tabular-nums">
                   {Math.round(personalBest.overall_score)}%
                 </p>
-                <p className="text-sm text-slate-600 font-semibold truncate">
+                <p className="text-sm text-slate-600 dark:text-slate-300 font-semibold truncate">
                   {personalBest.exercise_name || 'Exercise session'}
                 </p>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {personalBest.started_at
                     ? new Date(personalBest.started_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
                     : ''}
                 </p>
               </>
             ) : (
-              <p className="text-sm text-slate-500">No sessions recorded yet.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">No sessions recorded yet.</p>
             )}
           </Card>
         </div>
@@ -275,8 +275,8 @@ const AchievementsPage = () => {
           const Icon = category.icon;
           return (
             <section key={category.id} className="space-y-3">
-              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <span className="inline-flex items-center justify-center h-9 w-9 rounded-xl bg-primary-50 text-primary-600 border border-primary-100">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
+                <span className="inline-flex items-center justify-center h-9 w-9 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 border border-primary-100 dark:border-primary-900">
                   <Icon className="h-4.5 w-4.5" aria-hidden="true" />
                 </span>
                 {category.title}
@@ -310,26 +310,26 @@ const AchievementsPage = () => {
                           className={cn(
                             'inline-flex items-center justify-center p-3 rounded-xl border shrink-0',
                             isEarned
-                              ? 'bg-amber-50 text-amber-600 border-amber-200'
-                              : 'bg-slate-100 text-slate-500 border-slate-200',
+                              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700',
                           )}
                         >
                           {isEarned ? <BadgeIcon className="h-6 w-6" aria-hidden="true" /> : <Lock className="h-6 w-6" aria-hidden="true" />}
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-bold text-slate-900 text-sm">{meta.name}</h3>
+                            <h3 className="font-bold text-slate-900 dark:text-slate-50 text-sm">{meta.name}</h3>
                             {isEarned ? (
                               <Badge variant="success">Earned</Badge>
                             ) : (
                               <Badge variant="default">Locked</Badge>
                             )}
                           </div>
-                          <p className="text-sm text-slate-500 mt-1">
+                          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                             {isEarned ? meta.description : REQUIREMENTS[key] || meta.description}
                           </p>
                           {isEarned && earnedDate && (
-                            <p className="text-xs text-slate-500 mt-1.5">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
                               Earned {new Date(earnedDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                             </p>
                           )}
@@ -354,7 +354,7 @@ const AchievementsPage = () => {
           );
         })}
 
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           Achievements are calculated from your saved exercise sessions only. They reflect activity
           milestones, not a medical assessment.
         </p>

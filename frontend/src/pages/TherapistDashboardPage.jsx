@@ -103,7 +103,7 @@ const PatientDetails = ({ patientId }) => {
 
   if (error) {
     return (
-      <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+      <p className="text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3">
         This patient's sessions could not be loaded. Try collapsing and expanding again.
       </p>
     );
@@ -117,7 +117,7 @@ const PatientDetails = ({ patientId }) => {
   }
   if (sessions.length === 0) {
     return (
-      <p className="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3">
+      <p className="text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3">
         No completed sessions recorded yet for this patient.
       </p>
     );
@@ -129,47 +129,47 @@ const PatientDetails = ({ patientId }) => {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Sessions</p>
-          <p className="text-lg font-extrabold text-slate-900 tabular-nums">{s.total}</p>
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sessions</p>
+          <p className="text-lg font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">{s.total}</p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Avg score</p>
-          <p className="text-lg font-extrabold text-slate-900 tabular-nums">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Avg score</p>
+          <p className="text-lg font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">
             {s.avgScore != null ? `${Math.round(s.avgScore * 10) / 10}%` : '—'}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Max ROM</p>
-          <p className="text-lg font-extrabold text-slate-900 tabular-nums">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Max ROM</p>
+          <p className="text-lg font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">
             {s.maxRom != null ? `${Math.round(s.maxRom * 100) / 100}°` : '—'}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total time</p>
-          <p className="text-lg font-extrabold text-slate-900 tabular-nums">{fmtDuration(s.totalSeconds)}</p>
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total time</p>
+          <p className="text-lg font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">{fmtDuration(s.totalSeconds)}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
         <div className="lg:col-span-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
             Score trend ({s.total} sessions)
           </p>
           <ScoreSparkline sessions={sessions} />
         </div>
         <div className="space-y-1 text-sm">
-          <p className="text-slate-600">
-            <Gauge className="inline h-4 w-4 mr-1 -mt-0.5 text-purple-600" aria-hidden="true" />
+          <p className="text-slate-600 dark:text-slate-300">
+            <Gauge className="inline h-4 w-4 mr-1 -mt-0.5 text-purple-600 dark:text-purple-400" aria-hidden="true" />
             Avg smoothness:{' '}
-            <strong className="text-slate-900 tabular-nums">
+            <strong className="text-slate-900 dark:text-slate-50 tabular-nums">
               {s.avgSmoothness != null ? `${Math.round(s.avgSmoothness * 10) / 10}/100` : '—'}
             </strong>
           </p>
-          <p className="text-slate-600">
+          <p className="text-slate-600 dark:text-slate-300">
             <Activity className="inline h-4 w-4 mr-1 -mt-0.5 text-primary-600" aria-hidden="true" />
             Last 7 days:{' '}
-            <strong className="text-slate-900 tabular-nums">
+            <strong className="text-slate-900 dark:text-slate-50 tabular-nums">
               {s.weekly} session{s.weekly !== 1 ? 's' : ''}
             </strong>
           </p>
@@ -177,15 +177,15 @@ const PatientDetails = ({ patientId }) => {
       </div>
 
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Recent sessions</p>
-        <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 overflow-hidden">
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Recent sessions</p>
+        <div className="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           {recent.map((session) => (
-            <div key={session.id} className="flex items-center justify-between gap-3 px-4 py-3 bg-white">
+            <div key={session.id} className="flex items-center justify-between gap-3 px-4 py-3 bg-white dark:bg-slate-900">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-900 truncate">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 truncate">
                   {session.exercise_name || 'Exercise session'}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {session.started_at
                     ? new Date(session.started_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
                       ' · ' +
@@ -200,7 +200,7 @@ const PatientDetails = ({ patientId }) => {
             </div>
           ))}
         </div>
-        <p className="text-xs text-slate-400 mt-2">
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
           Showing the 3 most recent of {s.total} saved session{s.total !== 1 ? 's' : ''}.
         </p>
       </div>
@@ -271,7 +271,7 @@ const TherapistDashboardPage = () => {
 
   if (error) {
     return (
-      <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <ErrorState
             title="We couldn't load your patient list"
@@ -284,7 +284,7 @@ const TherapistDashboardPage = () => {
   }
 
   return (
-    <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
         <SectionHeader
           icon={Stethoscope}
@@ -342,7 +342,7 @@ const TherapistDashboardPage = () => {
                 Search patients by name or email
               </label>
               <Search
-                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400"
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400 dark:text-slate-500"
                 aria-hidden="true"
               />
               <input
@@ -351,7 +351,7 @@ const TherapistDashboardPage = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search patients…"
-                className="block w-full pl-10 pr-4 py-2.5 text-sm border border-slate-300 rounded-lg bg-white shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="block w-full pl-10 pr-4 py-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 shadow-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               />
             </div>
 
@@ -373,26 +373,26 @@ const TherapistDashboardPage = () => {
                         onClick={() => setExpandedId(isExpanded ? null : patient.id)}
                         aria-expanded={isExpanded}
                         aria-controls={`patient-panel-${patient.id}`}
-                        className="w-full text-left p-5 sm:p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 hover:bg-slate-50 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                        className="w-full text-left p-5 sm:p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                       >
                         <div className="flex items-start gap-4 min-w-0">
-                          <span className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-primary-50 text-primary-700 font-bold text-base uppercase border border-primary-100 shrink-0">
+                          <span className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-700 font-bold text-base uppercase border border-primary-100 dark:border-primary-900 shrink-0">
                             {(patient.full_name || '?').trim().charAt(0)}
                           </span>
                           <div className="min-w-0">
-                            <h3 className="font-extrabold text-slate-900 text-lg truncate">{patient.full_name}</h3>
-                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-sm text-slate-500">
+                            <h3 className="font-extrabold text-slate-900 dark:text-slate-50 text-lg truncate">{patient.full_name}</h3>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-sm text-slate-500 dark:text-slate-400">
                               <span>{STROKE_TYPE_LABELS[patient.stroke_type] || patient.stroke_type}</span>
                               <span aria-hidden="true">•</span>
                               <span>{AFFECTED_SIDE_LABELS[patient.affected_side] || patient.affected_side}</span>
                               <span aria-hidden="true">•</span>
-                              <span className="inline-flex items-center gap-1 font-semibold text-amber-600">
+                              <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
                                 <Flame className="h-4 w-4 fill-current" aria-hidden="true" /> {patient.streak_count || 0} day streak
                               </span>
                               {Array.isArray(patient.badges) && patient.badges.length > 0 && (
                                 <>
                                   <span aria-hidden="true">•</span>
-                                  <span className="inline-flex items-center gap-1 font-semibold text-purple-600">
+                                  <span className="inline-flex items-center gap-1 font-semibold text-purple-600 dark:text-purple-400">
                                     <Award className="h-4 w-4" aria-hidden="true" /> {patient.badges.length} badge{patient.badges.length !== 1 ? 's' : ''}
                                   </span>
                                 </>
@@ -420,15 +420,15 @@ const TherapistDashboardPage = () => {
                       {isExpanded && (
                         <div
                           id={`patient-panel-${patient.id}`}
-                          className="px-5 sm:px-6 pb-6 space-y-5 border-t border-slate-100 pt-5"
+                          className="px-5 sm:px-6 pb-6 space-y-5 border-t border-slate-100 dark:border-slate-800 pt-5"
                         >
                           <PatientDetails patientId={patient.id} />
 
                           {/* Severity control (existing endpoint, unchanged) */}
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 pt-4 border-t border-slate-100">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                             <label
                               htmlFor={`severity-${patient.id}`}
-                              className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+                              className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                             >
                               Severity level
                             </label>
@@ -437,7 +437,7 @@ const TherapistDashboardPage = () => {
                               value={patient.severity_level}
                               disabled={savingSeverityId === patient.id}
                               onChange={(e) => handleSeverityChange(patient.id, Number(e.target.value))}
-                              className="py-2 px-3 border border-slate-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm font-semibold cursor-pointer disabled:opacity-60"
+                              className="py-2 px-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm font-semibold cursor-pointer disabled:opacity-60"
                             >
                               {[1, 2, 3, 4, 5].map((lvl) => (
                                 <option key={lvl} value={lvl}>
@@ -445,7 +445,7 @@ const TherapistDashboardPage = () => {
                                 </option>
                               ))}
                             </select>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
                               Changing severity adjusts this patient's prescribed program and daily plan.
                             </p>
                           </div>
@@ -457,7 +457,7 @@ const TherapistDashboardPage = () => {
               </div>
             )}
 
-            <p className="text-xs text-slate-500 flex items-start gap-1.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-start gap-1.5">
               <Waves className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden="true" />
               Session summaries reflect saved exercise activity only and are not a clinical assessment.
             </p>

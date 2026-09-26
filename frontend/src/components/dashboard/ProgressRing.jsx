@@ -45,10 +45,10 @@ const ProgressRing = ({ value, size = 112, label }) => {
         )}
       </svg>
       <span className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-xl font-extrabold text-slate-900 tabular-nums leading-none">
+        <span className="text-xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums leading-none">
           {pct != null ? `${Math.round(pct)}%` : '—'}
         </span>
-        <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mt-0.5">
+        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">
           {pct != null ? 'done' : 'no plan'}
         </span>
       </span>

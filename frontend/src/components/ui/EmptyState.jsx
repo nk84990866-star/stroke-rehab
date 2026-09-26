@@ -8,12 +8,12 @@ import { cn } from '../../lib/cn';
  * Optional `action` renders a call-to-action below the text.
  */
 const EmptyState = ({ icon: Icon = Inbox, title, description, action, className }) => (
-  <div className={cn('bg-white rounded-xl border border-slate-200 shadow-card p-8 sm:p-12 text-center', className)}>
-    <span className="inline-flex items-center justify-center p-4 rounded-2xl bg-slate-100 text-slate-500 mb-4">
+  <div className={cn('bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-card p-8 sm:p-12 text-center', className)}>
+    <span className="inline-flex items-center justify-center p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 mb-4">
       <Icon className="h-8 w-8" aria-hidden="true" />
     </span>
-    <h3 className="text-lg font-bold text-slate-900">{title}</h3>
-    {description && <p className="text-slate-500 mt-1 max-w-md mx-auto">{description}</p>}
+    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-50">{title}</h3>
+    {description && <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">{description}</p>}
     {action && <div className="mt-5 flex justify-center">{action}</div>}
   </div>
 );

@@ -72,18 +72,18 @@ const Modal = ({ open, onClose, title, children, footer, className }) => {
         ref={panelRef}
         tabIndex={-1}
         className={cn(
-          'bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg max-h-[85vh] flex flex-col',
+          'bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 w-full max-w-lg max-h-[85vh] flex flex-col',
           'focus:outline-none',
           className,
         )}
       >
-        <div className="flex items-center justify-between p-5 border-b border-slate-100">
-          <h2 id={titleId} className="text-lg font-bold text-slate-900">{title}</h2>
+        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
+          <h2 id={titleId} className="text-lg font-bold text-slate-900 dark:text-slate-50">{title}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+            className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>

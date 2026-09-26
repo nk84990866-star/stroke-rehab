@@ -22,6 +22,7 @@ import {
   Waves,
 } from 'lucide-react';
 import { getStats, getProgress, getSessions } from '../services/api';
+import { useTheme } from '../context/ThemeContext';
 import { Badge, Card, EmptyStateLink, ErrorState, LoadingState, SectionHeader, StatCard } from '../components/ui';
 import { cn } from '../lib/cn';
 
@@ -56,6 +57,10 @@ const tickDate = (dateStr) => {
 };
 
 const ProgressPage = () => {
+  const { resolvedTheme } = useTheme();
+  // Recharts needs literal colors; resolvedTheme flips them on theme change.
+  const axisColor = resolvedTheme === 'dark' ? '#94a3b8' : '#64748b';
+  const gridColor = resolvedTheme === 'dark' ? '#334155' : '#e2e8f0';
   const [stats, setStats] = useState(null);
   const [progress, setProgress] = useState(null);   // chronological {date, score, rom, smoothness}
   const [sessions, setSessions] = useState(null);   // full session rows
@@ -162,7 +167,7 @@ const ProgressPage = () => {
 
   if (error) {
     return (
-      <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <ErrorState
             title="We couldn't load your progress"
@@ -177,7 +182,7 @@ const ProgressPage = () => {
   /* ---------- Fully empty account ---------- */
   if (stats && stats.total_sessions === 0) {
     return (
-      <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto space-y-6">
           <SectionHeader
             icon={BarChart2}
@@ -206,7 +211,7 @@ const ProgressPage = () => {
       : 'No sessions recorded in this period.';
 
   return (
-    <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
 
         <SectionHeader
@@ -216,7 +221,7 @@ const ProgressPage = () => {
           description="A summary of your completed rehabilitation sessions over time."
           actions={
             <div
-              className="inline-flex p-1 bg-slate-100 rounded-xl gap-1"
+              className="inline-flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl gap-1"
               role="group"
               aria-label="Time range filter"
             >
@@ -229,8 +234,8 @@ const ProgressPage = () => {
                   className={cn(
                     'px-3 py-2 text-sm font-semibold rounded-lg transition-colors cursor-pointer',
                     rangeDays === r.value
-                      ? 'bg-white text-primary-700 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-800',
+                      ? 'bg-white dark:bg-slate-900 text-primary-700 shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100',
                   )}
                 >
                   {r.label}
@@ -277,10 +282,10 @@ const ProgressPage = () => {
         {/* ============ SCORE TREND ============ */}
         <Card className="p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3 mb-4">
-            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary-600" aria-hidden="true" /> Score Trend
             </h2>
-            <p className="text-sm text-slate-500" aria-live="polite">
+            <p className="text-sm text-slate-500 dark:text-slate-400" aria-live="polite">
               {activeSessions} session{activeSessions !== 1 ? 's' : ''} in range
             </p>
           </div>
@@ -289,9 +294,9 @@ const ProgressPage = () => {
               <div className="h-72 w-full" role="img" aria-label={`Line chart of session scores over time. ${trendSummary}`}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={filteredProgressData} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="date" tickFormatter={tickDate} tick={{ fontSize: 12, fill: '#64748b' }} minTickGap={24} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#64748b' }} width={36} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                    <XAxis dataKey="date" tickFormatter={tickDate} tick={{ fontSize: 12, fill: axisColor }} minTickGap={24} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: axisColor }} width={36} />
                     <Tooltip labelFormatter={(l) => `Date: ${tickDate(l)}`} formatter={(v) => [`${v}%`, 'Score']} />
                     <Line type="monotone" dataKey="score" stroke="var(--color-primary-500)" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 6 }} name="Score" />
                   </LineChart>
@@ -300,7 +305,7 @@ const ProgressPage = () => {
               <figcaption className="sr-only">{trendSummary}</figcaption>
             </figure>
           ) : (
-            <p className="text-sm text-slate-500 py-8 text-center">
+            <p className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">
               No completed sessions in this period. Try a longer time range.
             </p>
           )}
@@ -310,19 +315,19 @@ const ProgressPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Range of motion — real values from saved sessions */}
           <Card className="p-5 sm:p-6">
-            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-4">
-              <Waves className="h-5 w-5 text-emerald-600" aria-hidden="true" /> Range of Motion
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2 mb-4">
+              <Waves className="h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" /> Range of Motion
             </h2>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Max ROM in range</p>
-                <p className="text-xl font-extrabold text-slate-900 tabular-nums">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Max ROM in range</p>
+                <p className="text-xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">
                   {summary.maxRom != null ? `${Math.round(summary.maxRom * 100) / 100}°` : '—'}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Avg ROM in range</p>
-                <p className="text-xl font-extrabold text-slate-900 tabular-nums">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Avg ROM in range</p>
+                <p className="text-xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">
                   {summary.avgRom != null ? `${Math.round(summary.avgRom * 100) / 100}°` : '—'}
                 </p>
               </div>
@@ -332,9 +337,9 @@ const ProgressPage = () => {
                 <div className="h-56 w-full" role="img" aria-label="Line chart of maximum range of motion reached per session.">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={filteredProgressData} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="date" tickFormatter={tickDate} tick={{ fontSize: 12, fill: '#64748b' }} minTickGap={24} />
-                      <YAxis domain={[0, 180]} tick={{ fontSize: 12, fill: '#64748b' }} width={36} />
+                      <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                      <XAxis dataKey="date" tickFormatter={tickDate} tick={{ fontSize: 12, fill: axisColor }} minTickGap={24} />
+                      <YAxis domain={[0, 180]} tick={{ fontSize: 12, fill: axisColor }} width={36} />
                       <Tooltip labelFormatter={(l) => `Date: ${tickDate(l)}`} formatter={(v) => [`${v}°`, 'Max ROM']} />
                       <Line type="monotone" dataKey="rom" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 6 }} name="Max ROM" />
                     </LineChart>
@@ -345,12 +350,12 @@ const ProgressPage = () => {
                 </figcaption>
               </figure>
             ) : (
-              <p className="text-sm text-slate-500 py-6 text-center">
+              <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center">
                 No ROM values recorded in this period yet.
               </p>
             )}
             {summary.romRecorded > 0 && (
-              <p className="text-xs text-slate-500 mt-2">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                 Averaged over {summary.romRecorded} session{summary.romRecorded !== 1 ? 's' : ''} with a recorded ROM value.
               </p>
             )}
@@ -358,12 +363,12 @@ const ProgressPage = () => {
 
           {/* Smoothness — existing backend values only */}
           <Card className="p-5 sm:p-6">
-            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-4">
-              <Gauge className="h-5 w-5 text-purple-600" aria-hidden="true" /> Movement Smoothness
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2 mb-4">
+              <Gauge className="h-5 w-5 text-purple-600 dark:text-purple-400" aria-hidden="true" /> Movement Smoothness
             </h2>
             <div className="mb-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Average in range</p>
-              <p className="text-xl font-extrabold text-slate-900 tabular-nums">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Average in range</p>
+              <p className="text-xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">
                 {summary.avgSmoothness != null ? `${Math.round(summary.avgSmoothness * 10) / 10} / 100` : '—'}
               </p>
             </div>
@@ -372,9 +377,9 @@ const ProgressPage = () => {
                 <div className="h-56 w-full" role="img" aria-label="Line chart of movement smoothness score per session.">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={filteredProgressData} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="date" tickFormatter={tickDate} tick={{ fontSize: 12, fill: '#64748b' }} minTickGap={24} />
-                      <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#64748b' }} width={36} />
+                      <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                      <XAxis dataKey="date" tickFormatter={tickDate} tick={{ fontSize: 12, fill: axisColor }} minTickGap={24} />
+                      <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: axisColor }} width={36} />
                       <Tooltip labelFormatter={(l) => `Date: ${tickDate(l)}`} formatter={(v) => [`${v}`, 'Smoothness']} />
                       <Line type="monotone" dataKey="smoothness" stroke="#8b5cf6" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 6 }} name="Smoothness" />
                     </LineChart>
@@ -385,11 +390,11 @@ const ProgressPage = () => {
                 </figcaption>
               </figure>
             ) : (
-              <p className="text-sm text-slate-500 py-6 text-center">
+              <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center">
                 No smoothness values recorded in this period yet.
               </p>
             )}
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               {summary.smoothnessRecorded > 0
                 ? `Averaged over ${summary.smoothnessRecorded} session${summary.smoothnessRecorded !== 1 ? 's' : ''} with a recorded value. Sessions saved before a scoring update may show 0.`
                 : 'Smoothness is calculated when a session is saved.'}
@@ -399,7 +404,7 @@ const ProgressPage = () => {
 
         {/* ============ WEEKLY ACTIVITY (current week, real sessions only) ============ */}
         <Card className="p-5 sm:p-6">
-          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-4">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2 mb-4">
             <Dumbbell className="h-5 w-5 text-primary-600" aria-hidden="true" /> This Week's Activity
           </h2>
           <div className="grid grid-cols-7 gap-2 sm:gap-3">
@@ -411,23 +416,23 @@ const ProgressPage = () => {
                   className={cn(
                     'rounded-xl border p-2 sm:p-3 text-center',
                     count > 0
-                      ? 'border-primary-200 bg-primary-50'
-                      : 'border-slate-200 bg-slate-50',
+                      ? 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-950/40'
+                      : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60',
                   )}
                   aria-label={`${day}: ${count} session${count !== 1 ? 's' : ''}`}
                 >
-                  <p className="text-xs font-bold text-slate-500 uppercase">{day}</p>
-                  <p className={cn('text-lg font-extrabold tabular-nums mt-1', count > 0 ? 'text-primary-700' : 'text-slate-300')}>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">{day}</p>
+                  <p className={cn('text-lg font-extrabold tabular-nums mt-1', count > 0 ? 'text-primary-700' : 'text-slate-300 dark:text-slate-600')}>
                     {count}
                   </p>
-                  <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                     {count > 0 ? (count === 1 ? 'session' : 'sessions') : '—'}
                   </p>
                 </div>
               );
             })}
           </div>
-          <p className="text-xs text-slate-500 mt-3">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">
             Counts are saved exercise sessions only — planned but not-yet-completed exercises are not included.
           </p>
         </Card>
@@ -435,26 +440,26 @@ const ProgressPage = () => {
         {/* ============ RECENT SESSIONS ============ */}
         <Card className="overflow-hidden">
           <div className="flex items-center justify-between gap-3 p-5 sm:p-6 pb-4">
-            <h2 className="text-lg font-bold text-slate-900">Sessions in Range</h2>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Sessions in Range</h2>
             <Link to="/reports" className="inline-flex items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700 cursor-pointer">
               All Reports <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
           {filteredSessions.length > 0 ? (
-            <div className="divide-y divide-slate-100 border-t border-slate-100">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">
               {filteredSessions.slice(0, 10).map((session) => (
                 <Link
                   key={session.id}
                   to={`/reports/${session.id}`}
-                  className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3.5 hover:bg-slate-50 transition-colors cursor-pointer"
+                  className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="p-2.5 rounded-lg bg-primary-50 text-primary-600 border border-primary-100 shrink-0">
+                    <span className="p-2.5 rounded-lg bg-primary-50 dark:bg-primary-950/40 text-primary-600 border border-primary-100 dark:border-primary-900 shrink-0">
                       <Activity className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900 truncate">{session.exercise_name || 'Exercise session'}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-50 truncate">{session.exercise_name || 'Exercise session'}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         {session.started_at
                           ? `${new Date(session.started_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · ${new Date(session.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
                           : ''}
@@ -466,19 +471,19 @@ const ProgressPage = () => {
                     <Badge variant={(session.overall_score || 0) >= 70 ? 'success' : 'default'}>
                       {session.overall_score ?? 0}%
                     </Badge>
-                    <ChevronRight className="h-4 w-4 text-slate-300" aria-hidden="true" />
+                    <ChevronRight className="h-4 w-4 text-slate-300 dark:text-slate-600" aria-hidden="true" />
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-500 p-6">
+            <p className="text-sm text-slate-500 dark:text-slate-400 p-6">
               No completed sessions in this period. Try a longer time range above.
             </p>
           )}
         </Card>
 
-        <p className="text-xs text-slate-500 flex items-start gap-1.5">
+        <p className="text-xs text-slate-500 dark:text-slate-400 flex items-start gap-1.5">
           <BarChart2 className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden="true" />
           This page summarizes your recorded exercise activity (sessions, scores, timing). It is an activity
           statistic, not a medical assessment — discuss your rehabilitation progress with your clinician.

@@ -6,10 +6,10 @@ const VARIANTS = {
   primary:
     'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 shadow-sm',
   secondary:
-    'bg-primary-50 text-primary-700 hover:bg-primary-100 active:bg-primary-200 border border-primary-200',
+    'bg-primary-50 dark:bg-primary-950/40 text-primary-700 hover:bg-primary-100 active:bg-primary-200 border border-primary-200 dark:border-primary-800',
   outline:
-    'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 hover:border-slate-400',
-  ghost: 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+    'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-400 dark:hover:border-slate-500',
+  ghost: 'bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-50',
   danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 shadow-sm',
 };
 

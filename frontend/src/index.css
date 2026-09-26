@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Dark mode is class-driven: `.dark` on <html>, set before first paint by the
+   inline script in index.html and managed by ThemeContext afterwards. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ============================================================
    NeuroMotion AI — Design System (Tailwind CSS v4, CSS-first)
    ============================================================ */
@@ -48,6 +52,10 @@
        text at a comfortable size while layouts stay intact. */
     font-size: 1.03125rem;
   }
+  .dark body {
+    /* Dark surface + off-white primary text (high contrast on #0F172A-ish) */
+    @apply bg-slate-950 text-slate-50;
+  }
   h1, h2 {
     @apply tracking-tight;
   }
@@ -57,20 +65,41 @@
     outline-offset: 2px;
     border-radius: 4px;
   }
+  .dark :focus-visible {
+    /* Brighter ring on dark backgrounds */
+    outline-color: oklch(0.809 0.114 250.6); /* primary-300 */
+  }
 
   ::selection {
     background: var(--color-primary-100);
     color: var(--color-primary-900);
   }
+  .dark ::selection {
+    background: var(--color-primary-700);
+    color: white;
+  }
 }
 
-/* ---------------- Utilities ---------------- */
-@utility text-balance {
-  text-wrap: balance;
+/* ---------------- Theme-aware surface utilities ----------------
+   Semantic helpers so components can stay theme-agnostic. Light values
+   match the existing palette; dark values meet contrast requirements. */
+@utility surface-page {
+  @apply bg-surface dark:bg-slate-950;
 }
-
-@utility text-pretty {
-  text-wrap: pretty;
+@utility surface-card {
+  @apply bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700;
+}
+@utility text-strong {
+  @apply text-slate-900 dark:text-slate-50;
+}
+@utility text-body {
+  @apply text-slate-600 dark:text-slate-300;
+}
+@utility text-muted {
+  @apply text-slate-500 dark:text-slate-400;
+}
+@utility text-contrast {
+  @apply text-slate-700 dark:text-slate-200;
 }
 
 /* ---------------- Reduced motion ---------------- */

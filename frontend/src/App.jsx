@@ -21,7 +21,7 @@ import TherapistDashboardPage from './pages/TherapistDashboardPage';
 function App() {
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-surface flex flex-col">
+      <div className="min-h-screen bg-surface dark:bg-slate-950 flex flex-col">
         {/* Skip link: first focusable element, visible on keyboard focus only */}
         <a
           href="#main-content"

@@ -11,15 +11,15 @@ const SectionHeader = ({ icon: Icon, eyebrow, title, description, actions, class
       {eyebrow && (
         <p className="text-xs font-bold uppercase tracking-widest text-primary-600 mb-1">{eyebrow}</p>
       )}
-      <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2.5">
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 flex items-center gap-2.5">
         {Icon && (
-          <span className="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-primary-50 text-primary-600 border border-primary-100">
+          <span className="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 border border-primary-100 dark:border-primary-900">
             <Icon className="h-5 w-5" aria-hidden="true" />
           </span>
         )}
         {title}
       </h1>
-      {description && <p className="text-slate-500 mt-1.5 max-w-2xl text-pretty">{description}</p>}
+      {description && <p className="text-slate-500 dark:text-slate-400 mt-1.5 max-w-2xl text-pretty">{description}</p>}
     </div>
     {actions && <div className="flex items-center gap-3 shrink-0">{actions}</div>}
   </div>

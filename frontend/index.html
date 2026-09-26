@@ -6,8 +6,28 @@
     <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0f83fd" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="description" content="NeuroMotion AI — AI-assisted stroke rehabilitation with real-time pose tracking, personalized exercise programs, and clinical progress reports." />
     <title>NeuroMotion AI - Stroke Rehabilitation</title>
+    <script>
+      // Anti-flicker: set the theme class before first paint. Reads the
+      // persisted preference ('light' | 'dark' | 'system'); falls back to
+      // the OS preference when nothing is stored.
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme');
+          var dark = stored === 'dark' ||
+            ((stored === null || stored === 'system') &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var root = document.documentElement;
+          root.classList.remove('light', 'dark');
+          root.classList.add(dark ? 'dark' : 'light');
+          root.style.colorScheme = dark ? 'dark' : 'light';
+        } catch (e) {
+          document.documentElement.classList.add('light');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

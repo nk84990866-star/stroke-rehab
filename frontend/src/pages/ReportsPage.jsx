@@ -74,10 +74,10 @@ const ReportsPage = () => {
   }
 
   return (
-    <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Back navigation */}
-        <Link to="/dashboard" className="inline-flex items-center text-sm font-semibold text-slate-500 hover:text-slate-800 gap-1.5 cursor-pointer">
+        <Link to="/dashboard" className="inline-flex items-center text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 gap-1.5 cursor-pointer">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Dashboard
         </Link>
 
@@ -91,21 +91,21 @@ const ReportsPage = () => {
         {/* ===== Calendar ===== */}
         <Card className="p-5 sm:p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary-600" aria-hidden="true" />
               {MONTH_NAMES[viewMonth]} {viewYear}
             </h2>
             <div className="flex items-center gap-2">
               <button onClick={goToPrevMonth} aria-label="Previous month"
-                className="p-2.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
+                className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" />
               </button>
               <button onClick={goToToday}
-                className="px-3 py-2 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
+                className="px-3 py-2 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
                 Today
               </button>
               <button onClick={goToNextMonth} aria-label="Next month"
-                className="p-2.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
+                className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
                 <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
@@ -113,7 +113,7 @@ const ReportsPage = () => {
 
           <div className="grid grid-cols-7 gap-1 mb-1" role="row">
             {WEEKDAY_LABELS.map((w) => (
-              <div key={w} className="text-center text-[11px] font-bold text-slate-500 uppercase py-1">{w}</div>
+              <div key={w} className="text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase py-1">{w}</div>
             ))}
           </div>
 
@@ -142,8 +142,8 @@ const ReportsPage = () => {
                   className={cn(
                     'relative h-14 rounded-lg text-sm font-semibold transition-colors',
                     isSelected ? 'bg-primary-600 text-white shadow-sm' :
-                      hasSessions ? 'bg-primary-50 border border-primary-200 text-primary-900 hover:bg-primary-100 cursor-pointer' :
-                      'text-slate-300 bg-slate-50',
+                      hasSessions ? 'bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800 text-primary-900 hover:bg-primary-100 cursor-pointer' :
+                      'text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800/60',
                     isToday && !isSelected ? 'ring-2 ring-primary-300' : '',
                   )}
                 >
@@ -151,7 +151,7 @@ const ReportsPage = () => {
                   {hasSessions && (
                     <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
                       {daySessions.slice(0, 3).map((_, j) => (
-                        <span key={j} className={cn('h-1.5 w-1.5 rounded-full', isSelected ? 'bg-white' : 'bg-primary-500')} />
+                        <span key={j} className={cn('h-1.5 w-1.5 rounded-full', isSelected ? 'bg-white dark:bg-slate-900' : 'bg-primary-50 dark:bg-primary-950/400')} />
                       ))}
                       {daySessions.length > 1 && (
                         <span className={cn('text-[10px] font-bold', isSelected ? 'text-white' : 'text-primary-600')}>
@@ -165,14 +165,14 @@ const ReportsPage = () => {
             })}
           </div>
 
-          <p className="text-xs text-slate-500 mt-3">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">
             Days highlighted in blue have completed sessions — click one to see that day's reports.
           </p>
         </Card>
 
         {/* ===== Session list (filtered when a day is selected) ===== */}
         {selectedDate && (
-          <div className="flex items-center justify-between gap-3 bg-primary-50 border border-primary-200 rounded-xl px-4 py-3">
+          <div className="flex items-center justify-between gap-3 bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800 rounded-xl px-4 py-3">
             <p className="text-sm font-semibold text-primary-900">
               {new Date(selectedDate + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               {' — '}{shownSessions.length} session{shownSessions.length !== 1 ? 's' : ''}
@@ -202,20 +202,20 @@ const ReportsPage = () => {
             description='Pick another highlighted day, or press "Show all".'
           />
         ) : (
-          <Card className="divide-y divide-slate-100 overflow-hidden">
+          <Card className="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
             {shownSessions.map((session) => (
               <Link
                 key={session.id}
                 to={`/reports/${session.id}`}
-                className="p-5 sm:p-6 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer"
+                className="p-5 sm:p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-4 min-w-0">
-                  <span className="p-3 bg-primary-50 text-primary-600 rounded-xl border border-primary-100 shrink-0">
+                  <span className="p-3 bg-primary-50 dark:bg-primary-950/40 text-primary-600 rounded-xl border border-primary-100 dark:border-primary-900 shrink-0">
                     <CheckCircle className="h-6 w-6" aria-hidden="true" />
                   </span>
                   <div className="min-w-0">
-                    <h3 className="font-bold text-slate-900 truncate">{session.exercise_name}</h3>
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-sm text-slate-500">
+                    <h3 className="font-bold text-slate-900 dark:text-slate-50 truncate">{session.exercise_name}</h3>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-sm text-slate-500 dark:text-slate-400">
                       <Calendar className="h-4 w-4" aria-hidden="true" />
                       <span>{new Date(session.started_at).toLocaleDateString()}</span>
                       <span aria-hidden="true">•</span>
@@ -227,10 +227,10 @@ const ReportsPage = () => {
                 </div>
                 <div className="flex items-center gap-4 shrink-0">
                   <div className="text-right">
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Score</span>
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Score</span>
                     <span className="font-extrabold text-primary-600 text-lg tabular-nums">{session.overall_score}%</span>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-slate-300" aria-hidden="true" />
+                  <ChevronRight className="h-5 w-5 text-slate-300 dark:text-slate-600" aria-hidden="true" />
                 </div>
               </Link>
             ))}

@@ -29,7 +29,7 @@ const ProfilePage = () => {
   const isPatient = user.role === 'patient';
 
   return (
-    <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <SectionHeader
           icon={UserCircle2}
@@ -53,8 +53,8 @@ const ProfilePage = () => {
               {(user.full_name || '?').trim().charAt(0)}
             </span>
             <div className="min-w-0">
-              <h2 className="text-xl font-extrabold text-slate-900 truncate">{user.full_name}</h2>
-              <p className="text-sm text-slate-500 flex items-center gap-1.5 mt-0.5">
+              <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-50 truncate">{user.full_name}</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
                 <Mail className="h-3.5 w-3.5" aria-hidden="true" /> {user.email}
               </p>
               <div className="flex flex-wrap items-center gap-2 mt-2.5">
@@ -62,7 +62,7 @@ const ProfilePage = () => {
                   {isPatient ? <HeartPulse className="h-3 w-3" aria-hidden="true" /> : <Stethoscope className="h-3 w-3" aria-hidden="true" />}
                   {isPatient ? 'Patient' : 'Therapist'}
                 </Badge>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-slate-500 dark:text-slate-400">
                   Member since {user.created_at ? new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
                 </span>
               </div>
@@ -87,35 +87,35 @@ const ProfilePage = () => {
               </Card.Header>
               <Card.Content className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Stroke classification</p>
-                  <p className="text-sm font-semibold text-slate-900 mt-1">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Stroke classification</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 mt-1">
                     {STROKE_TYPE_LABELS[user.stroke_type] || user.stroke_type || '—'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Affected side</p>
-                  <p className="text-sm font-semibold text-slate-900 mt-1">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Affected side</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 mt-1">
                     {AFFECTED_SIDE_LABELS[user.affected_side] || user.affected_side || '—'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Severity level</p>
-                  <p className="text-sm font-semibold text-slate-900 mt-1">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Severity level</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 mt-1">
                     Level {user.severity_level ?? '—'}
                     {user.severity_level ? ` · ${SEVERITY_LABELS[user.severity_level]}` : ''}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Date of stroke</p>
-                  <p className="text-sm font-semibold text-slate-900 mt-1">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Date of stroke</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 mt-1">
                     {user.date_of_stroke
                       ? new Date(user.date_of_stroke).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
                       : '—'}
                   </p>
                 </div>
-                <div className="sm:col-span-2 pt-4 border-t border-slate-100">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Exercise difficulty range</p>
-                  <p className="text-sm text-slate-600">
+                <div className="sm:col-span-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Exercise difficulty range</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
                     Your severity level (<strong>Level {user.severity_level ?? '—'}</strong>) maps to the Basic / Moderate / High
                     exercise levels recommended on your dashboard.
                   </p>
@@ -132,18 +132,18 @@ const ProfilePage = () => {
             </Card.Header>
             <Card.Content className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Specialization</p>
-                <p className="text-sm font-semibold text-slate-900 mt-1">{user.specialization || '—'}</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Specialization</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 mt-1">{user.specialization || '—'}</p>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">License number</p>
-                <p className="text-sm font-semibold text-slate-900 mt-1">{user.license_number || '—'}</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">License number</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 mt-1">{user.license_number || '—'}</p>
               </div>
             </Card.Content>
           </Card>
         )}
 
-        <p className="text-xs text-slate-500 flex items-center gap-1.5">
+        <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
           <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
           Profile editing will arrive with a future update — this page is read-only.
         </p>

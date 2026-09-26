@@ -49,8 +49,8 @@ const BadgeChip = ({ badgeKey, earned }) => {
       className={cn(
         'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold border',
         earned
-          ? 'bg-amber-50 text-amber-700 border-amber-200'
-          : 'bg-slate-50 text-slate-500 border-slate-200',
+          ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+          : 'bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700',
       )}
       title={earned ? 'Unlocked' : 'Locked'}
     >
@@ -76,15 +76,15 @@ const ScoreSparkline = ({ data }) => (
 const ActivityRow = ({ session }) => (
   <Link
     to={`/reports/${session.id}`}
-    className="flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors cursor-pointer"
+    className="flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
   >
     <div className="flex items-center gap-3 min-w-0">
-      <span className="inline-flex items-center justify-center p-2.5 rounded-lg bg-primary-50 text-primary-600 border border-primary-100 shrink-0">
+      <span className="inline-flex items-center justify-center p-2.5 rounded-lg bg-primary-50 dark:bg-primary-950/40 text-primary-600 border border-primary-100 dark:border-primary-900 shrink-0">
         <Dumbbell className="h-4 w-4" aria-hidden="true" />
       </span>
       <div className="min-w-0">
-        <p className="text-sm font-bold text-slate-900 truncate">{session.exercise_name || 'Exercise session'}</p>
-        <p className="text-xs text-slate-500">
+        <p className="text-sm font-bold text-slate-900 dark:text-slate-50 truncate">{session.exercise_name || 'Exercise session'}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           {session.started_at
             ? new Date(session.started_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
               ' · ' +
@@ -97,7 +97,7 @@ const ActivityRow = ({ session }) => (
       <Badge variant={(session.overall_score || 0) >= 70 ? 'success' : 'default'}>
         {session.overall_score ?? 0}%
       </Badge>
-      <ChevronRight className="h-4 w-4 text-slate-300" aria-hidden="true" />
+      <ChevronRight className="h-4 w-4 text-slate-300 dark:text-slate-600" aria-hidden="true" />
     </div>
   </Link>
 );
@@ -106,9 +106,9 @@ const ActivityRow = ({ session }) => (
 const QuickAction = ({ to, icon: Icon, label }) => (
   <Link
     to={to}
-    className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover hover:border-primary-200 hover:-translate-y-0.5 transition-all text-slate-700 hover:text-primary-700 cursor-pointer"
+    className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-card hover:shadow-card-hover hover:border-primary-200 dark:hover:border-primary-800 hover:-translate-y-0.5 transition-all text-slate-700 dark:text-slate-200 hover:text-primary-700 cursor-pointer"
   >
-    <span className="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-primary-50 text-primary-600 border border-primary-100">
+    <span className="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 border border-primary-100 dark:border-primary-900">
       <Icon className="h-5 w-5" aria-hidden="true" />
     </span>
     <span className="text-sm font-semibold text-center">{label}</span>
@@ -201,7 +201,7 @@ const DashboardPage = () => {
 
   if (error) {
     return (
-      <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <ErrorState
             title="We couldn't load your dashboard"
@@ -214,7 +214,7 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* ============ 1. WELCOME HEADER ============ */}
@@ -224,10 +224,10 @@ const DashboardPage = () => {
               <p className="text-xs font-bold uppercase tracking-widest text-primary-600 mb-1">
                 {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
               </p>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50">
                 {firstName ? `Welcome back, ${firstName}!` : 'Welcome back!'}
               </h1>
-              <p className="text-slate-500 mt-1.5 max-w-xl text-pretty">
+              <p className="text-slate-500 dark:text-slate-400 mt-1.5 max-w-xl text-pretty">
                 Every steady rep builds new pathways — here's your rehabilitation at a glance.
               </p>
             </div>
@@ -254,13 +254,13 @@ const DashboardPage = () => {
               }
             />
             <div className="flex-1 text-center sm:text-left min-w-0">
-              <h2 className="text-lg font-bold text-slate-900">Today's Rehabilitation Plan</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Today's Rehabilitation Plan</h2>
               {plan && totalCount > 0 ? (
                 <>
-                  <p className="text-sm text-slate-500 mt-1">
-                    <strong className="text-slate-900 tabular-nums">{doneCount}</strong> of{' '}
-                    <strong className="text-slate-900 tabular-nums">{totalCount}</strong> completed
-                    {remainingCount > 0 && <> · <strong className="text-slate-900 tabular-nums">{remainingCount}</strong> remaining</>}
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    <strong className="text-slate-900 dark:text-slate-50 tabular-nums">{doneCount}</strong> of{' '}
+                    <strong className="text-slate-900 dark:text-slate-50 tabular-nums">{totalCount}</strong> completed
+                    {remainingCount > 0 && <> · <strong className="text-slate-900 dark:text-slate-50 tabular-nums">{remainingCount}</strong> remaining</>}
                   </p>
                   <ProgressBar
                     className="mt-3 max-w-md"
@@ -282,7 +282,7 @@ const DashboardPage = () => {
                   </div>
                 </>
               ) : (
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                   No rehabilitation plan is available for today. You can still browse the full exercise library and
                   train any exercise.
                 </p>
@@ -376,7 +376,7 @@ const DashboardPage = () => {
           {/* Progress preview */}
           <Card className="lg:col-span-2 p-6">
             <div className="flex items-center justify-between gap-3 mb-4">
-              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
                 <BarChart2 className="h-5 w-5 text-primary-600" aria-hidden="true" /> Your Progress
               </h2>
               <Link
@@ -396,23 +396,23 @@ const DashboardPage = () => {
                 </p>
                 <div className="grid grid-cols-3 gap-4 mt-4">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Weekly sessions</p>
-                    <p className="text-xl font-extrabold text-slate-900 tabular-nums">{weeklyCount}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Weekly sessions</p>
+                    <p className="text-xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">{weeklyCount}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Recent avg score</p>
-                    <p className="text-xl font-extrabold text-slate-900 tabular-nums">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Recent avg score</p>
+                    <p className="text-xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">
                       {recentAvgScore != null ? `${recentAvgScore}%` : '—'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Sessions tracked</p>
-                    <p className="text-xl font-extrabold text-slate-900 tabular-nums">{progressSeries.length}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sessions tracked</p>
+                    <p className="text-xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">{progressSeries.length}</p>
                   </div>
                 </div>
               </>
             ) : (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Complete your first session to start building your progress trend.
               </p>
             )}
@@ -421,7 +421,7 @@ const DashboardPage = () => {
           {/* Achievements preview */}
           <Card className="p-6">
             <div className="flex items-center justify-between gap-3 mb-4">
-              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-amber-500" aria-hidden="true" /> Achievements
               </h2>
               <Link
@@ -436,7 +436,7 @@ const DashboardPage = () => {
                 <BadgeChip key={key} badgeKey={key} earned={earned} />
               ))}
             </div>
-            <p className="text-xs text-slate-500 mt-3">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">
               {earnedBadges.length > 0
                 ? `${earnedBadges.length} badge${earnedBadges.length !== 1 ? 's' : ''} unlocked so far.`
                 : 'No badges unlocked yet — complete a session to earn your first!'}
@@ -449,7 +449,7 @@ const DashboardPage = () => {
           {/* Recent activity */}
           <Card className="lg:col-span-2 overflow-hidden">
             <div className="flex items-center justify-between gap-3 p-5 sm:p-6 pb-4">
-              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
                 <History className="h-5 w-5 text-primary-600" aria-hidden="true" /> Recent Activity
               </h2>
               <Link
@@ -460,7 +460,7 @@ const DashboardPage = () => {
               </Link>
             </div>
             {recentSessions.length > 0 ? (
-              <div className="divide-y divide-slate-100 border-t border-slate-100">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">
                 {recentSessions.map((session) => (
                   <ActivityRow key={session.id} session={session} />
                 ))}
@@ -479,7 +479,7 @@ const DashboardPage = () => {
 
           {/* Quick actions */}
           <Card className="p-6">
-            <h2 className="text-lg font-bold text-slate-900 mb-4">Quick Actions</h2>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-3">
               <QuickAction to={continueHref} icon={Play} label="Start Exercise" />
               <QuickAction to="/exercises" icon={Dumbbell} label="View Exercises" />

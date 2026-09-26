@@ -238,12 +238,14 @@ const ExerciseRunnerPage = () => {
     const ctx = twinRef.current?.getContext('2d');
     const width = twinRef.current?.width || 400;
     const height = twinRef.current?.height || 350;
+    // Theme-aware twin colors (dark mode: dark grid, light text)
+    const isDark = document.documentElement.classList.contains('dark');
 
     if (ctx && exercise) {
       ctx.clearRect(0, 0, width, height);
 
       // Draw Grid
-      ctx.strokeStyle = '#e5e7eb';
+      ctx.strokeStyle = isDark ? '#334155' : '#e5e7eb';
       ctx.lineWidth = 1;
       for (let i = 0; i < width; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke(); }
       for (let j = 0; j < height; j += 40) { ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(width, j); ctx.stroke(); }
@@ -273,7 +275,7 @@ const ExerciseRunnerPage = () => {
         ctx.lineWidth = 3;
         ctx.stroke();
 
-        ctx.fillStyle = '#065f46';
+        ctx.fillStyle = isDark ? '#6ee7b7' : '#065f46';
         ctx.font = 'bold 12px sans-serif';
         ctx.fillText(`Target ${currentTargetIndex.current + 1}`, targetX - 25, targetY - 25);
       }          let startTimeMs = performance.now();
@@ -381,9 +383,11 @@ const ExerciseRunnerPage = () => {
             const mappedElbowX = shoulderX + elbowDx;
             const mappedElbowY = shoulderY - elbowDy;
 
-            ctx.beginPath(); ctx.arc(shoulderX, shoulderY, 12, 0, 2 * Math.PI); ctx.fillStyle = '#1e3a8a'; ctx.fill();
+            // Skeleton stays saturated blue in both themes (contrast on both
+            // light and dark twin backgrounds); joints/hand pop in dark mode.
+            ctx.beginPath(); ctx.arc(shoulderX, shoulderY, 12, 0, 2 * Math.PI); ctx.fillStyle = isDark ? '#93c5fd' : '#1e3a8a'; ctx.fill();
             ctx.beginPath(); ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(mappedElbowX, mappedElbowY); ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 8; ctx.stroke();
-            ctx.beginPath(); ctx.arc(mappedElbowX, mappedElbowY, 10, 0, 2 * Math.PI); ctx.fillStyle = '#1e3a8a'; ctx.fill();
+            ctx.beginPath(); ctx.arc(mappedElbowX, mappedElbowY, 10, 0, 2 * Math.PI); ctx.fillStyle = isDark ? '#93c5fd' : '#1e3a8a'; ctx.fill();
             ctx.beginPath(); ctx.moveTo(mappedElbowX, mappedElbowY); ctx.lineTo(handX, handY); ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 6; ctx.stroke();
             ctx.beginPath(); ctx.arc(handX, handY, 8, 0, 2 * Math.PI); ctx.fillStyle = '#10b981'; ctx.fill();
 
@@ -587,14 +591,14 @@ const ExerciseRunnerPage = () => {
   /* ================= COMPLETION SCREEN (real metrics only) ================= */
   if (status === 'completed' && saveResult) {
     return (
-      <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <Card className="p-8 text-center">
-            <span className="inline-flex items-center justify-center p-4 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 mb-4">
+            <span className="inline-flex items-center justify-center p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-100 mb-4">
               <CheckCircle2 className="h-10 w-10" aria-hidden="true" />
             </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Exercise Completed</h1>
-            <p className="text-slate-500 mt-2">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50">Exercise Completed</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-2">
               {exercise.name} · {saveResult.duration}s session
               {saveResult.newStreak != null && <> · {saveResult.newStreak} day streak</>}
               {repStat && <> · {repStat}</>}
@@ -669,21 +673,21 @@ const ExerciseRunnerPage = () => {
   const statusMeta = STATUS_META[status] || STATUS_META.ready;
 
   return (
-    <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* ============ HEADER ============ */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-card p-5 sm:p-6 space-y-4">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-card p-5 sm:p-6 space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="min-w-0">
               <button
                 type="button"
                 onClick={() => navigate('/exercises')}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-800 mb-1.5 cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 mb-1.5 cursor-pointer"
               >
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Exercises
               </button>
-              <h1 className="text-2xl font-extrabold text-slate-900 truncate">{exercise.name}</h1>
+              <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-50 truncate">{exercise.name}</h1>
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <Badge variant={exercise.level === 3 ? 'danger' : exercise.level === 2 ? 'warning' : 'success'}>
                   Level {exercise.level}{exercise.level_name ? ` · ${exercise.level_name}` : ''}
@@ -703,29 +707,29 @@ const ExerciseRunnerPage = () => {
             </div>              <div className="flex items-center gap-4">
               {running && (
                 <div
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700"
                   role="status"
                   aria-label={`Repetitions completed: ${repCount}`}
                 >
                   <Repeat className="h-4 w-4 text-primary-600" aria-hidden="true" />
-                  <span className="text-sm font-bold text-slate-700 tabular-nums">{repCount} reps</span>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200 tabular-nums">{repCount} reps</span>
                 </div>
  )}
               {/* Session status — text + icon, never color-only */}
               <div
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700"
                 role="status"
                 aria-live="polite"
               >
-                {status === 'in_progress' && <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" aria-hidden="true" />}
-                <span className="text-sm font-bold text-slate-700">{statusMeta.label}</span>
+                {status === 'in_progress' && <span className="h-2.5 w-2.5 rounded-full bg-emerald-50 dark:bg-emerald-950/400" aria-hidden="true" />}
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{statusMeta.label}</span>
               </div>
               <div className="text-right">
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <Timer className="h-3.5 w-3.5" aria-hidden="true" /> Remaining
                 </span>
                 <span className="block text-2xl font-extrabold text-primary-600 tabular-nums">{timeLeft}s</span>
-                <span className="block text-xs text-slate-500 tabular-nums">{elapsed}s elapsed</span>
+                <span className="block text-xs text-slate-500 dark:text-slate-400 tabular-nums">{elapsed}s elapsed</span>
               </div>
             </div>
           </div>
@@ -740,7 +744,7 @@ const ExerciseRunnerPage = () => {
         </div>
 
         {error && (
-          <div role="alert" className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+          <div role="alert" className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm rounded-xl px-4 py-3">
             {error}
           </div>
         )}
@@ -749,19 +753,19 @@ const ExerciseRunnerPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           <Card className="lg:col-span-3 p-5 sm:p-6 flex flex-col items-center">
             <div className="w-full flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900" id="camera-panel-title">Camera Tracking</h2>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-50" id="camera-panel-title">Camera Tracking</h2>
               {running && (
                 <span
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200 rounded-full px-2.5 py-1"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full px-2.5 py-1"
                   aria-live="polite"
                 >
                   {poseDetected ? (
                     <>
-                      <Video className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" /> Pose detected
+                      <Video className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" /> Pose detected
                     </>
                   ) : (
                     <>
-                      <VideoOff className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" /> Looking for you…
+                      <VideoOff className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" aria-hidden="true" /> Looking for you…
                     </>
                   )}
                 </span>
@@ -772,7 +776,7 @@ const ExerciseRunnerPage = () => {
               role="group"
               aria-labelledby="camera-panel-title"
               aria-describedby="camera-privacy-note"
-              className="relative w-full aspect-video bg-slate-100 rounded-xl overflow-hidden flex items-center justify-center"
+              className="relative w-full aspect-video bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden flex items-center justify-center"
             >
               <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover transform -scale-x-100" />
               <canvas ref={overlayRef} className="absolute inset-0 w-full h-full transform -scale-x-100 pointer-events-none" />
@@ -788,22 +792,22 @@ const ExerciseRunnerPage = () => {
                 </span>
               )}
             </div>
-            <p id="camera-privacy-note" className="text-xs text-slate-500 mt-3 text-center">
+            <p id="camera-privacy-note" className="text-xs text-slate-500 dark:text-slate-400 mt-3 text-center">
               Your camera stays on this device — video is processed locally and never uploaded.
             </p>
           </Card>
 
           <Card className="lg:col-span-2 p-5 sm:p-6 flex flex-col items-center">
-            <h2 className="text-base font-bold text-slate-900 mb-4" id="twin-panel-title">Rehabilitation Digital Twin</h2>
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-50 mb-4" id="twin-panel-title">Rehabilitation Digital Twin</h2>
             <canvas
               ref={twinRef}
               width={400}
               height={350}
               role="img"
               aria-label="Digital twin view showing the active exercise target and your tracked arm movement"
-              className="border border-slate-200 rounded-xl bg-surface w-full max-w-[400px]"
+              className="border border-slate-200 dark:border-slate-700 rounded-xl bg-surface dark:bg-slate-950 w-full max-w-[400px]"
             />
-            <p className="text-xs text-slate-500 mt-3 text-center">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-3 text-center">
               Reach toward the highlighted target and hold steady to complete it.
             </p>
           </Card>
@@ -813,7 +817,7 @@ const ExerciseRunnerPage = () => {
         <Card className="p-5 sm:p-6">
           {status === 'completing' && saveFailed ? (
             <div className="text-center space-y-3">
-              <p className="text-sm font-semibold text-red-700">
+              <p className="text-sm font-semibold text-red-700 dark:text-red-300">
                 Your session could not be saved. Your exercise data is kept — please try again.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-3">
@@ -856,10 +860,10 @@ const ExerciseRunnerPage = () => {
         </Card>
 
         {/* ============ COACH FEEDBACK + VOICE CONTROLS ============ */}
-        <div className="bg-primary-50/60 border border-primary-100 p-5 sm:p-6 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="bg-primary-50/60 border border-primary-100 dark:border-primary-900 p-5 sm:p-6 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1 min-w-0">
             <h3 className="text-xs font-bold text-primary-700 uppercase tracking-widest">AI Rehab Coach</h3>
-            <p className="text-lg font-extrabold text-slate-900" aria-live="polite">{coachHint}</p>
+            <p className="text-lg font-extrabold text-slate-900 dark:text-slate-50" aria-live="polite">{coachHint}</p>
           </div>
           {voiceSupported && (
             <div className="flex items-center gap-2 shrink-0">
@@ -869,7 +873,7 @@ const ExerciseRunnerPage = () => {
                 onClick={() => speak(coachHint, { force: true })}
                 aria-label="Read the current coaching message aloud"
                 title="Read aloud"
-                className="p-3 bg-white text-primary-600 border border-primary-200 rounded-full hover:bg-primary-50 transition-colors cursor-pointer"
+                className="p-3 bg-white dark:bg-slate-900 text-primary-600 border border-primary-200 dark:border-primary-800 rounded-full hover:bg-primary-50 transition-colors cursor-pointer"
               >
                 <Volume2 className="h-5 w-5" aria-hidden="true" />
               </button>
@@ -885,7 +889,7 @@ const ExerciseRunnerPage = () => {
                   'inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border transition-colors cursor-pointer',
                   voiceOn
                     ? 'bg-primary-600 text-white border-primary-600 hover:bg-primary-700'
-                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50',
+                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800',
                 )}
               >
                 {voiceOn ? <Volume2 className="h-4 w-4" aria-hidden="true" /> : <VolumeX className="h-4 w-4" aria-hidden="true" />}
@@ -898,7 +902,7 @@ const ExerciseRunnerPage = () => {
         {/* ============ INSTRUCTIONS ============ */}
         <Card className="p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3 mb-3">
-            <h2 className="text-base font-bold text-slate-900">How to do this exercise</h2>
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-50">How to do this exercise</h2>
             {voiceSupported && exercise.instructions && (
               <button
                 type="button"
@@ -911,18 +915,18 @@ const ExerciseRunnerPage = () => {
             )}
           </div>
           {exercise.instructions ? (
-            <ol className="space-y-1.5 list-decimal list-inside text-sm text-slate-600">
+            <ol className="space-y-1.5 list-decimal list-inside text-sm text-slate-600 dark:text-slate-300">
               {String(exercise.instructions).split('\n').filter(Boolean).map((line, i) => (
                 <li key={i}>{line.replace(/^\s*\d+\.\s*/, '')}</li>
               ))}
             </ol>
           ) : (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Follow the on-screen target: reach toward it and hold steady for the requested time.
             </p>
           )}
           {targets.length > 0 && (
-            <p className="text-xs text-slate-500 mt-3">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">
               {targets.length} target{targets.length !== 1 ? 's' : ''} in this exercise
               {maxHold != null ? ` · hold each up to ${maxHold}s` : ''} · the twin shows which target is active.
             </p>

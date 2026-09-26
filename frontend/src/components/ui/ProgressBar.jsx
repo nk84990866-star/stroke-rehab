@@ -3,10 +3,10 @@ import { cn } from '../../lib/cn';
 
 const FILL = {
   primary: 'bg-primary-600',
-  success: 'bg-emerald-500',
-  warning: 'bg-amber-500',
-  danger: 'bg-red-500',
-  purple: 'bg-purple-500',
+  success: 'bg-emerald-50 dark:bg-emerald-950/400',
+  warning: 'bg-amber-50 dark:bg-amber-950/400',
+  danger: 'bg-red-50 dark:bg-red-950/400',
+  purple: 'bg-purple-50 dark:bg-purple-950/400',
 };
 
 /**
@@ -27,8 +27,8 @@ const ProgressBar = ({
     <div className={cn('w-full', className)}>
       {label && (
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-sm font-medium text-slate-600">{label}</span>
-          <span className="text-sm font-semibold text-slate-900 tabular-nums">
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{label}</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50 tabular-nums">
             {valueText ?? `${Math.round(pct)}%`}
           </span>
         </div>
@@ -40,7 +40,7 @@ const ProgressBar = ({
         aria-valuemax={100}
         aria-label={label || 'Progress'}
         className={cn(
-          'w-full bg-slate-100 rounded-full overflow-hidden',
+          'w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden',
           size === 'sm' ? 'h-1.5' : size === 'lg' ? 'h-3' : 'h-2',
         )}
       >

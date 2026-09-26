@@ -95,10 +95,10 @@ const ExercisesPage = () => {
   };
 
   const selectClass =
-    'block w-full sm:w-52 pl-3 pr-10 py-2.5 text-sm border border-slate-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 cursor-pointer';
+    'block w-full sm:w-52 pl-3 pr-10 py-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 cursor-pointer';
 
   return (
-    <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <SectionHeader
           icon={Dumbbell}
@@ -113,21 +113,21 @@ const ExercisesPage = () => {
             <label htmlFor="exercise-search" className="sr-only">
               Search exercises by name, description, or target area
             </label>
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-500" aria-hidden="true" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
             <input
               id="exercise-search"
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search exercises…"
-              className="block w-full pl-10 pr-10 py-2.5 text-sm border border-slate-300 rounded-lg bg-white shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="block w-full pl-10 pr-10 py-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 shadow-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch('')}
                 aria-label="Clear search"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -135,7 +135,7 @@ const ExercisesPage = () => {
           </div>
 
           <div
-            className="inline-flex p-1 bg-slate-100 rounded-xl gap-1 w-fit"
+            className="inline-flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl gap-1 w-fit"
             role="tablist"
             aria-label="Exercise difficulty level"
           >
@@ -149,8 +149,8 @@ const ExercisesPage = () => {
                 className={cn(
                   'px-4 py-2 text-sm font-semibold rounded-lg transition-colors cursor-pointer',
                   selectedLevel === tab.value
-                    ? 'bg-white text-primary-700 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800',
+                    ? 'bg-white dark:bg-slate-900 text-primary-700 shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100',
                 )}
               >
                 {tab.label}
@@ -160,7 +160,7 @@ const ExercisesPage = () => {
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 lg:ml-auto">
             <div className="flex items-center gap-2">
-              <label htmlFor="strokeFilter" className="text-sm font-semibold text-slate-700 whitespace-nowrap">
+              <label htmlFor="strokeFilter" className="text-sm font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
                 <Users className="inline h-4 w-4 mr-1 -mt-0.5" aria-hidden="true" />Stroke:
               </label>
               <select
@@ -177,7 +177,7 @@ const ExercisesPage = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <label htmlFor="severityFilter" className="text-sm font-semibold text-slate-700 whitespace-nowrap">
+              <label htmlFor="severityFilter" className="text-sm font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
                 <SlidersHorizontal className="inline h-4 w-4 mr-1 -mt-0.5" aria-hidden="true" />Severity:
               </label>
               <select
@@ -199,7 +199,7 @@ const ExercisesPage = () => {
           <LoadingState message="Loading exercises…" />
         ) : (
           <>
-            <p className="text-sm text-slate-500" aria-live="polite">
+            <p className="text-sm text-slate-500 dark:text-slate-400" aria-live="polite">
               Showing <strong>{filteredExercises.length}</strong> of {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
               {hasActiveFilters && <> matching your filters</>}
             </p>

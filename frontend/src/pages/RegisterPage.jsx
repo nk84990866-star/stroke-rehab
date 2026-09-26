@@ -5,7 +5,7 @@ import { Activity, ArrowLeft } from 'lucide-react';
 import { Button, Card } from '../components/ui';
 
 const inputClass =
-  'mt-1.5 block w-full px-3.5 py-2.5 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm';
+  'mt-1.5 block w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm';
 
 const RegisterPage = () => {
   const { register, login } = useAuth();
@@ -69,13 +69,13 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="bg-surface min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="bg-surface dark:bg-slate-950 min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
         <span className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-primary-600 text-white shadow-sm">
           <Activity className="h-6 w-6" aria-hidden="true" />
         </span>
-        <h1 className="mt-4 text-center text-3xl font-extrabold text-slate-900">Create your account</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="mt-4 text-center text-3xl font-extrabold text-slate-900 dark:text-slate-50">Create your account</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           {step === 1 ? 'Step 1 of 2 — account details.' : 'Step 2 of 2 — profile details.'}
         </p>
       </div>
@@ -83,7 +83,7 @@ const RegisterPage = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <Card className="p-6 sm:p-8">
           {error && (
-            <div id="register-error" role="alert" className="mb-5 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
+            <div id="register-error" role="alert" className="mb-5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm rounded-lg px-4 py-3">
               {error}
             </div>
           )}
@@ -91,7 +91,7 @@ const RegisterPage = () => {
           {step === 1 ? (
             <form className="space-y-5" onSubmit={handleNext}>
               <div>
-                <label htmlFor="fullName" className="block text-sm font-semibold text-slate-700">Full Name</label>
+                <label htmlFor="fullName" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Full Name</label>
                 <input
                   id="fullName"
                   type="text"
@@ -104,7 +104,7 @@ const RegisterPage = () => {
               </div>
 
               <div>
-                <label htmlFor="regEmail" className="block text-sm font-semibold text-slate-700">Email Address</label>
+                <label htmlFor="regEmail" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Email Address</label>
                 <input
                   id="regEmail"
                   type="email"
@@ -119,7 +119,7 @@ const RegisterPage = () => {
               </div>
 
               <div>
-                <label htmlFor="regPassword" className="block text-sm font-semibold text-slate-700">Password</label>
+                <label htmlFor="regPassword" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Password</label>
                 <input
                   id="regPassword"
                   type="password"
@@ -132,7 +132,7 @@ const RegisterPage = () => {
               </div>
 
               <div>
-                <label htmlFor="role" className="block text-sm font-semibold text-slate-700">Account Type</label>
+                <label htmlFor="role" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Account Type</label>
                 <select
                   id="role"
                   value={role}
@@ -153,7 +153,7 @@ const RegisterPage = () => {
               {role === 'patient' ? (
                 <>
                   <div>
-                    <label htmlFor="strokeType" className="block text-sm font-semibold text-slate-700">Stroke Classification</label>
+                    <label htmlFor="strokeType" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Stroke Classification</label>
                     <select
                       id="strokeType"
                       value={strokeType}
@@ -168,7 +168,7 @@ const RegisterPage = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="affectedSide" className="block text-sm font-semibold text-slate-700">Affected Side</label>
+                    <label htmlFor="affectedSide" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Affected Side</label>
                     <select
                       id="affectedSide"
                       value={affectedSide}
@@ -181,7 +181,7 @@ const RegisterPage = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="severityLevel" className="block text-sm font-semibold text-slate-700">Severity Level (1-5)</label>
+                    <label htmlFor="severityLevel" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Severity Level (1-5)</label>
                     <select
                       id="severityLevel"
                       value={severityLevel}
@@ -197,7 +197,7 @@ const RegisterPage = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="dateOfStroke" className="block text-sm font-semibold text-slate-700">Date of Stroke Incident</label>
+                    <label htmlFor="dateOfStroke" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Date of Stroke Incident</label>
                     <input
                       id="dateOfStroke"
                       type="date"
@@ -211,7 +211,7 @@ const RegisterPage = () => {
               ) : (
                 <>
                   <div>
-                    <label htmlFor="specialization" className="block text-sm font-semibold text-slate-700">Specialization</label>
+                    <label htmlFor="specialization" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Specialization</label>
                     <input
                       id="specialization"
                       type="text"
@@ -224,7 +224,7 @@ const RegisterPage = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="licenseNumber" className="block text-sm font-semibold text-slate-700">Medical License Number</label>
+                    <label htmlFor="licenseNumber" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Medical License Number</label>
                     <input
                       id="licenseNumber"
                       type="text"
@@ -248,7 +248,7 @@ const RegisterPage = () => {
             </form>
           )}
 
-          <p className="mt-6 text-center text-sm text-slate-500">
+          <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
             Already have an account?{' '}
             <Link to="/login" className="font-semibold text-primary-600 hover:text-primary-700">
               Sign in

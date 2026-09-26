@@ -27,6 +27,7 @@ export const updateProfile = (data) => api.put('/auth/profile', data).then(res =
 export const getExercises = (level) => api.get('/exercises', { params: { level } }).then(res => res.data);
 export const getExerciseDetail = (id) => api.get(`/exercises/${id}`).then(res => res.data);
 export const getRecommendedProgram = () => api.get('/exercises/program').then(res => res.data);
+export const getDailyPlan = () => api.get('/exercises/daily-plan').then(res => res.data);
 
 // Session endpoints
 export const saveSession = (data) => api.post('/sessions', data).then(res => res.data);

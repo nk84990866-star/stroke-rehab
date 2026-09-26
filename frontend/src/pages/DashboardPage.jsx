@@ -13,15 +13,17 @@ import {
   Lock,
   Play,
   Star,
+  Timer,
   Trophy,
   Zap,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getStats, getRecommendedProgram, getSessions, getProgress } from '../services/api';
+import { getStats, getDailyPlan, getSessions, getProgress } from '../services/api';
 import {
   Button,
   Card,
   Badge,
+  ProgressBar,
   EmptyState,
   EmptyStateLink,
   ErrorState,
@@ -34,9 +36,6 @@ import ProgressRing from '../components/dashboard/ProgressRing';
 import { BADGE_META } from '../config/labels';
 import { cn } from '../lib/cn';
 
-/** Local YYYY-MM-DD key for a Date (matches ReportsPage grouping). */
-const dateKey = (d) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 /* ---------- Small dashboard-specific pieces ---------- */
 
@@ -121,7 +120,7 @@ const QuickAction = ({ to, icon: Icon, label }) => (
 const DashboardPage = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
-  const [program, setProgram] = useState(null);
+  const [plan, setPlan] = useState(null);            // today's deterministic daily plan
   const [sessions, setSessions] = useState(null);   // null = not loaded / failed
   const [progress, setProgress] = useState(null);   // null = not loaded / failed
   const [loading, setLoading] = useState(true);
@@ -132,18 +131,19 @@ const DashboardPage = () => {
     setError(false);
     try {
       // Core data (existing endpoints)
-      const [statsData, progData, sessionsData, progressData] = await Promise.allSettled([
+      const [statsData, planData, sessionsData, progressData] = await Promise.allSettled([
         getStats(),
-        getRecommendedProgram(),
+        getDailyPlan(),
         getSessions(),
         getProgress(),
       ]);
 
-      if (statsData.status !== 'fulfilled' || progData.status !== 'fulfilled') {
+      if (statsData.status !== 'fulfilled') {
         throw new Error('Dashboard data unavailable');
       }
       setStats(statsData.value);
-      setProgram(progData.value);
+      // Plan failure degrades to the empty state, not a whole-page error
+      setPlan(planData.status === 'fulfilled' ? planData.value : null);
       setSessions(sessionsData.status === 'fulfilled' ? sessionsData.value : null);
       setProgress(progressData.status === 'fulfilled' ? progressData.value : null);
     } catch (err) {
@@ -160,22 +160,14 @@ const DashboardPage = () => {
 
   /* ----- Derived values (existing data only — nothing invented) ----- */
 
-  const prescribed = useMemo(() => program?.exercises || [], [program]);
+  // Today's plan (backend-derived; completion comes from saved sessions)
+  const planExercises = useMemo(() => plan?.exercises || [], [plan]);
+  const totalCount = plan?.total_exercises ?? 0;
+  const doneCount = plan?.completed_exercises ?? 0;
+  const remainingCount = plan?.remaining_exercises ?? 0;
+  const completionPct = plan ? plan.completion_percentage : null;
 
-  const completedTodayIds = useMemo(() => {
-    if (!sessions) return new Set();
-    const today = dateKey(new Date());
-    return new Set(
-      sessions
-        .filter((s) => s.started_at && dateKey(new Date(s.started_at)) === today)
-        .map((s) => s.exercise_id),
-    );
-  }, [sessions]);
-
-  const doneCount = prescribed.filter((ex) => completedTodayIds.has(ex.id)).length;
-  const completionPct = prescribed.length > 0 ? Math.round((doneCount / prescribed.length) * 100) : null;
-
-  const nextExercise = prescribed.find((ex) => !completedTodayIds.has(ex.id)) || prescribed[0] || null;
+  const nextExercise = planExercises.find((ex) => !ex.completed) || planExercises[0] || null;
   const continueHref = nextExercise ? `/exercise/${nextExercise.id}` : '/exercises';
 
   const firstName = (user?.full_name || '').trim().split(' ')[0];
@@ -250,33 +242,40 @@ const DashboardPage = () => {
           </div>
         </Card>
 
-        {/* ============ 2. TODAY'S REHABILITATION SUMMARY ============ */}
+        {/* ============ 2. TODAY'S REHABILITATION PLAN ============ */}
         <Card className="p-6">
           <div className="flex flex-col sm:flex-row items-center gap-6">
             <ProgressRing
               value={completionPct}
               label={
                 completionPct != null
-                  ? `${doneCount} of ${prescribed.length} prescribed exercises completed today`
-                  : 'No prescribed plan available'
+                  ? `${doneCount} of ${totalCount} planned exercises completed today`
+                  : 'No rehabilitation plan is available for today'
               }
             />
             <div className="flex-1 text-center sm:text-left min-w-0">
-              <h2 className="text-lg font-bold text-slate-900">Today's Rehabilitation Summary</h2>
-              {prescribed.length > 0 ? (
+              <h2 className="text-lg font-bold text-slate-900">Today's Rehabilitation Plan</h2>
+              {plan && totalCount > 0 ? (
                 <>
                   <p className="text-sm text-slate-500 mt-1">
                     <strong className="text-slate-900 tabular-nums">{doneCount}</strong> of{' '}
-                    <strong className="text-slate-900 tabular-nums">{prescribed.length}</strong> prescribed
-                    exercises completed today.
+                    <strong className="text-slate-900 tabular-nums">{totalCount}</strong> completed
+                    {remainingCount > 0 && <> · <strong className="text-slate-900 tabular-nums">{remainingCount}</strong> remaining</>}
                   </p>
+                  <ProgressBar
+                    className="mt-3 max-w-md"
+                    value={completionPct}
+                    valueText={`${doneCount} of ${totalCount} completed`}
+                    variant={completionPct === 100 ? 'success' : 'primary'}
+                    label={null}
+                  />
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-3">
-                    {doneCount === prescribed.length ? (
+                    {completionPct === 100 ? (
                       <Badge variant="success">
                         <Award className="h-3 w-3" aria-hidden="true" /> All done for today — great work!
                       </Badge>
                     ) : doneCount > 0 ? (
-                      <Badge variant="warning">In progress — {prescribed.length - doneCount} remaining</Badge>
+                      <Badge variant="warning">In progress — {remainingCount} remaining</Badge>
                     ) : (
                       <Badge variant="primary">Not started — your plan is ready</Badge>
                     )}
@@ -284,13 +283,10 @@ const DashboardPage = () => {
                 </>
               ) : (
                 <p className="text-sm text-slate-500 mt-1">
-                  No prescribed program is available right now. You can still browse the full exercise library and
+                  No rehabilitation plan is available for today. You can still browse the full exercise library and
                   train any exercise.
                 </p>
               )}
-              {/* Slot for the future daily-plan feature: this card already renders
-                  plan-based completion; a backend daily plan can replace
-                  `prescribed` without UI restructuring. */}
             </div>
           </div>
         </Card>
@@ -331,26 +327,33 @@ const DashboardPage = () => {
           />
         </div>
 
-        {/* ============ 4. TODAY'S / PRESCRIBED EXERCISES ============ */}
+        {/* ============ 4. TODAY'S PLAN EXERCISES ============ */}
         <section className="space-y-4">
           <SectionHeader
             icon={CalendarDays}
             eyebrow="Today's plan"
-            title="Prescribed Exercises"
-            description={program?.program_description}
+            title={plan?.program_name || 'Planned Exercises'}
+            description={plan?.program_description}
           />
-          {prescribed.length > 0 ? (
+          {planExercises.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-              {prescribed.map((ex) => (
+              {planExercises.map((ex) => (
                 <ExerciseCard
                   key={ex.id}
                   exercise={ex}
-                  cta={completedTodayIds.has(ex.id) ? 'Practice Again' : 'Start Exercise'}
+                  cta={ex.completed ? 'Practice Again' : 'Start Exercise'}
                   statusBadge={
-                    completedTodayIds.has(ex.id) ? (
+                    ex.completed ? (
                       <Badge variant="success">
                         <Award className="h-3 w-3" aria-hidden="true" /> Done
                       </Badge>
+                    ) : undefined
+                  }
+                  meta={
+                    ex.hold_time_seconds != null ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Timer className="h-3.5 w-3.5" aria-hidden="true" /> Hold up to {ex.hold_time_seconds}s
+                      </span>
                     ) : undefined
                   }
                 />
@@ -358,10 +361,10 @@ const DashboardPage = () => {
             </div>
           ) : (
             <EmptyStateLink
-              icon={Dumbbell}
+              icon={CalendarDays}
               to="/exercises"
-              title="No prescribed exercises"
-              description="We couldn't load a program for your profile right now — browse the library and pick an exercise."
+              title="No rehabilitation plan is available for today."
+              description="This can happen when your profile is missing exercise details — browse the library to train any exercise."
             >
               Browse Exercises
             </EmptyStateLink>

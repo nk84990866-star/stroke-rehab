@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { getExercises } from '../services/api';
-import { Dumbbell, Search, SlidersHorizontal, Timer, Users, X } from 'lucide-react';
+import { getExercises, getDailyPlan } from '../services/api';
+import { Award, Dumbbell, Search, SlidersHorizontal, Timer, Users, X } from 'lucide-react';
 import { cn } from '../lib/cn';
-import { Button, EmptyState, LoadingState, SectionHeader, ExerciseCard } from '../components/ui';
+import { Badge, Button, EmptyState, LoadingState, SectionHeader, ExerciseCard } from '../components/ui';
 import {
   STROKE_TYPE_LABELS,
   STROKE_TYPE_SHORT_LABELS,
@@ -39,6 +39,7 @@ const ExercisesPage = () => {
   const [selectedSeverity, setSelectedSeverity] = useState('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [planIds, setPlanIds] = useState(() => new Set()); // exercises in today's plan (best-effort)
 
   // Fetch once per level via the existing wrapper; search/stroke/severity
   // filters are client-side (no extra API requests, no new endpoints).
@@ -46,8 +47,17 @@ const ExercisesPage = () => {
     const loadExercises = async () => {
       setLoading(true);
       try {
-        const data = await getExercises(selectedLevel || undefined);
-        setExercises(data);
+        const [data, planData] = await Promise.allSettled([
+          getExercises(selectedLevel || undefined),
+          getDailyPlan(),
+        ]);
+        setExercises(data.status === 'fulfilled' ? data.value : []);
+        // Best-effort: if the plan can't be loaded, the library still works
+        setPlanIds(
+          planData.status === 'fulfilled'
+            ? new Set((planData.value?.exercises || []).map((ex) => ex.id))
+            : new Set(),
+        );
       } catch (err) {
         console.error('Error loading exercises:', err);
       } finally {
@@ -218,6 +228,13 @@ const ExercisesPage = () => {
                       key={ex.id}
                       exercise={ex}
                       cta="Start Exercise"
+                      statusBadge={
+                        planIds.has(ex.id) ? (
+                          <Badge variant="primary">
+                            <Award className="h-3 w-3" aria-hidden="true" /> In today's plan
+                          </Badge>
+                        ) : undefined
+                      }
                       meta={
                         <>
                           {maxHold != null && (

@@ -8,6 +8,7 @@ import {
   Flag,
   Pause,
   Play,
+  Repeat,
   RotateCcw,
   Timer,
   Video,
@@ -27,6 +28,20 @@ const STATUS_META = {
   completed: { label: 'Completed', variant: 'success' },
 };
 
+/**
+ * Repetition counting (deterministic, measured — not estimated):
+ * a rep is one full lift-and-lower cycle of the tracked arm, measured on the
+ * already-computed smoothed vertical offset (dy) inside the detection loop.
+ * Thresholds adapt to the patient's own movement during the session:
+ *   - a lift starts when dy rises above max(MIN_REP_AMPLITUDE, 50% of the
+ *     session's largest dy so far) — MIN_REP_AMPLITUDE is a small noise gate
+ *     so trembling cannot start a rep;
+ *   - the rep completes when dy falls back below 35% of that lift's peak.
+ * Movement between the two thresholds cannot double-count (hysteresis).
+ * Sessions with no lifting motion record 0 reps.
+ */
+const MIN_REP_AMPLITUDE = 40; // dy units (≈ 0.13 normalized offset) — noise gate only
+
 const ExerciseRunnerPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -39,6 +54,7 @@ const ExerciseRunnerPage = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [targetsHit, setTargetsHit] = useState(0);
+  const [repCount, setRepCount] = useState(0); // mirrored from ref; updates only when a rep completes
   const [coachHint, setCoachHint] = useState("Loading AI Model...");
   const [error, setError] = useState('');
   const [modelReady, setModelReady] = useState(false);
@@ -64,6 +80,12 @@ const ExerciseRunnerPage = () => {
   const smoothedStateRef = useRef(null);   // EMA smoothing state for twin movement
   const activeSideRef = useRef(null);      // which arm is tracked: 'left' | 'right'
   const containerRef = useRef(null);       // webcam box — aspect set from the real stream
+
+  // Repetition tracking (see MIN_REP_AMPLITUDE note above for the rule)
+  const repCountRef = useRef(0);            // completed reps this session
+  const repStateRef = useRef('lowered');    // hysteresis state: 'lowered' | 'raised'
+  const repPeakRef = useRef(0);             // peak smoothed dy of the current lift
+  const sessionMaxDyRef = useRef(0);        // running max dy — per-session calibration
   const poseDetectedRef = useRef(false);
 
   // Load exercise and model
@@ -140,6 +162,12 @@ const ExerciseRunnerPage = () => {
         activeSideRef.current = null;      // re-select tracked arm
         lastVideoTime.current = -1;
         setTargetsHit(0);
+        // Fresh repetition tracking per session
+        repCountRef.current = 0;
+        setRepCount(0);
+        repStateRef.current = 'lowered';
+        repPeakRef.current = 0;
+        sessionMaxDyRef.current = 0;
         // Match the webcam box to the real stream aspect ratio so the overlay
         // skeleton lines up with the video (no stretch/crop mismatch).
         const v = videoRef.current;
@@ -348,6 +376,30 @@ const ExerciseRunnerPage = () => {
             // of raw pixel-space numbers like 178.1310772640824.
             const toDeg = (v) => Math.min(180, Math.abs(v) * 0.6);
             anglesHistory.current.push([toDeg(dx), toDeg(dy)]);
+
+            // --- Repetition counting (measurement only; does not affect
+            // angles, targets, or scoring). Uses the smoothed dy already
+            // computed above. See MIN_REP_AMPLITUDE doc for the rule. ---
+            const absDy = Math.abs(dy);
+            if (absDy > sessionMaxDyRef.current) sessionMaxDyRef.current = absDy;
+            if (repStateRef.current === 'lowered') {
+              // Lift threshold: noise gate, or half of the patient's best lift
+              const liftThreshold = Math.max(MIN_REP_AMPLITUDE, sessionMaxDyRef.current * 0.5);
+              if (absDy >= liftThreshold) {
+                repStateRef.current = 'raised';
+                repPeakRef.current = absDy;
+              }
+            } else {
+              // Track the peak of the current lift
+              if (absDy > repPeakRef.current) repPeakRef.current = absDy;
+              // Complete the rep when the arm returns below 35% of its peak
+              if (absDy <= repPeakRef.current * 0.35) {
+                repCountRef.current += 1;
+                setRepCount(repCountRef.current); // change-gated; ~1 render per rep
+                repStateRef.current = 'lowered';
+                repPeakRef.current = 0;
+              }
+            }
           }
 
           // Target Hit Logic
@@ -414,6 +466,7 @@ const ExerciseRunnerPage = () => {
       });
       setSaveResult({
         sessionId: result?.session?.id || null,
+        repetitions: repCountRef.current,
         overallScore: result?.session?.overall_score ?? null,
         pointsEarned: result?.points_earned ?? null,
         newStreak: result?.new_streak ?? null,
@@ -470,6 +523,7 @@ const ExerciseRunnerPage = () => {
     setTimeLeft(exercise.duration_seconds);
     setElapsed(0);
     setTargetsHit(0);
+    setRepCount(0);
     setCoachHint('Camera ready. Press Start Exercise when you are.');
     currentTargetIndex.current = 0;
     anglesHistory.current = [];
@@ -480,6 +534,11 @@ const ExerciseRunnerPage = () => {
     poseDetectedRef.current = false;
     setPoseDetected(false);
   };
+
+  /* ---- Completion screen: reps are shown only when at least one was measured ---- */
+  const repStat = saveResult?.repetitions > 0
+    ? `${saveResult.repetitions} rep${saveResult.repetitions !== 1 ? 's' : ''} measured`
+    : null;
 
   // Format metric numbers to a fixed number of decimals.
   const fmt = (v, decimals = 1) => {
@@ -504,6 +563,7 @@ const ExerciseRunnerPage = () => {
             <p className="text-slate-500 mt-2">
               {exercise.name} · {saveResult.duration}s session
               {saveResult.newStreak != null && <> · {saveResult.newStreak} day streak</>}
+              {repStat && <> · {repStat}</>}
             </p>
           </Card>
 
@@ -606,9 +666,17 @@ const ExerciseRunnerPage = () => {
                   <Badge variant="default">Hold up to {maxHold}s</Badge>
                 )}
               </div>
-            </div>
-
-            <div className="flex items-center gap-4">
+            </div>              <div className="flex items-center gap-4">
+              {running && (
+                <div
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200"
+                  role="status"
+                  aria-label={`Repetitions completed: ${repCount}`}
+                >
+                  <Repeat className="h-4 w-4 text-primary-600" aria-hidden="true" />
+                  <span className="text-sm font-bold text-slate-700 tabular-nums">{repCount} reps</span>
+                </div>
+ )}
               {/* Session status — text + icon, never color-only */}
               <div
                 className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200"

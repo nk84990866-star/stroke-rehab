@@ -2,6 +2,13 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getExerciseDetail, saveSession } from '../services/api';
 import {
+  isVoiceEnabled,
+  isVoiceSupported,
+  setVoiceEnabled,
+  speak,
+  stopSpeaking,
+} from '../services/voice';
+import {
   ArrowLeft,
   Award,
   CheckCircle2,
@@ -14,9 +21,11 @@ import {
   Video,
   VideoOff,
   Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { Badge, Button, Card, ProgressBar, LoadingState, StatCard } from '../components/ui';
 import { EXERCISE_CATEGORY_LABELS } from '../config/labels';
+import { cn } from '../lib/cn';
 import { PoseLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 
 /** Session status machine: READY → IN PROGRESS → COMPLETING → COMPLETED (or PAUSED). */
@@ -55,6 +64,10 @@ const ExerciseRunnerPage = () => {
   const [elapsed, setElapsed] = useState(0);
   const [targetsHit, setTargetsHit] = useState(0);
   const [repCount, setRepCount] = useState(0); // mirrored from ref; updates only when a rep completes
+
+  // Voice assistance: supported = browser capability; on = user opt-in (persisted, default OFF)
+  const [voiceSupported] = useState(() => isVoiceSupported());
+  const [voiceOn, setVoiceOn] = useState(() => isVoiceEnabled());
   const [coachHint, setCoachHint] = useState("Loading AI Model...");
   const [error, setError] = useState('');
   const [modelReady, setModelReady] = useState(false);
@@ -121,6 +134,7 @@ const ExerciseRunnerPage = () => {
 
     return () => {
       stopCamera();
+      stopSpeaking();
       if (landmarkerRef.current) landmarkerRef.current.close();
     };
   }, [id]);
@@ -440,6 +454,21 @@ const ExerciseRunnerPage = () => {
     frameIdRef.current = requestAnimationFrame(detectLoop);
   }, [running, exercise]);
 
+  // ---- Voice assistance (optional, opt-in; every spoken line is also visible) ----
+  useEffect(() => {
+    if (!voiceOn) stopSpeaking();
+  }, [voiceOn]);
+
+  // Speak coach hints only while the session is running
+  useEffect(() => {
+    if (voiceOn && running) speak(coachHint);
+  }, [coachHint, voiceOn, running]);
+
+  // Optional voice countdown for the final 10 seconds
+  useEffect(() => {
+    if (voiceOn && running && timeLeft > 0 && timeLeft <= 10) speak(`${timeLeft}`);
+  }, [timeLeft, voiceOn, running]);
+
   // Session timer: a single interval drives both remaining and elapsed so the
   // two can never disagree. Auto-completes when the prescribed duration ends.
   useEffect(() => {
@@ -487,8 +516,10 @@ const ExerciseRunnerPage = () => {
         duration: result?.session?.duration_seconds ?? exercise.duration_seconds,
       });
       setStatus('completed');
+      speak('Exercise Completed', { force: true });
     } catch (err) {
       console.error("Error saving session logs:", err);
+      speak('Your session could not be saved. Please try again.', { force: true });
       // Keep the session data; let the patient retry. Never show a false
       // "Completed" screen when saving failed.
       setSaveFailed(true);
@@ -824,20 +855,61 @@ const ExerciseRunnerPage = () => {
           )}
         </Card>
 
-        {/* ============ COACH FEEDBACK ============ */}
-        <div className="bg-primary-50/60 border border-primary-100 p-5 sm:p-6 rounded-xl flex items-center justify-between gap-4">
+        {/* ============ COACH FEEDBACK + VOICE CONTROLS ============ */}
+        <div className="bg-primary-50/60 border border-primary-100 p-5 sm:p-6 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1 min-w-0">
             <h3 className="text-xs font-bold text-primary-700 uppercase tracking-widest">AI Rehab Coach</h3>
             <p className="text-lg font-extrabold text-slate-900" aria-live="polite">{coachHint}</p>
           </div>
-          <button onClick={() => window.speechSynthesis.speak(new SpeechSynthesisUtterance(coachHint))} aria-label="Read coach hint aloud" className="p-3 bg-white text-primary-600 border border-primary-200 rounded-full hover:bg-primary-50 transition-colors cursor-pointer shrink-0">
-            <Volume2 className="h-6 w-6" aria-hidden="true" />
-          </button>
+          {voiceSupported && (
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Read current hint on demand (works even with voice off) */}
+              <button
+                type="button"
+                onClick={() => speak(coachHint, { force: true })}
+                aria-label="Read the current coaching message aloud"
+                title="Read aloud"
+                className="p-3 bg-white text-primary-600 border border-primary-200 rounded-full hover:bg-primary-50 transition-colors cursor-pointer"
+              >
+                <Volume2 className="h-5 w-5" aria-hidden="true" />
+              </button>
+              {/* Ambient voice toggle (hints + countdown + completion). Opt-in. */}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={voiceOn}
+                onClick={() => setVoiceEnabled(!voiceOn) || setVoiceOn(!voiceOn)}
+                aria-label="Toggle voice assistance for coaching, countdown, and completion announcements"
+                title={voiceOn ? 'Voice assistance: on' : 'Voice assistance: off'}
+                className={cn(
+                  'inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border transition-colors cursor-pointer',
+                  voiceOn
+                    ? 'bg-primary-600 text-white border-primary-600 hover:bg-primary-700'
+                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50',
+                )}
+              >
+                {voiceOn ? <Volume2 className="h-4 w-4" aria-hidden="true" /> : <VolumeX className="h-4 w-4" aria-hidden="true" />}
+                Voice {voiceOn ? 'on' : 'off'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* ============ INSTRUCTIONS ============ */}
         <Card className="p-5 sm:p-6">
-          <h2 className="text-base font-bold text-slate-900 mb-3">How to do this exercise</h2>
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2 className="text-base font-bold text-slate-900">How to do this exercise</h2>
+            {voiceSupported && exercise.instructions && (
+              <button
+                type="button"
+                onClick={() => speak(String(exercise.instructions), { force: true })}
+                aria-label="Read the exercise instructions aloud"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-700 cursor-pointer"
+              >
+                <Volume2 className="h-4 w-4" aria-hidden="true" /> Read instructions aloud
+              </button>
+            )}
+          </div>
           {exercise.instructions ? (
             <ol className="space-y-1.5 list-decimal list-inside text-sm text-slate-600">
               {String(exercise.instructions).split('\n').filter(Boolean).map((line, i) => (

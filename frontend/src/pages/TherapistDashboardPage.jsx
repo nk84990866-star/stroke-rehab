@@ -167,7 +167,7 @@ const PatientDetails = ({ patientId }) => {
             </strong>
           </p>
           <p className="text-slate-600 dark:text-slate-300">
-            <Activity className="inline h-4 w-4 mr-1 -mt-0.5 text-primary-600" aria-hidden="true" />
+            <Activity className="inline h-4 w-4 mr-1 -mt-0.5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" />
             Last 7 days:{' '}
             <strong className="text-slate-900 dark:text-slate-50 tabular-nums">
               {s.weekly} session{s.weekly !== 1 ? 's' : ''}
@@ -403,7 +403,7 @@ const TherapistDashboardPage = () => {
 
                         <div className="flex items-center gap-3 self-stretch lg:self-auto justify-between border-t lg:border-t-0 pt-4 lg:pt-0">
                           <span
-                            className="inline-flex items-center gap-1 text-sm font-bold text-primary-600"
+                            className="inline-flex items-center gap-1 text-sm font-bold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200"
                             aria-hidden="true"
                           >
                             {isExpanded ? 'Hide details' : 'View details'}

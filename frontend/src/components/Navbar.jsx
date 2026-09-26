@@ -90,7 +90,7 @@ const Navbar = () => {
                 <Activity className="h-5 w-5" aria-hidden="true" />
               </span>
               <span className="font-bold text-lg text-slate-900 dark:text-slate-50 dark:text-slate-50 whitespace-nowrap">
-                NeuroMotion <span className="text-primary-600">AI</span>
+                NeuroMotion <span className="text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200">AI</span>
               </span>
             </Link>
             <div className="hidden lg:ml-8 lg:flex lg:items-center lg:gap-1">

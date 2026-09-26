@@ -92,7 +92,7 @@ const ReportsPage = () => {
         <Card className="p-5 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary-600" aria-hidden="true" />
+              <Calendar className="h-5 w-5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" />
               {MONTH_NAMES[viewMonth]} {viewYear}
             </h2>
             <div className="flex items-center gap-2">
@@ -154,7 +154,7 @@ const ReportsPage = () => {
                         <span key={j} className={cn('h-1.5 w-1.5 rounded-full', isSelected ? 'bg-white dark:bg-slate-900' : 'bg-primary-50 dark:bg-primary-950/400')} />
                       ))}
                       {daySessions.length > 1 && (
-                        <span className={cn('text-[10px] font-bold', isSelected ? 'text-white' : 'text-primary-600')}>
+                        <span className={cn('text-[10px] font-bold', isSelected ? 'text-white' : 'text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200')}>
                           ×{daySessions.length}
                         </span>
                       )}
@@ -210,7 +210,7 @@ const ReportsPage = () => {
                 className="p-5 sm:p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-4 min-w-0">
-                  <span className="p-3 bg-primary-50 dark:bg-primary-950/40 text-primary-600 rounded-xl border border-primary-100 dark:border-primary-900 shrink-0">
+                  <span className="p-3 bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 rounded-xl border border-primary-100 dark:border-primary-900 shrink-0">
                     <CheckCircle className="h-6 w-6" aria-hidden="true" />
                   </span>
                   <div className="min-w-0">
@@ -228,7 +228,7 @@ const ReportsPage = () => {
                 <div className="flex items-center gap-4 shrink-0">
                   <div className="text-right">
                     <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Score</span>
-                    <span className="font-extrabold text-primary-600 text-lg tabular-nums">{session.overall_score}%</span>
+                    <span className="font-extrabold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 text-lg tabular-nums">{session.overall_score}%</span>
                   </div>
                   <ChevronRight className="h-5 w-5 text-slate-300 dark:text-slate-600" aria-hidden="true" />
                 </div>

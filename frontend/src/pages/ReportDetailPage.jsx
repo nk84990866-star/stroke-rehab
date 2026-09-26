@@ -56,7 +56,7 @@ const ReportDetailPage = () => {
           </div>
           <div className="text-right shrink-0">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Session Score</span>
-            <span className="text-4xl font-black text-primary-600 tabular-nums">{report.metrics?.accuracy_score}%</span>
+            <span className="text-4xl font-black text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 tabular-nums">{report.metrics?.accuracy_score}%</span>
           </div>
         </Card>
 
@@ -91,12 +91,12 @@ const ReportDetailPage = () => {
         {/* AI Recommendations Panel */}
         <Card className="bg-primary-50/60 border-primary-100 dark:border-primary-900 p-6 space-y-4">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
-            <BrainCircuit className="h-5 w-5 text-primary-600" aria-hidden="true" /> Clinic AI Rehabilitation Recommendations
+            <BrainCircuit className="h-5 w-5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" /> Clinic AI Rehabilitation Recommendations
           </h2>
           <ul className="space-y-2.5">
             {report.recommendations?.map((rec, i) => (
               <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-slate-200">
-                <CheckCircle className="h-4.5 w-4.5 text-primary-600 shrink-0 mt-0.5" aria-hidden="true" />
+                <CheckCircle className="h-4.5 w-4.5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 shrink-0 mt-0.5" aria-hidden="true" />
                 <span>{rec}</span>
               </li>
             ))}

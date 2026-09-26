@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '../../lib/cn';
 
 const ICON_COLORS = {
-  primary: 'bg-primary-50 dark:bg-primary-950/40 text-primary-600 border-primary-100 dark:border-primary-900',
+  primary: 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 border-primary-100 dark:border-primary-900',
   success: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-100',
   warning: 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-100',
   danger: 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border-red-100',

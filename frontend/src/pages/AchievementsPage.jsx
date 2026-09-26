@@ -252,7 +252,7 @@ const AchievementsPage = () => {
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Personal Best</h2>
             {personalBest ? (
               <>
-                <p className="text-2xl font-extrabold text-primary-600 tabular-nums">
+                <p className="text-2xl font-extrabold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 tabular-nums">
                   {Math.round(personalBest.overall_score)}%
                 </p>
                 <p className="text-sm text-slate-600 dark:text-slate-300 font-semibold truncate">
@@ -276,7 +276,7 @@ const AchievementsPage = () => {
           return (
             <section key={category.id} className="space-y-3">
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
-                <span className="inline-flex items-center justify-center h-9 w-9 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 border border-primary-100 dark:border-primary-900">
+                <span className="inline-flex items-center justify-center h-9 w-9 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 border border-primary-100 dark:border-primary-900">
                   <Icon className="h-4.5 w-4.5" aria-hidden="true" />
                 </span>
                 {category.title}

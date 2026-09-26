@@ -79,7 +79,7 @@ const ActivityRow = ({ session }) => (
     className="flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
   >
     <div className="flex items-center gap-3 min-w-0">
-      <span className="inline-flex items-center justify-center p-2.5 rounded-lg bg-primary-50 dark:bg-primary-950/40 text-primary-600 border border-primary-100 dark:border-primary-900 shrink-0">
+      <span className="inline-flex items-center justify-center p-2.5 rounded-lg bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 border border-primary-100 dark:border-primary-900 shrink-0">
         <Dumbbell className="h-4 w-4" aria-hidden="true" />
       </span>
       <div className="min-w-0">
@@ -108,7 +108,7 @@ const QuickAction = ({ to, icon: Icon, label }) => (
     to={to}
     className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-card hover:shadow-card-hover hover:border-primary-200 dark:hover:border-primary-800 hover:-translate-y-0.5 transition-all text-slate-700 dark:text-slate-200 hover:text-primary-700 cursor-pointer"
   >
-    <span className="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 border border-primary-100 dark:border-primary-900">
+    <span className="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 border border-primary-100 dark:border-primary-900">
       <Icon className="h-5 w-5" aria-hidden="true" />
     </span>
     <span className="text-sm font-semibold text-center">{label}</span>
@@ -221,7 +221,7 @@ const DashboardPage = () => {
         <Card className="p-6 sm:p-7">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div className="min-w-0">
-              <p className="text-xs font-bold uppercase tracking-widest text-primary-600 mb-1">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 mb-1">
                 {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
               </p>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50">
@@ -377,11 +377,11 @@ const DashboardPage = () => {
           <Card className="lg:col-span-2 p-6">
             <div className="flex items-center justify-between gap-3 mb-4">
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
-                <BarChart2 className="h-5 w-5 text-primary-600" aria-hidden="true" /> Your Progress
+                <BarChart2 className="h-5 w-5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" /> Your Progress
               </h2>
               <Link
                 to="/progress"
-                className="inline-flex items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700 cursor-pointer"
+                className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 cursor-pointer"
               >
                 View Full Progress <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </Link>
@@ -426,7 +426,7 @@ const DashboardPage = () => {
               </h2>
               <Link
                 to="/achievements"
-                className="inline-flex items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700 cursor-pointer"
+                className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 cursor-pointer"
               >
                 View All <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </Link>
@@ -450,11 +450,11 @@ const DashboardPage = () => {
           <Card className="lg:col-span-2 overflow-hidden">
             <div className="flex items-center justify-between gap-3 p-5 sm:p-6 pb-4">
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
-                <History className="h-5 w-5 text-primary-600" aria-hidden="true" /> Recent Activity
+                <History className="h-5 w-5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" /> Recent Activity
               </h2>
               <Link
                 to="/reports"
-                className="inline-flex items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700 cursor-pointer"
+                className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 cursor-pointer"
               >
                 View Reports <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </Link>

@@ -283,7 +283,7 @@ const ProgressPage = () => {
         <Card className="p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3 mb-4">
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary-600" aria-hidden="true" /> Score Trend
+              <Activity className="h-5 w-5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" /> Score Trend
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400" aria-live="polite">
               {activeSessions} session{activeSessions !== 1 ? 's' : ''} in range
@@ -405,7 +405,7 @@ const ProgressPage = () => {
         {/* ============ WEEKLY ACTIVITY (current week, real sessions only) ============ */}
         <Card className="p-5 sm:p-6">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2 mb-4">
-            <Dumbbell className="h-5 w-5 text-primary-600" aria-hidden="true" /> This Week's Activity
+            <Dumbbell className="h-5 w-5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" /> This Week's Activity
           </h2>
           <div className="grid grid-cols-7 gap-2 sm:gap-3">
             {WEEKDAYS.map((day, i) => {
@@ -441,7 +441,7 @@ const ProgressPage = () => {
         <Card className="overflow-hidden">
           <div className="flex items-center justify-between gap-3 p-5 sm:p-6 pb-4">
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Sessions in Range</h2>
-            <Link to="/reports" className="inline-flex items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700 cursor-pointer">
+            <Link to="/reports" className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 cursor-pointer">
               All Reports <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
@@ -454,7 +454,7 @@ const ProgressPage = () => {
                   className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="p-2.5 rounded-lg bg-primary-50 dark:bg-primary-950/40 text-primary-600 border border-primary-100 dark:border-primary-900 shrink-0">
+                    <span className="p-2.5 rounded-lg bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 border border-primary-100 dark:border-primary-900 shrink-0">
                       <Activity className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <div className="min-w-0">

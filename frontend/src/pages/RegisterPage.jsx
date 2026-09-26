@@ -250,7 +250,7 @@ const RegisterPage = () => {
 
           <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
             Already have an account?{' '}
-            <Link to="/login" className="font-semibold text-primary-600 hover:text-primary-700">
+            <Link to="/login" className="font-semibold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200">
               Sign in
             </Link>
           </p>

@@ -711,7 +711,7 @@ const ExerciseRunnerPage = () => {
                   role="status"
                   aria-label={`Repetitions completed: ${repCount}`}
                 >
-                  <Repeat className="h-4 w-4 text-primary-600" aria-hidden="true" />
+                  <Repeat className="h-4 w-4 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" />
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-200 tabular-nums">{repCount} reps</span>
                 </div>
  )}
@@ -728,7 +728,7 @@ const ExerciseRunnerPage = () => {
                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <Timer className="h-3.5 w-3.5" aria-hidden="true" /> Remaining
                 </span>
-                <span className="block text-2xl font-extrabold text-primary-600 tabular-nums">{timeLeft}s</span>
+                <span className="block text-2xl font-extrabold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 tabular-nums">{timeLeft}s</span>
                 <span className="block text-xs text-slate-500 dark:text-slate-400 tabular-nums">{elapsed}s elapsed</span>
               </div>
             </div>
@@ -873,7 +873,7 @@ const ExerciseRunnerPage = () => {
                 onClick={() => speak(coachHint, { force: true })}
                 aria-label="Read the current coaching message aloud"
                 title="Read aloud"
-                className="p-3 bg-white dark:bg-slate-900 text-primary-600 border border-primary-200 dark:border-primary-800 rounded-full hover:bg-primary-50 transition-colors cursor-pointer"
+                className="p-3 bg-white dark:bg-slate-900 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 border border-primary-200 dark:border-primary-800 rounded-full hover:bg-primary-50 transition-colors cursor-pointer"
               >
                 <Volume2 className="h-5 w-5" aria-hidden="true" />
               </button>
@@ -908,7 +908,7 @@ const ExerciseRunnerPage = () => {
                 type="button"
                 onClick={() => speak(String(exercise.instructions), { force: true })}
                 aria-label="Read the exercise instructions aloud"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-700 cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 cursor-pointer"
               >
                 <Volume2 className="h-4 w-4" aria-hidden="true" /> Read instructions aloud
               </button>

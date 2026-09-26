@@ -20,7 +20,7 @@ const ExerciseCard = ({ exercise, to, cta = 'Start Training', statusBadge, meta,
   return (
     <div className={cn('bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-card p-5 sm:p-6 flex flex-col', className)}>
       <div className="flex items-start justify-between gap-3 mb-4">
-        <span className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 border border-primary-100 dark:border-primary-900">
+        <span className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 border border-primary-100 dark:border-primary-900">
           <Icon className="h-5.5 w-5.5" aria-hidden="true" />
         </span>
         <div className="flex items-center gap-2">

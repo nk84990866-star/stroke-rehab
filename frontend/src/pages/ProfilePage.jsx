@@ -39,7 +39,7 @@ const ProfilePage = () => {
           actions={
             <Link
               to="/dashboard"
-              className="text-sm font-semibold text-primary-600 hover:text-primary-700 cursor-pointer"
+              className="text-sm font-semibold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 cursor-pointer"
             >
               ← Back to Dashboard
             </Link>
@@ -82,7 +82,7 @@ const ProfilePage = () => {
             <Card>
               <Card.Header>
                 <Card.Title className="flex items-center gap-2">
-                  <HeartPulse className="h-5 w-5 text-primary-600" aria-hidden="true" /> Rehabilitation Profile
+                  <HeartPulse className="h-5 w-5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" /> Rehabilitation Profile
                 </Card.Title>
               </Card.Header>
               <Card.Content className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -127,7 +127,7 @@ const ProfilePage = () => {
           <Card>
             <Card.Header>
               <Card.Title className="flex items-center gap-2">
-                <Stethoscope className="h-5 w-5 text-primary-600" aria-hidden="true" /> Clinical Details
+                <Stethoscope className="h-5 w-5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" /> Clinical Details
               </Card.Title>
             </Card.Header>
             <Card.Content className="grid grid-cols-1 sm:grid-cols-2 gap-5">

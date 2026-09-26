@@ -35,6 +35,7 @@ export const getSessions = (patientId) => api.get('/sessions', { params: { patie
 export const getSessionReport = (id) => api.get(`/sessions/${id}/report`).then(res => res.data);
 export const getProgress = (patientId) => api.get('/sessions/progress', { params: { patient_id: patientId } }).then(res => res.data);
 export const getStats = (patientId) => api.get('/sessions/stats', { params: { patient_id: patientId } }).then(res => res.data);
+export const getAchievements = () => api.get('/sessions/achievements').then(res => res.data);
 
 // Therapist endpoints
 export const getAssignedPatients = () => api.get('/patients').then(res => res.data);

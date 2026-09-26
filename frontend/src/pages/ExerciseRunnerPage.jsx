@@ -418,6 +418,11 @@ const ExerciseRunnerPage = () => {
         pointsEarned: result?.points_earned ?? null,
         newStreak: result?.new_streak ?? null,
         unlockedBadges: result?.unlocked_badges || [],
+        // Flag for the Achievements page: show a one-time celebration banner
+        // for badges actually persisted during this session save.
+        ...(result?.unlocked_badges?.length
+          ? (() => { sessionStorage.setItem('nm_new_badges', JSON.stringify(result.unlocked_badges)); return {}; })()
+          : {}),
         maxRom: result?.session?.max_rom_achieved ?? null,
         smoothness: result?.session?.movement_smoothness_score ?? null,
         avgVelocity: result?.session?.avg_joint_velocity ?? null,

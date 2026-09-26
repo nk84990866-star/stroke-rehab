@@ -44,6 +44,21 @@ BADGE_DEFINITIONS = {
         "name": "High Velocity Athlete",
         "description": "Complete a session in Level 3 (High/Fast) exercises.",
         "icon": "zap"
+    },
+    "sessions_10": {
+        "name": "Ten Sessions",
+        "description": "Complete 10 exercise sessions.",
+        "icon": "dumbbell"
+    },
+    "sessions_25": {
+        "name": "Twenty-Five Sessions",
+        "description": "Complete 25 exercise sessions.",
+        "icon": "trophy"
+    },
+    "variety_5": {
+        "name": "Exercise Explorer",
+        "description": "Complete sessions with 5 different exercises.",
+        "icon": "layers"
     }
 }
 
@@ -117,7 +132,19 @@ def check_achievements(user, session, db, Achievement):
         unlocked_keys.append("level_2_unlocked")
     if session.level_played == 3 and "level_3_unlocked" not in existing_badges:
         unlocked_keys.append("level_3_unlocked")
-        
+
+    # 6. Session count milestones (real saved sessions, including this one)
+    total_sessions = user.sessions.count()
+    if total_sessions >= 10 and "sessions_10" not in existing_badges:
+        unlocked_keys.append("sessions_10")
+    if total_sessions >= 25 and "sessions_25" not in existing_badges:
+        unlocked_keys.append("sessions_25")
+
+    # 7. Exercise variety (distinct exercises with at least one saved session)
+    distinct_exercises = len({s.exercise_id for s in user.sessions.all()})
+    if distinct_exercises >= 5 and "variety_5" not in existing_badges:
+        unlocked_keys.append("variety_5")
+
     # Persist newly unlocked achievements
     for key in unlocked_keys:
         badge_info = BADGE_DEFINITIONS[key]

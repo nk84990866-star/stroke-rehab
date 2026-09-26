@@ -134,6 +134,26 @@ def get_progress():
         })
     return jsonify(progress_data)
 
+@sessions_bp.route("/achievements", methods=["GET"])
+@login_required
+def get_achievements():
+    """
+    Returns the logged-in patient's earned achievements with earned dates.
+    Identity comes from the session only; no patient_id is accepted.
+    """
+    rows = (
+        Achievement.query.filter_by(patient_id=current_user.id)
+        .order_by(Achievement.earned_at.asc())
+        .all()
+    )
+    return jsonify([
+        {
+            "badge_name": a.badge_name,
+            "earned_at": a.earned_at.isoformat() if a.earned_at else None,
+        }
+        for a in rows
+    ])
+
 @sessions_bp.route("/stats", methods=["GET"])
 @login_required
 def get_stats():
@@ -148,18 +168,40 @@ def get_stats():
             "total_sessions": 0,
             "avg_score": 0.0,
             "best_score": 0.0,
+            "best_session": None,
             "streak": user.streak_count,
-            "points": user.points
+            "points": user.points,
+            "badges": user.badges
         })
 
     scores = [s.overall_score for s in sessions]
     avg_score = round(sum(scores) / total, 1)
     best_score = max(scores)
 
+    # Highest real session score with its exercise, for the Personal Best card.
+    best_session = (
+        ExerciseSession.query.filter_by(patient_id=patient_id)
+        .order_by(ExerciseSession.overall_score.desc())
+        .first()
+    )
+    best_exercise_name = (
+        best_session.exercise.name if best_session and best_session.exercise else None
+    )
+
     return jsonify({
         "total_sessions": total,
         "avg_score": avg_score,
         "best_score": best_score,
+        "best_session": {
+            "id": best_session.id,
+            "exercise_name": best_exercise_name,
+            "overall_score": best_session.overall_score,
+            "started_at": best_session.started_at.isoformat() if best_session.started_at else None,
+        } if best_session else None,
         "streak": user.streak_count,
-        "points": user.points
+        "points": user.points,
+        # Badges are already persisted per patient at session-save time
+        # (gamification.check_achievements); expose them here so the
+        # achievements page uses one consistent source.
+        "badges": user.badges
     })

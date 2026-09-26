@@ -6,16 +6,19 @@ import {
   Activity,
   Award,
   Crosshair,
+  Dumbbell,
   Gauge,
   Flame,
   Hand,
   HeartPulse,
+  Layers,
   Lock,
   Move,
   RotateCcw,
   ShieldAlert,
   Star,
   Target,
+  Trophy,
   Waves,
   Zap,
 } from 'lucide-react';
@@ -90,6 +93,25 @@ export const BADGE_META = {
   rom_milestone_135: { name: '135-Degree Extension', icon: Award },
   level_2_unlocked: { name: 'Moderate Explorer', icon: ShieldAlert },
   level_3_unlocked: { name: 'High Velocity Athlete', icon: ShieldAlert },
+  sessions_10: { name: 'Ten Sessions', icon: Dumbbell },
+  sessions_25: { name: 'Twenty-Five Sessions', icon: Trophy },
+  variety_5: { name: 'Exercise Explorer', icon: Layers },
+};
+
+/**
+ * Real-progress definitions for locked badges. `current` sources:
+ *  - sessions_count / distinct_exercises: real saved sessions (/api/sessions)
+ *  - streak: existing backend streak (/api/sessions/stats)
+ *  - best_score: real stored session scores (/api/sessions/stats)
+ * Anything without a reliable current value renders the requirement only.
+ */
+export const BADGE_PROGRESS = {
+  sessions_10: { current: 'sessions_count', target: 10 },
+  sessions_25: { current: 'sessions_count', target: 25 },
+  streak_3: { current: 'streak', target: 3 },
+  streak_7: { current: 'streak', target: 7 },
+  variety_5: { current: 'distinct_exercises', target: 5 },
+  perfect_score: { current: 'best_score', target: 95 },
 };
 
 /** icon_name values stored in the Exercise model → lucide icons. */

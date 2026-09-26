@@ -36,6 +36,10 @@ class Config:
         # `postgresql://` to this dialect at import time, and a missing driver
         # then crashes the whole service at boot (ModuleNotFoundError: psycopg).
         _database_url = "postgresql+psycopg://" + _database_url[len("postgresql://"):]
+        # Cap connection attempts so a bad endpoint fails fast instead of
+        # hanging gunicorn workers during deploy (Render scans the port).
+        if "connect_timeout" not in _database_url:
+            _database_url += "&connect_timeout=10" if "?" in _database_url else "?connect_timeout=10"
     SQLALCHEMY_DATABASE_URI = _database_url or f"sqlite:///{os.path.join(BASE_DIR, 'rehab_system.db')}"
 
     # pool_pre_ping drops dead connections before use — needed for serverless

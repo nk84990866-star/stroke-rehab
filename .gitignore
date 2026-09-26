@@ -17,3 +17,4 @@ venv.bak/
 # OS generated files
 .DS_Store
 Thumbs.db
+scripts/theme-audit/

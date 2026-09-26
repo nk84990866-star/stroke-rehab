@@ -4,13 +4,17 @@
  */
 import {
   Activity,
+  Award,
   Crosshair,
   Gauge,
+  Flame,
   Hand,
   HeartPulse,
   Lock,
   Move,
   RotateCcw,
+  ShieldAlert,
+  Star,
   Target,
   Waves,
   Zap,
@@ -63,6 +67,21 @@ export const SPEED_LABELS = {
   slow: 'Slow & controlled',
   normal: 'Normal pace',
   fast: 'Fast-paced',
+};
+
+/**
+ * Badge keys used by backend gamification (services/gamification.py) → name + icon.
+ * Shared by AchievementsPage and the dashboard achievements preview.
+ */
+export const BADGE_META = {
+  first_session: { name: 'First Reaches', icon: Award },
+  streak_3: { name: 'Consistent Start', icon: Flame },
+  streak_7: { name: 'Weekly Warrior', icon: Flame },
+  perfect_score: { name: 'Precision Master', icon: Star },
+  rom_milestone_90: { name: '90-Degree Reach', icon: Award },
+  rom_milestone_135: { name: '135-Degree Extension', icon: Award },
+  level_2_unlocked: { name: 'Moderate Explorer', icon: ShieldAlert },
+  level_3_unlocked: { name: 'High Velocity Athlete', icon: ShieldAlert },
 };
 
 /** icon_name values stored in the Exercise model → lucide icons. */

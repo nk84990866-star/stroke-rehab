@@ -27,6 +27,14 @@ export const STROKE_TYPE_LABELS = {
   brainstem: 'Brainstem Stroke',
 };
 
+/** Short forms for compact chips (e.g. on exercise cards). */
+export const STROKE_TYPE_SHORT_LABELS = {
+  ischemic: 'Ischemic',
+  hemorrhagic: 'Hemorrhagic',
+  tia: 'TIA',
+  brainstem: 'Brainstem',
+};
+
 export const AFFECTED_SIDE_LABELS = {
   left: 'Left side affected',
   right: 'Right side affected',

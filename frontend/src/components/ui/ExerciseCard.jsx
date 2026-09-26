@@ -9,8 +9,9 @@ import { EXERCISE_LEVELS, EXERCISE_CATEGORY_LABELS, SPEED_LABELS, getExerciseIco
  * ExerciseCard — one shared card for the exercise library and dashboard.
  * Renders only fields that exist on the Exercise model (no fake data).
  * Optional `statusBadge` node (e.g. completion Badge) renders in the header row.
+ * Optional `meta` node renders as extra chips in the details row (hold time, suitability…).
  */
-const ExerciseCard = ({ exercise, to, cta = 'Start Training', statusBadge, className }) => {
+const ExerciseCard = ({ exercise, to, cta = 'Start Training', statusBadge, meta, className }) => {
   if (!exercise) return null;
   const level = EXERCISE_LEVELS[exercise.level] || { name: `Level ${exercise.level}`, badge: 'default' };
   const Icon = getExerciseIcon(exercise.icon_name);
@@ -49,6 +50,7 @@ const ExerciseCard = ({ exercise, to, cta = 'Start Training', statusBadge, class
             <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" /> {SPEED_LABELS[exercise.speed_requirement] || exercise.speed_requirement}
           </span>
         )}
+        {meta}
       </div>
 
       <div className="mt-5 pt-4 border-t border-slate-100">

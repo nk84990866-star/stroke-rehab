@@ -315,13 +315,13 @@ const ProgressPage = () => {
             </h2>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Max ROM in range</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Max ROM in range</p>
                 <p className="text-xl font-extrabold text-slate-900 tabular-nums">
                   {summary.maxRom != null ? `${Math.round(summary.maxRom * 100) / 100}°` : '—'}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Avg ROM in range</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Avg ROM in range</p>
                 <p className="text-xl font-extrabold text-slate-900 tabular-nums">
                   {summary.avgRom != null ? `${Math.round(summary.avgRom * 100) / 100}°` : '—'}
                 </p>
@@ -350,7 +350,7 @@ const ProgressPage = () => {
               </p>
             )}
             {summary.romRecorded > 0 && (
-              <p className="text-xs text-slate-400 mt-2">
+              <p className="text-xs text-slate-500 mt-2">
                 Averaged over {summary.romRecorded} session{summary.romRecorded !== 1 ? 's' : ''} with a recorded ROM value.
               </p>
             )}
@@ -362,7 +362,7 @@ const ProgressPage = () => {
               <Gauge className="h-5 w-5 text-purple-600" aria-hidden="true" /> Movement Smoothness
             </h2>
             <div className="mb-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Average in range</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Average in range</p>
               <p className="text-xl font-extrabold text-slate-900 tabular-nums">
                 {summary.avgSmoothness != null ? `${Math.round(summary.avgSmoothness * 10) / 10} / 100` : '—'}
               </p>
@@ -389,7 +389,7 @@ const ProgressPage = () => {
                 No smoothness values recorded in this period yet.
               </p>
             )}
-            <p className="text-xs text-slate-400 mt-2">
+            <p className="text-xs text-slate-500 mt-2">
               {summary.smoothnessRecorded > 0
                 ? `Averaged over ${summary.smoothnessRecorded} session${summary.smoothnessRecorded !== 1 ? 's' : ''} with a recorded value. Sessions saved before a scoring update may show 0.`
                 : 'Smoothness is calculated when a session is saved.'}
@@ -420,14 +420,14 @@ const ProgressPage = () => {
                   <p className={cn('text-lg font-extrabold tabular-nums mt-1', count > 0 ? 'text-primary-700' : 'text-slate-300')}>
                     {count}
                   </p>
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+                  <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
                     {count > 0 ? (count === 1 ? 'session' : 'sessions') : '—'}
                   </p>
                 </div>
               );
             })}
           </div>
-          <p className="text-xs text-slate-400 mt-3">
+          <p className="text-xs text-slate-500 mt-3">
             Counts are saved exercise sessions only — planned but not-yet-completed exercises are not included.
           </p>
         </Card>
@@ -478,7 +478,7 @@ const ProgressPage = () => {
           )}
         </Card>
 
-        <p className="text-xs text-slate-400 flex items-start gap-1.5">
+        <p className="text-xs text-slate-500 flex items-start gap-1.5">
           <BarChart2 className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden="true" />
           This page summarizes your recorded exercise activity (sessions, scores, timing). It is an activity
           statistic, not a medical assessment — discuss your rehabilitation progress with your clinician.

@@ -50,7 +50,7 @@ const BadgeChip = ({ badgeKey, earned }) => {
         'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold border',
         earned
           ? 'bg-amber-50 text-amber-700 border-amber-200'
-          : 'bg-slate-50 text-slate-400 border-slate-200',
+          : 'bg-slate-50 text-slate-500 border-slate-200',
       )}
       title={earned ? 'Unlocked' : 'Locked'}
     >
@@ -396,17 +396,17 @@ const DashboardPage = () => {
                 </p>
                 <div className="grid grid-cols-3 gap-4 mt-4">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Weekly sessions</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Weekly sessions</p>
                     <p className="text-xl font-extrabold text-slate-900 tabular-nums">{weeklyCount}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Recent avg score</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Recent avg score</p>
                     <p className="text-xl font-extrabold text-slate-900 tabular-nums">
                       {recentAvgScore != null ? `${recentAvgScore}%` : '—'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Sessions tracked</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Sessions tracked</p>
                     <p className="text-xl font-extrabold text-slate-900 tabular-nums">{progressSeries.length}</p>
                   </div>
                 </div>
@@ -436,7 +436,7 @@ const DashboardPage = () => {
                 <BadgeChip key={key} badgeKey={key} earned={earned} />
               ))}
             </div>
-            <p className="text-xs text-slate-400 mt-3">
+            <p className="text-xs text-slate-500 mt-3">
               {earnedBadges.length > 0
                 ? `${earnedBadges.length} badge${earnedBadges.length !== 1 ? 's' : ''} unlocked so far.`
                 : 'No badges unlocked yet — complete a session to earn your first!'}

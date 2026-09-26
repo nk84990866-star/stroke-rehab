@@ -149,7 +149,7 @@ const Navbar = () => {
                       to="/profile"
                       className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
                     >
-                      <UserCircle2 className="h-4 w-4 text-slate-400" aria-hidden="true" /> My Profile
+                      <UserCircle2 className="h-4 w-4 text-slate-500" aria-hidden="true" /> My Profile
                     </Link>
                   )}
                   <button

@@ -55,7 +55,7 @@ const ReportDetailPage = () => {
             </div>
           </div>
           <div className="text-right shrink-0">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Session Score</span>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Session Score</span>
             <span className="text-4xl font-black text-primary-600 tabular-nums">{report.metrics?.accuracy_score}%</span>
           </div>
         </Card>

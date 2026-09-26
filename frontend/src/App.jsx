@@ -22,8 +22,15 @@ function App() {
   return (
     <AuthProvider>
       <div className="min-h-screen bg-surface flex flex-col">
+        {/* Skip link: first focusable element, visible on keyboard focus only */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-[60] focus:rounded-lg focus:bg-primary-600 focus:px-4 focus:py-2.5 focus:text-white focus:shadow-lg"
+        >
+          Skip to main content
+        </a>
         <Navbar />
-        <main className="flex-grow">
+        <main id="main-content" className="flex-grow">
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />

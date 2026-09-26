@@ -247,7 +247,10 @@ const ExerciseRunnerPage = () => {
         const targetX = shoulderX + (currentTarget.x * 4);
         const targetY = shoulderY - (currentTarget.y * 4);
 
-        const radius = 15 + Math.sin(Date.now() / 150) * 3;
+        // Respect prefers-reduced-motion: keep the target marker static
+        // instead of pulsing every frame for users who opt out of motion.
+        const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+        const radius = reduceMotion ? 15 : 15 + Math.sin(Date.now() / 150) * 3;
         ctx.beginPath();
         ctx.arc(targetX, targetY, radius, 0, 2 * Math.PI);
         ctx.fillStyle = 'rgba(16, 185, 129, 0.2)';
@@ -691,7 +694,7 @@ const ExerciseRunnerPage = () => {
                   <Timer className="h-3.5 w-3.5" aria-hidden="true" /> Remaining
                 </span>
                 <span className="block text-2xl font-extrabold text-primary-600 tabular-nums">{timeLeft}s</span>
-                <span className="block text-xs text-slate-400 tabular-nums">{elapsed}s elapsed</span>
+                <span className="block text-xs text-slate-500 tabular-nums">{elapsed}s elapsed</span>
               </div>
             </div>
           </div>
@@ -715,7 +718,7 @@ const ExerciseRunnerPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           <Card className="lg:col-span-3 p-5 sm:p-6 flex flex-col items-center">
             <div className="w-full flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900">Camera Tracking</h2>
+              <h2 className="text-base font-bold text-slate-900" id="camera-panel-title">Camera Tracking</h2>
               {running && (
                 <span
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200 rounded-full px-2.5 py-1"
@@ -727,13 +730,19 @@ const ExerciseRunnerPage = () => {
                     </>
                   ) : (
                     <>
-                      <VideoOff className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" /> Looking for you…
+                      <VideoOff className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" /> Looking for you…
                     </>
                   )}
                 </span>
               )}
             </div>
-            <div ref={containerRef} className="relative w-full aspect-video bg-slate-100 rounded-xl overflow-hidden flex items-center justify-center">
+            <div
+              ref={containerRef}
+              role="group"
+              aria-labelledby="camera-panel-title"
+              aria-describedby="camera-privacy-note"
+              className="relative w-full aspect-video bg-slate-100 rounded-xl overflow-hidden flex items-center justify-center"
+            >
               <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover transform -scale-x-100" />
               <canvas ref={overlayRef} className="absolute inset-0 w-full h-full transform -scale-x-100 pointer-events-none" />
               {status === 'ready' && !running && (
@@ -748,15 +757,22 @@ const ExerciseRunnerPage = () => {
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-400 mt-3 text-center">
+            <p id="camera-privacy-note" className="text-xs text-slate-500 mt-3 text-center">
               Your camera stays on this device — video is processed locally and never uploaded.
             </p>
           </Card>
 
           <Card className="lg:col-span-2 p-5 sm:p-6 flex flex-col items-center">
-            <h2 className="text-base font-bold text-slate-900 mb-4">Rehabilitation Digital Twin</h2>
-            <canvas ref={twinRef} width={400} height={350} className="border border-slate-200 rounded-xl bg-surface w-full max-w-[400px]" />
-            <p className="text-xs text-slate-400 mt-3 text-center">
+            <h2 className="text-base font-bold text-slate-900 mb-4" id="twin-panel-title">Rehabilitation Digital Twin</h2>
+            <canvas
+              ref={twinRef}
+              width={400}
+              height={350}
+              role="img"
+              aria-label="Digital twin view showing the active exercise target and your tracked arm movement"
+              className="border border-slate-200 rounded-xl bg-surface w-full max-w-[400px]"
+            />
+            <p className="text-xs text-slate-500 mt-3 text-center">
               Reach toward the highlighted target and hold steady to complete it.
             </p>
           </Card>
@@ -834,7 +850,7 @@ const ExerciseRunnerPage = () => {
             </p>
           )}
           {targets.length > 0 && (
-            <p className="text-xs text-slate-400 mt-3">
+            <p className="text-xs text-slate-500 mt-3">
               {targets.length} target{targets.length !== 1 ? 's' : ''} in this exercise
               {maxHold != null ? ` · hold each up to ${maxHold}s` : ''} · the twin shows which target is active.
             </p>

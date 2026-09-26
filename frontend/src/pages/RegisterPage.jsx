@@ -83,7 +83,7 @@ const RegisterPage = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <Card className="p-6 sm:p-8">
           {error && (
-            <div role="alert" className="mb-5 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
+            <div id="register-error" role="alert" className="mb-5 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
               {error}
             </div>
           )}
@@ -110,6 +110,8 @@ const RegisterPage = () => {
                   type="email"
                   autoComplete="email"
                   required
+                  aria-invalid={!!error || undefined}
+                  aria-describedby={error ? 'register-error' : undefined}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={inputClass}

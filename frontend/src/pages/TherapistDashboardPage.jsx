@@ -98,7 +98,7 @@ const TherapistDashboardPage = () => {
                   <div className="flex items-center gap-3 self-stretch lg:self-auto justify-between border-t lg:border-t-0 pt-4 lg:pt-0">
                     <label
                       htmlFor={`severity-${patient.id}`}
-                      className="text-xs font-bold text-slate-400 uppercase tracking-wider"
+                      className="text-xs font-bold text-slate-500 uppercase tracking-wider"
                     >
                       Severity Level
                     </label>

@@ -113,7 +113,7 @@ const ExercisesPage = () => {
             <label htmlFor="exercise-search" className="sr-only">
               Search exercises by name, description, or target area
             </label>
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400" aria-hidden="true" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-500" aria-hidden="true" />
             <input
               id="exercise-search"
               type="search"
@@ -127,7 +127,7 @@ const ExercisesPage = () => {
                 type="button"
                 onClick={() => setSearch('')}
                 aria-label="Clear search"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>

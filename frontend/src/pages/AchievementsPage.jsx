@@ -244,12 +244,12 @@ const AchievementsPage = () => {
               valueText={`${earnedCount} of ${totalBadges} badges`}
               variant="warning"
             />
-            <p className="text-xs text-slate-400 mt-3">
+            <p className="text-xs text-slate-500 mt-3">
               Trophy points: <strong className="text-slate-600 tabular-nums">{stats?.points || 0} XP</strong>
             </p>
           </Card>
           <Card className="p-5">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Personal Best</h2>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Personal Best</h2>
             {personalBest ? (
               <>
                 <p className="text-2xl font-extrabold text-primary-600 tabular-nums">
@@ -258,7 +258,7 @@ const AchievementsPage = () => {
                 <p className="text-sm text-slate-600 font-semibold truncate">
                   {personalBest.exercise_name || 'Exercise session'}
                 </p>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   {personalBest.started_at
                     ? new Date(personalBest.started_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
                     : ''}
@@ -311,7 +311,7 @@ const AchievementsPage = () => {
                             'inline-flex items-center justify-center p-3 rounded-xl border shrink-0',
                             isEarned
                               ? 'bg-amber-50 text-amber-600 border-amber-200'
-                              : 'bg-slate-100 text-slate-400 border-slate-200',
+                              : 'bg-slate-100 text-slate-500 border-slate-200',
                           )}
                         >
                           {isEarned ? <BadgeIcon className="h-6 w-6" aria-hidden="true" /> : <Lock className="h-6 w-6" aria-hidden="true" />}
@@ -329,7 +329,7 @@ const AchievementsPage = () => {
                             {isEarned ? meta.description : REQUIREMENTS[key] || meta.description}
                           </p>
                           {isEarned && earnedDate && (
-                            <p className="text-xs text-slate-400 mt-1.5">
+                            <p className="text-xs text-slate-500 mt-1.5">
                               Earned {new Date(earnedDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                             </p>
                           )}
@@ -354,7 +354,7 @@ const AchievementsPage = () => {
           );
         })}
 
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-500">
           Achievements are calculated from your saved exercise sessions only. They reflect activity
           milestones, not a medical assessment.
         </p>

@@ -113,7 +113,7 @@ const ReportsPage = () => {
 
           <div className="grid grid-cols-7 gap-1 mb-1" role="row">
             {WEEKDAY_LABELS.map((w) => (
-              <div key={w} className="text-center text-[11px] font-bold text-slate-400 uppercase py-1">{w}</div>
+              <div key={w} className="text-center text-[11px] font-bold text-slate-500 uppercase py-1">{w}</div>
             ))}
           </div>
 
@@ -165,7 +165,7 @@ const ReportsPage = () => {
             })}
           </div>
 
-          <p className="text-xs text-slate-400 mt-3">
+          <p className="text-xs text-slate-500 mt-3">
             Days highlighted in blue have completed sessions — click one to see that day's reports.
           </p>
         </Card>
@@ -227,7 +227,7 @@ const ReportsPage = () => {
                 </div>
                 <div className="flex items-center gap-4 shrink-0">
                   <div className="text-right">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Score</span>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Score</span>
                     <span className="font-extrabold text-primary-600 text-lg tabular-nums">{session.overall_score}%</span>
                   </div>
                   <ChevronRight className="h-5 w-5 text-slate-300" aria-hidden="true" />

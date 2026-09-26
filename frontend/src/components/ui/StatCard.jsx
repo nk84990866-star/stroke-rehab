@@ -25,11 +25,11 @@ const StatCard = ({ icon: Icon, label, value, sub, footer, color = 'primary', cl
         <p className="text-sm font-medium text-slate-500 truncate">{label}</p>
         <p className="text-2xl font-extrabold text-slate-900 tabular-nums leading-tight">
           {value}
-          {sub && <span className="text-sm font-semibold text-slate-400 ml-1">{sub}</span>}
+          {sub && <span className="text-sm font-semibold text-slate-500 ml-1">{sub}</span>}
         </p>
       </div>
     </div>
-    {footer && <p className="text-xs text-slate-400 mt-3">{footer}</p>}
+    {footer && <p className="text-xs text-slate-500 mt-3">{footer}</p>}
   </div>
 );
 

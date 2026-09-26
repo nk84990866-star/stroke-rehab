@@ -9,7 +9,7 @@ import { cn } from '../../lib/cn';
  */
 const EmptyState = ({ icon: Icon = Inbox, title, description, action, className }) => (
   <div className={cn('bg-white rounded-xl border border-slate-200 shadow-card p-8 sm:p-12 text-center', className)}>
-    <span className="inline-flex items-center justify-center p-4 rounded-2xl bg-slate-100 text-slate-400 mb-4">
+    <span className="inline-flex items-center justify-center p-4 rounded-2xl bg-slate-100 text-slate-500 mb-4">
       <Icon className="h-8 w-8" aria-hidden="true" />
     </span>
     <h3 className="text-lg font-bold text-slate-900">{title}</h3>

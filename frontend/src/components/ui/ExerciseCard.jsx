@@ -33,7 +33,7 @@ const ExerciseCard = ({ exercise, to, cta = 'Start Training', statusBadge, meta,
 
       <h3 className="text-lg font-bold text-slate-900">{exercise.name}</h3>
       {exercise.category && (
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mt-0.5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mt-0.5">
           {EXERCISE_CATEGORY_LABELS[exercise.category] || exercise.category}
         </p>
       )}

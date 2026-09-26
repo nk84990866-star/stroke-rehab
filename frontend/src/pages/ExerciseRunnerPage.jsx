@@ -1,31 +1,60 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getExerciseDetail, saveSession } from '../services/api';
-import { Play, Volume2, StopCircle, Timer } from 'lucide-react';
-import { Badge, LoadingState } from '../components/ui';
+import {
+  ArrowLeft,
+  Award,
+  CheckCircle2,
+  Flag,
+  Pause,
+  Play,
+  RotateCcw,
+  Timer,
+  Video,
+  VideoOff,
+  Volume2,
+} from 'lucide-react';
+import { Badge, Button, Card, ProgressBar, LoadingState, StatCard } from '../components/ui';
+import { EXERCISE_CATEGORY_LABELS } from '../config/labels';
 import { PoseLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
+
+/** Session status machine: READY → IN PROGRESS → COMPLETING → COMPLETED (or PAUSED). */
+const STATUS_META = {
+  ready: { label: 'Ready', variant: 'default' },
+  in_progress: { label: 'In Progress', variant: 'success' },
+  paused: { label: 'Paused', variant: 'warning' },
+  completing: { label: 'Completing…', variant: 'primary' },
+  completed: { label: 'Completed', variant: 'success' },
+};
 
 const ExerciseRunnerPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [exercise, setExercise] = useState(null);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
+  const [status, setStatus] = useState('ready'); // ready | in_progress | paused | completing | completed
   const [score, setScore] = useState(100.0);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
   const [targetsHit, setTargetsHit] = useState(0);
   const [coachHint, setCoachHint] = useState("Loading AI Model...");
   const [error, setError] = useState('');
   const [modelReady, setModelReady] = useState(false);
-  
+  const [cameraStarting, setCameraStarting] = useState(false);
+  const [poseDetected, setPoseDetected] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const [saveResult, setSaveResult] = useState(null); // real metrics from the session API
+
   // WebRTC & Canvas references
   const videoRef = useRef(null);
   const twinRef = useRef(null);
   const overlayRef = useRef(null); // Canvas over the webcam
   const streamRef = useRef(null);
   const landmarkerRef = useRef(null);
-  
+
   // Rehab tracking state
   const anglesHistory = useRef([]);
   const frameIdRef = useRef(null);
@@ -35,6 +64,7 @@ const ExerciseRunnerPage = () => {
   const smoothedStateRef = useRef(null);   // EMA smoothing state for twin movement
   const activeSideRef = useRef(null);      // which arm is tracked: 'left' | 'right'
   const containerRef = useRef(null);       // webcam box — aspect set from the real stream
+  const poseDetectedRef = useRef(false);
 
   // Load exercise and model
   useEffect(() => {
@@ -55,18 +85,18 @@ const ExerciseRunnerPage = () => {
           runningMode: "VIDEO",
           numPoses: 1
         });
-        
+
         setModelReady(true);
         setCoachHint("Model Ready! Click Initialize Camera.");
       } catch (err) {
         console.error('Error initialization:', err);
-        setError("Failed to load exercise or AI model.");
+        setError("The AI model could not be loaded. Please refresh the page and try again.");
       } finally {
         setLoading(false);
       }
     };
     initialize();
-    
+
     return () => {
       stopCamera();
       if (landmarkerRef.current) landmarkerRef.current.close();
@@ -92,14 +122,17 @@ const ExerciseRunnerPage = () => {
 
   const handleStart = async () => {
     setError('');
+    setCameraStarting(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
       videoRef.current.srcObject = stream;
       streamRef.current = stream;
-      
+
       videoRef.current.onloadeddata = () => {
+        setCameraStarting(false);
         setRunning(true);
         runningRef.current = true;
+        setStatus('in_progress');
         setCoachHint("Raise your arm toward the green target!");
         currentTargetIndex.current = 0;
         anglesHistory.current = [];
@@ -115,7 +148,35 @@ const ExerciseRunnerPage = () => {
         }
       };
     } catch (err) {
-      setError('Could not access camera device. Ensure camera permissions are allowed.');
+      console.error('Camera error:', err);
+      setCameraStarting(false);
+      if (err && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')) {
+        setError('Camera permission was denied. Please allow camera access in your browser settings and try again.');
+      } else if (err && (err.name === 'NotFoundError' || err.name === 'NotReadableError')) {
+        setError('No camera is available. Please connect a camera and try again.');
+      } else {
+        setError('The camera could not be started. Please check your device and try again.');
+      }
+    }
+  };
+
+  // Pause: stop the detection loop but keep angle history and smoothing state
+  // so the session can resume exactly where it left off.
+  const handlePause = () => {
+    if (runningRef.current) {
+      setRunning(false);
+      runningRef.current = false;
+      setStatus('paused');
+      setCoachHint('Session paused. Press Resume when ready.');
+    }
+  };
+
+  const handleResume = () => {
+    if (!runningRef.current && status === 'paused') {
+      setRunning(true);
+      runningRef.current = true;
+      setStatus('in_progress');
+      setCoachHint('Session resumed. Reach toward the target!');
     }
   };
 
@@ -135,7 +196,7 @@ const ExerciseRunnerPage = () => {
     const ctx = twinRef.current?.getContext('2d');
     const width = twinRef.current?.width || 400;
     const height = twinRef.current?.height || 350;
-    
+
     if (ctx && exercise) {
       ctx.clearRect(0, 0, width, height);
 
@@ -153,7 +214,7 @@ const ExerciseRunnerPage = () => {
       if (targets && targets.length > 0) {
         currentTarget = targets[currentTargetIndex.current % targets.length];
       }
-      
+
       if (currentTarget) {
         const targetX = shoulderX + (currentTarget.x * 4);
         const targetY = shoulderY - (currentTarget.y * 4);
@@ -166,7 +227,7 @@ const ExerciseRunnerPage = () => {
         ctx.strokeStyle = '#10b981';
         ctx.lineWidth = 3;
         ctx.stroke();
-        
+
         ctx.fillStyle = '#065f46';
         ctx.font = 'bold 12px sans-serif';
         ctx.fillText(`Target ${currentTargetIndex.current + 1}`, targetX - 25, targetY - 25);
@@ -177,6 +238,14 @@ const ExerciseRunnerPage = () => {
               const results = landmarkerRef.current.detectForVideo(videoRef.current, startTimeMs);
 
               const lm = (results.landmarks && results.landmarks.length > 0) ? results.landmarks[0] : null;
+
+              // Pose-detected indicator: update React state only when the value
+              // changes (keeps re-renders out of the per-frame path).
+              const poseNow = !!lm;
+              if (poseNow !== poseDetectedRef.current) {
+                poseDetectedRef.current = poseNow;
+                setPoseDetected(poseNow);
+              }
 
               // Pick the arm actually being exercised: the one whose wrist is
               // raised highest. Sticky (hysteresis) so it doesn't flicker
@@ -238,7 +307,7 @@ const ExerciseRunnerPage = () => {
             const elbow = lm[sideIdx.e];
             const wrist = lm[sideIdx.w];
 
-            const rawDx = (shoulder.x - wrist.x) * 300; 
+            const rawDx = (shoulder.x - wrist.x) * 300;
             const rawDy = (shoulder.y - wrist.y) * 300; // Fixed inverted Y axis
 
             const rawElbowDx = (shoulder.x - elbow.x) * 300;
@@ -271,8 +340,8 @@ const ExerciseRunnerPage = () => {
             ctx.beginPath(); ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(mappedElbowX, mappedElbowY); ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 8; ctx.stroke();
             ctx.beginPath(); ctx.arc(mappedElbowX, mappedElbowY, 10, 0, 2 * Math.PI); ctx.fillStyle = '#1e3a8a'; ctx.fill();
             ctx.beginPath(); ctx.moveTo(mappedElbowX, mappedElbowY); ctx.lineTo(handX, handY); ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 6; ctx.stroke();
-            ctx.beginPath(); ctx.arc(handX, handY, 8, 0, 2 * Math.PI); ctx.fillStyle = '#10b981'; ctx.fill(); 
-            
+            ctx.beginPath(); ctx.arc(handX, handY, 8, 0, 2 * Math.PI); ctx.fillStyle = '#10b981'; ctx.fill();
+
             // Convert normalized landmark offsets to approximate joint angles
             // (degrees). Only the magnitude matters for ROM/smoothness metrics;
             // scaling keeps values in a realistic 0-180° clinical range instead
@@ -286,11 +355,11 @@ const ExerciseRunnerPage = () => {
             const targetCanvasX = shoulderX + (currentTarget.x * 4);
             const targetCanvasY = shoulderY - (currentTarget.y * 4);
             const distance = Math.sqrt(Math.pow(handX - targetCanvasX, 2) + Math.pow(handY - targetCanvasY, 2));
-            
+
             if (distance < 35) {
               if (!holdStartTime.current) holdStartTime.current = Date.now();
               const holdDuration = (Date.now() - holdStartTime.current) / 1000;
-              
+
               if (holdDuration >= (currentTarget.hold_sec || 1.0)) {
                 currentTargetIndex.current += 1;
                 setTargetsHit(prev => prev + 1);
@@ -316,18 +385,24 @@ const ExerciseRunnerPage = () => {
     frameIdRef.current = requestAnimationFrame(detectLoop);
   }, [running, exercise]);
 
+  // Session timer: a single interval drives both remaining and elapsed so the
+  // two can never disagree. Auto-completes when the prescribed duration ends.
   useEffect(() => {
     let interval = null;
     if (running && timeLeft > 0) {
-      interval = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+      interval = setInterval(() => {
+        setTimeLeft(prev => prev - 1);
+        setElapsed(prev => prev + 1);
+      }, 1000);
     } else if (timeLeft === 0 && running) {
-      handleComplete();
+      handleFinish();
     }
     return () => clearInterval(interval);
   }, [running, timeLeft]);
 
-  const handleComplete = async () => {
-    stopCamera();
+  const persistSession = async () => {
+    setSaving(true);
+    setSaveFailed(false);
     try {
       const result = await saveSession({
         exercise_id: Number(id),
@@ -337,74 +412,361 @@ const ExerciseRunnerPage = () => {
         total_targets: targetsHit + 1,
         joint_angle_data: anglesHistory.current
       });
-      alert(`Session Completed! Score: ${result?.session?.overall_score || 100}%. Points earned: ${result?.points_earned || 50} XP.`);
-      navigate('/reports');
+      setSaveResult({
+        sessionId: result?.session?.id || null,
+        overallScore: result?.session?.overall_score ?? null,
+        pointsEarned: result?.points_earned ?? null,
+        newStreak: result?.new_streak ?? null,
+        unlockedBadges: result?.unlocked_badges || [],
+        maxRom: result?.session?.max_rom_achieved ?? null,
+        smoothness: result?.session?.movement_smoothness_score ?? null,
+        avgVelocity: result?.session?.avg_joint_velocity ?? null,
+        targetsHit: result?.session?.targets_hit ?? targetsHit,
+        totalTargets: result?.session?.total_targets ?? (targetsHit + 1),
+        duration: result?.session?.duration_seconds ?? exercise.duration_seconds,
+      });
+      setStatus('completed');
     } catch (err) {
       console.error("Error saving session logs:", err);
-      navigate('/reports');
+      // Keep the session data; let the patient retry. Never show a false
+      // "Completed" screen when saving failed.
+      setSaveFailed(true);
+      setStatus('completing');
+      if (err?.response?.status === 401) {
+        setError('Your sign-in session has expired. Please sign in again to save your session.');
+      } else if (!err?.response) {
+        setError('The service could not be reached. Check your connection and try saving again.');
+      } else {
+        setError('Your session could not be saved. Your exercise data is kept — please try again.');
+      }
+    } finally {
+      setSaving(false);
     }
+  };
+
+  // Finish = stop camera + save. Guarded against double clicks via `saving`.
+  const handleFinish = () => {
+    if (saving) return;
+    stopCamera();
+    setStatus('completing');
+    persistSession();
+  };
+
+  const retrySave = () => {
+    if (saving) return;
+    persistSession();
+  };
+
+  const handlePracticeAgain = () => {
+    setSaveResult(null);
+    setSaveFailed(false);
+    setError('');
+    setStatus('ready');
+    setTimeLeft(exercise.duration_seconds);
+    setElapsed(0);
+    setTargetsHit(0);
+    setCoachHint('Camera ready. Press Start Exercise when you are.');
+    currentTargetIndex.current = 0;
+    anglesHistory.current = [];
+    smoothedStateRef.current = null;
+    activeSideRef.current = null;
+    holdStartTime.current = null;
+    lastVideoTime.current = -1;
+    poseDetectedRef.current = false;
+    setPoseDetected(false);
+  };
+
+  // Format metric numbers to a fixed number of decimals.
+  const fmt = (v, decimals = 1) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n.toFixed(decimals) : '—';
   };
 
   if (loading) {
     return <LoadingState fullPage message="Preparing your session…" />;
   }
 
+  /* ================= COMPLETION SCREEN (real metrics only) ================= */
+  if (status === 'completed' && saveResult) {
+    return (
+      <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <Card className="p-8 text-center">
+            <span className="inline-flex items-center justify-center p-4 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 mb-4">
+              <CheckCircle2 className="h-10 w-10" aria-hidden="true" />
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Exercise Completed</h1>
+            <p className="text-slate-500 mt-2">
+              {exercise.name} · {saveResult.duration}s session
+              {saveResult.newStreak != null && <> · {saveResult.newStreak} day streak</>}
+            </p>
+          </Card>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <StatCard
+              icon={Award}
+              color="primary"
+              label="Session Score"
+              value={saveResult.overallScore != null ? `${fmt(saveResult.overallScore)}%` : '—'}
+            />
+            <StatCard
+              icon={Award}
+              color="warning"
+              label="Points Earned"
+              value={saveResult.pointsEarned != null ? `${saveResult.pointsEarned}` : '—'}
+              sub="XP"
+            />
+            <StatCard
+              icon={Timer}
+              color="purple"
+              label="Movement Smoothness"
+              value={saveResult.smoothness != null ? `${fmt(saveResult.smoothness)}/100` : '—'}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <StatCard
+              icon={Timer}
+              label="Max ROM"
+              value={saveResult.maxRom != null ? `${fmt(saveResult.maxRom, 2)}°` : '—'}
+            />
+            <StatCard
+              icon={Flag}
+              label="Targets Reached"
+              value={`${saveResult.targetsHit} / ${saveResult.totalTargets}`}
+            />
+            <StatCard
+              icon={Timer}
+              label="Avg Joint Velocity"
+              value={saveResult.avgVelocity != null ? `${fmt(saveResult.avgVelocity, 2)}` : '—'}
+              sub="deg/s"
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-3">
+            {saveResult.sessionId && (
+              <Button asChild size="lg">
+                <Link to={`/reports/${saveResult.sessionId}`}>View Report</Link>
+              </Button>
+            )}
+            <Button asChild variant="outline" size="lg">
+              <Link to="/dashboard">Back to Today's Plan</Link>
+            </Button>
+            <Button variant="secondary" size="lg" onClick={handlePracticeAgain}>
+              <RotateCcw className="h-4 w-4" aria-hidden="true" /> Practice Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const targets = Array.isArray(exercise.target_positions) ? exercise.target_positions : [];
+  const holdSecs = targets.map((t) => Number(t.hold_sec) || 0).filter(Boolean);
+  const maxHold = holdSecs.length ? Math.max(...holdSecs) : null;
+  const progressPct = exercise.duration_seconds > 0
+    ? Math.min(100, (elapsed / exercise.duration_seconds) * 100)
+    : 0;
+  const statusMeta = STATUS_META[status] || STATUS_META.ready;
+
   return (
     <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="bg-white rounded-xl border border-slate-200 shadow-card p-5 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-extrabold text-slate-900">{exercise.name}</h1>
-            <div className="mt-1.5">
-              <Badge variant={exercise.level === 3 ? 'danger' : exercise.level === 2 ? 'warning' : 'success'}>
-                Level {exercise.level}{exercise.level_name ? ` · ${exercise.level_name}` : ''}
-              </Badge>
-            </div>
-          </div>
-          <div className="flex gap-6 items-center">
-            <div className="text-right" aria-live="off">
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                <Timer className="h-3.5 w-3.5" aria-hidden="true" /> Time Left
-              </span>
-              <span className="block text-2xl font-extrabold text-primary-600 tabular-nums">{timeLeft}s</span>
-            </div>
-            {running && (
-              <button onClick={stopCamera} aria-label="Stop session" className="inline-flex items-center px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors cursor-pointer">
-                <StopCircle className="w-5 h-5 mr-2" /> Stop
+
+        {/* ============ HEADER ============ */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-card p-5 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="min-w-0">
+              <button
+                type="button"
+                onClick={() => navigate('/exercises')}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-800 mb-1.5 cursor-pointer"
+              >
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Exercises
               </button>
-            )}
+              <h1 className="text-2xl font-extrabold text-slate-900 truncate">{exercise.name}</h1>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <Badge variant={exercise.level === 3 ? 'danger' : exercise.level === 2 ? 'warning' : 'success'}>
+                  Level {exercise.level}{exercise.level_name ? ` · ${exercise.level_name}` : ''}
+                </Badge>
+                {exercise.category && (
+                  <Badge variant="default">
+                    {EXERCISE_CATEGORY_LABELS[exercise.category] || exercise.category}
+                  </Badge>
+                )}
+                <Badge variant="default">
+                  <Timer className="h-3 w-3" aria-hidden="true" /> {exercise.duration_seconds}s
+                </Badge>
+                {maxHold != null && (
+                  <Badge variant="default">Hold up to {maxHold}s</Badge>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* Session status — text + icon, never color-only */}
+              <div
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200"
+                role="status"
+                aria-live="polite"
+              >
+                {status === 'in_progress' && <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" aria-hidden="true" />}
+                <span className="text-sm font-bold text-slate-700">{statusMeta.label}</span>
+              </div>
+              <div className="text-right">
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <Timer className="h-3.5 w-3.5" aria-hidden="true" /> Remaining
+                </span>
+                <span className="block text-2xl font-extrabold text-primary-600 tabular-nums">{timeLeft}s</span>
+                <span className="block text-xs text-slate-400 tabular-nums">{elapsed}s elapsed</span>
+              </div>
+            </div>
           </div>
+
+          {/* Session progress from the existing timer only */}
+          <ProgressBar
+            label="Session progress"
+            value={progressPct}
+            valueText={`${Math.round(progressPct)}% of ${exercise.duration_seconds}s`}
+            size="sm"
+          />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-card p-5 sm:p-6 flex flex-col items-center">
-            <h3 className="text-base font-bold text-slate-900 mb-4">Webcam Tracking</h3>
-            {error && <div role="alert" className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 w-full mb-4">{error}</div>}
+        {error && (
+          <div role="alert" className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+            {error}
+          </div>
+        )}
+
+        {/* ============ CAMERA / TWIN ============ */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <Card className="lg:col-span-3 p-5 sm:p-6 flex flex-col items-center">
+            <div className="w-full flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-slate-900">Camera Tracking</h2>
+              {running && (
+                <span
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200 rounded-full px-2.5 py-1"
+                  aria-live="polite"
+                >
+                  {poseDetected ? (
+                    <>
+                      <Video className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" /> Pose detected
+                    </>
+                  ) : (
+                    <>
+                      <VideoOff className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" /> Looking for you…
+                    </>
+                  )}
+                </span>
+              )}
+            </div>
             <div ref={containerRef} className="relative w-full aspect-video bg-slate-100 rounded-xl overflow-hidden flex items-center justify-center">
               <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover transform -scale-x-100" />
               <canvas ref={overlayRef} className="absolute inset-0 w-full h-full transform -scale-x-100 pointer-events-none" />
-              {!running && (
-                <button onClick={handleStart} disabled={!modelReady} className="absolute px-6 py-3.5 bg-primary-600 text-white font-bold text-base rounded-xl shadow-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center cursor-pointer z-10 transition-colors">
-                  <Play className="h-5 w-5 mr-2 fill-current" /> {modelReady ? "Initialize Camera" : "Loading Model..."}
+              {status === 'ready' && !running && (
+                <button onClick={handleStart} disabled={!modelReady || cameraStarting} className="absolute px-6 py-3.5 bg-primary-600 text-white font-bold text-base rounded-xl shadow-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center cursor-pointer z-10 transition-colors">
+                  <Play className="h-5 w-5 mr-2 fill-current" aria-hidden="true" />
+                  {cameraStarting ? 'Starting camera…' : modelReady ? 'Start Exercise' : 'Loading AI model…'}
                 </button>
               )}
+              {status === 'paused' && (
+                <span className="absolute z-10 px-4 py-2 bg-slate-900/70 text-white text-sm font-semibold rounded-lg">
+                  Session paused
+                </span>
+              )}
             </div>
-          </div>
-          <div className="bg-white rounded-xl border border-slate-200 shadow-card p-5 sm:p-6 flex flex-col items-center">
-            <h3 className="text-base font-bold text-slate-900 mb-4">Rehabilitation Digital Twin</h3>
-            <canvas ref={twinRef} width={400} height={350} className="border border-slate-200 rounded-xl bg-surface" />
-          </div>
+            <p className="text-xs text-slate-400 mt-3 text-center">
+              Your camera stays on this device — video is processed locally and never uploaded.
+            </p>
+          </Card>
+
+          <Card className="lg:col-span-2 p-5 sm:p-6 flex flex-col items-center">
+            <h2 className="text-base font-bold text-slate-900 mb-4">Rehabilitation Digital Twin</h2>
+            <canvas ref={twinRef} width={400} height={350} className="border border-slate-200 rounded-xl bg-surface w-full max-w-[400px]" />
+            <p className="text-xs text-slate-400 mt-3 text-center">
+              Reach toward the highlighted target and hold steady to complete it.
+            </p>
+          </Card>
         </div>
 
+        {/* ============ CONTROLS ============ */}
+        <Card className="p-5 sm:p-6">
+          {status === 'completing' && saveFailed ? (
+            <div className="text-center space-y-3">
+              <p className="text-sm font-semibold text-red-700">
+                Your session could not be saved. Your exercise data is kept — please try again.
+              </p>
+              <div className="flex flex-col sm:flex-row justify-center gap-3">
+                <Button size="lg" onClick={retrySave} loading={saving} disabled={saving}>
+                  {saving ? 'Saving…' : 'Try Saving Again'}
+                </Button>
+                <Button variant="outline" size="lg" asChild>
+                  <Link to="/dashboard">Back to Dashboard</Link>
+                </Button>
+              </div>
+            </div>
+          ) : status === 'completing' ? (
+            <div className="flex items-center justify-center gap-3 py-2">
+              <LoadingState message="Saving your session…" />
+            </div>
+          ) : status === 'ready' ? (
+            <div className="flex justify-center">
+              <Button size="lg" onClick={handleStart} disabled={!modelReady || cameraStarting} className="min-w-[220px] min-h-[48px]">
+                <Play className="h-5 w-5 fill-current" aria-hidden="true" />
+                {cameraStarting ? 'Starting camera…' : modelReady ? 'Start Exercise' : 'Loading AI model…'}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
+              {status === 'in_progress' && (
+                <Button variant="outline" size="lg" onClick={handlePause} className="min-h-[48px] min-w-[160px]">
+                  <Pause className="h-5 w-5" aria-hidden="true" /> Pause
+                </Button>
+              )}
+              {status === 'paused' && (
+                <Button size="lg" onClick={handleResume} className="min-h-[48px] min-w-[160px]">
+                  <Play className="h-5 w-5 fill-current" aria-hidden="true" /> Resume
+                </Button>
+              )}
+              <Button variant="danger" size="lg" onClick={handleFinish} disabled={saving} className="min-h-[48px] min-w-[160px]">
+                <Flag className="h-5 w-5" aria-hidden="true" /> Finish
+              </Button>
+            </div>
+          )}
+        </Card>
+
+        {/* ============ COACH FEEDBACK ============ */}
         <div className="bg-primary-50/60 border border-primary-100 p-5 sm:p-6 rounded-xl flex items-center justify-between gap-4">
           <div className="space-y-1 min-w-0">
-            <h4 className="text-xs font-bold text-primary-700 uppercase tracking-widest">AI Rehab Coach</h4>
+            <h3 className="text-xs font-bold text-primary-700 uppercase tracking-widest">AI Rehab Coach</h3>
             <p className="text-lg font-extrabold text-slate-900" aria-live="polite">{coachHint}</p>
           </div>
           <button onClick={() => window.speechSynthesis.speak(new SpeechSynthesisUtterance(coachHint))} aria-label="Read coach hint aloud" className="p-3 bg-white text-primary-600 border border-primary-200 rounded-full hover:bg-primary-50 transition-colors cursor-pointer shrink-0">
             <Volume2 className="h-6 w-6" aria-hidden="true" />
           </button>
         </div>
+
+        {/* ============ INSTRUCTIONS ============ */}
+        <Card className="p-5 sm:p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-3">How to do this exercise</h2>
+          {exercise.instructions ? (
+            <ol className="space-y-1.5 list-decimal list-inside text-sm text-slate-600">
+              {String(exercise.instructions).split('\n').filter(Boolean).map((line, i) => (
+                <li key={i}>{line.replace(/^\s*\d+\.\s*/, '')}</li>
+              ))}
+            </ol>
+          ) : (
+            <p className="text-sm text-slate-500">
+              Follow the on-screen target: reach toward it and hold steady for the requested time.
+            </p>
+          )}
+          {targets.length > 0 && (
+            <p className="text-xs text-slate-400 mt-3">
+              {targets.length} target{targets.length !== 1 ? 's' : ''} in this exercise
+              {maxHold != null ? ` · hold each up to ${maxHold}s` : ''} · the twin shows which target is active.
+            </p>
+          )}
+        </Card>
       </div>
     </div>
   );

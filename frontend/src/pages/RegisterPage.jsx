@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Activity } from 'lucide-react';
+import { Activity, ArrowLeft } from 'lucide-react';
+import { Button, Card } from '../components/ui';
+
+const inputClass =
+  'mt-1.5 block w-full px-3.5 py-2.5 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm';
 
 const RegisterPage = () => {
   const { register, login } = useAuth();
@@ -55,11 +59,7 @@ const RegisterPage = () => {
       await register(payload);
       // Automatically log in after registration
       await login(email, password);
-      if (role === 'therapist') {
-        navigate('/therapist');
-      } else {
-        navigate('/dashboard');
-      }
+      navigate(role === 'therapist' ? '/therapist' : '/dashboard');
     } catch (err) {
       setError(err);
       setStep(1); // Go back to fix basic details if registering failed
@@ -69,88 +69,94 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="bg-surface min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
-        <Activity className="h-12 w-12 text-blue-600 mb-2" />
-        <h2 className="text-center text-3xl font-extrabold text-gray-900">
-          Create your account
-        </h2>
+        <span className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-primary-600 text-white shadow-sm">
+          <Activity className="h-6 w-6" aria-hidden="true" />
+        </span>
+        <h1 className="mt-4 text-center text-3xl font-extrabold text-slate-900">Create your account</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          {step === 1 ? 'Step 1 of 2 — account details.' : 'Step 2 of 2 — profile details.'}
+        </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-200">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
+        <Card className="p-6 sm:p-8">
           {error && (
-            <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-4 rounded text-sm text-red-700">
+            <div role="alert" className="mb-5 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
               {error}
             </div>
           )}
 
           {step === 1 ? (
-            <form className="space-y-6" onSubmit={handleNext}>
+            <form className="space-y-5" onSubmit={handleNext}>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                <label htmlFor="fullName" className="block text-sm font-semibold text-slate-700">Full Name</label>
                 <input
+                  id="fullName"
                   type="text"
+                  autoComplete="name"
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email Address</label>
+                <label htmlFor="regEmail" className="block text-sm font-semibold text-slate-700">Email Address</label>
                 <input
+                  id="regEmail"
                   type="email"
+                  autoComplete="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Password</label>
+                <label htmlFor="regPassword" className="block text-sm font-semibold text-slate-700">Password</label>
                 <input
+                  id="regPassword"
                   type="password"
+                  autoComplete="new-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Account Type</label>
+                <label htmlFor="role" className="block text-sm font-semibold text-slate-700">Account Type</label>
                 <select
+                  id="role"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className={inputClass}
                 >
                   <option value="patient">Patient (Stroke Rehab Candidate)</option>
                   <option value="therapist">Clinician / Therapist</option>
                 </select>
               </div>
 
-              <div>
-                <button
-                  type="submit"
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                >
-                  Next Step
-                </button>
-              </div>
+              <Button type="submit" size="lg" className="w-full">
+                Next Step
+              </Button>
             </form>
           ) : (
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-5" onSubmit={handleSubmit}>
               {role === 'patient' ? (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Stroke Classification</label>
+                    <label htmlFor="strokeType" className="block text-sm font-semibold text-slate-700">Stroke Classification</label>
                     <select
+                      id="strokeType"
                       value={strokeType}
                       onChange={(e) => setStrokeType(e.target.value)}
-                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className={inputClass}
                     >
                       <option value="ischemic">Ischemic Stroke (Blood Clot)</option>
                       <option value="hemorrhagic">Hemorrhagic Stroke (Brain Bleed)</option>
@@ -160,11 +166,12 @@ const RegisterPage = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Affected Side</label>
+                    <label htmlFor="affectedSide" className="block text-sm font-semibold text-slate-700">Affected Side</label>
                     <select
+                      id="affectedSide"
                       value={affectedSide}
                       onChange={(e) => setAffectedSide(e.target.value)}
-                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className={inputClass}
                     >
                       <option value="left">Left Side Affected (Right Brain Stroke)</option>
                       <option value="right">Right Side Affected (Left Brain Stroke)</option>
@@ -172,11 +179,12 @@ const RegisterPage = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Severity Level (1-5)</label>
+                    <label htmlFor="severityLevel" className="block text-sm font-semibold text-slate-700">Severity Level (1-5)</label>
                     <select
+                      id="severityLevel"
                       value={severityLevel}
                       onChange={(e) => setSeverityLevel(Number(e.target.value))}
-                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className={inputClass}
                     >
                       <option value={1}>1 - Severe Paralysis (Passive Exercise Support)</option>
                       <option value={2}>2 - Moderate-Severe Impairment</option>
@@ -187,69 +195,64 @@ const RegisterPage = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Date of Stroke Incident</label>
+                    <label htmlFor="dateOfStroke" className="block text-sm font-semibold text-slate-700">Date of Stroke Incident</label>
                     <input
+                      id="dateOfStroke"
                       type="date"
                       required
                       value={dateOfStroke}
                       onChange={(e) => setDateOfStroke(e.target.value)}
-                      className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className={inputClass}
                     />
                   </div>
                 </>
               ) : (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Specialization</label>
+                    <label htmlFor="specialization" className="block text-sm font-semibold text-slate-700">Specialization</label>
                     <input
+                      id="specialization"
                       type="text"
                       required
                       value={specialization}
                       placeholder="e.g., Physical Therapist, Occupational Therapist"
                       onChange={(e) => setSpecialization(e.target.value)}
-                      className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className={inputClass}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Medical License Number</label>
+                    <label htmlFor="licenseNumber" className="block text-sm font-semibold text-slate-700">Medical License Number</label>
                     <input
+                      id="licenseNumber"
                       type="text"
                       required
                       value={licenseNumber}
                       onChange={(e) => setLicenseNumber(e.target.value)}
-                      className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className={inputClass}
                     />
                   </div>
                 </>
               )}
 
-              <div className="flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="w-1/2 flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-1/2 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
-                >
-                  {loading ? 'Creating...' : 'Register'}
-                </button>
+              <div className="flex gap-3">
+                <Button type="button" variant="outline" size="lg" className="w-1/2" onClick={() => setStep(1)}>
+                  <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
+                </Button>
+                <Button type="submit" size="lg" loading={loading} className="w-1/2">
+                  {loading ? 'Creating…' : 'Register'}
+                </Button>
               </div>
             </form>
           )}
 
-          <div className="mt-6 text-center">
-            <span className="text-sm text-gray-600">Already have an account? </span>
-            <Link to="/login" className="text-sm font-medium text-blue-600 hover:text-blue-500">
+          <p className="mt-6 text-center text-sm text-slate-500">
+            Already have an account?{' '}
+            <Link to="/login" className="font-semibold text-primary-600 hover:text-primary-700">
               Sign in
             </Link>
-          </div>
-        </div>
+          </p>
+        </Card>
       </div>
     </div>
   );

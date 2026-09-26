@@ -1,72 +1,85 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Activity, Shield, Award, LineChart, ChevronRight } from 'lucide-react';
+import { Activity, ChevronRight, LineChart, Shield, Sparkles } from 'lucide-react';
+import { Button, Card } from '../components/ui';
 
 const LandingPage = () => {
   const { user } = useAuth();
 
   return (
-    <div className="bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen">
+    <div className="bg-surface min-h-screen">
+      {/* Hero */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
-        <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-gray-900 mb-6">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-xs font-bold uppercase tracking-wider">
+          <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> AI-Assisted Rehabilitation
+        </span>
+        <h1 className="mt-5 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mb-5 text-balance">
           AI-Powered{' '}
-          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Stroke Rehabilitation
-          </span>
+          <span className="text-primary-600">Stroke Rehabilitation</span>
         </h1>
-        <p className="max-w-2xl mx-auto text-xl text-gray-600 mb-10">
+        <p className="max-w-2xl mx-auto text-lg text-slate-600 mb-9 text-pretty">
           Transform stroke recovery with real-time pose estimation, personalized exercise regimens based on clinical research, and detailed joint kinematics.
         </p>
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center gap-3">
           {user ? (
-            <Link
-              to={user.role === 'therapist' ? '/therapist' : '/dashboard'}
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 gap-2"
-            >
-              Go to Dashboard <ChevronRight className="h-5 w-5" />
-            </Link>
+            <Button asChild size="lg">
+              <Link to={user.role === 'therapist' ? '/therapist' : '/dashboard'}>
+                Go to Dashboard <ChevronRight className="h-5 w-5" aria-hidden="true" />
+              </Link>
+            </Button>
           ) : (
             <>
-              <Link
-                to="/register"
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 gap-2"
-              >
-                Get Started
-              </Link>
-              <Link
-                to="/login"
-                className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50"
-              >
-                Sign In
-              </Link>
+              <Button asChild size="lg">
+                <Link to="/register">Get Started</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link to="/login">Sign In</Link>
+              </Button>
             </>
           )}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <Activity className="h-10 w-10 text-blue-600 mb-4" />
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Real-Time Pose Tracking</h3>
-            <p className="text-gray-600">Track motor trajectories directly in your browser using standard webcam devices without auxiliary gear.</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <Shield className="h-10 w-10 text-purple-600 mb-4" />
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Disease-Specific</h3>
-            <p className="text-gray-600">Rehabilitation exercises specialized for Ischemic, Hemorrhagic, TIA, and Brainstem stroke pathologies.</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <LineChart className="h-10 w-10 text-green-600 mb-4" />
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Analytical Insights</h3>
-            <p className="text-gray-600">Assess recovery quality through joint velocity tracking, range-of-motion metrics, and movement smoothness.</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <Award className="h-10 w-10 text-amber-600 mb-4" />
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Gamification System</h3>
-            <p className="text-gray-600">Keep motivation levels high with daily execution streaks, earned trophies, and point tracking rewards.</p>
-          </div>
+      {/* Feature grid */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card hoverable className="p-6">
+            <span className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-primary-50 text-primary-600 border border-primary-100 mb-4">
+              <Activity className="h-5.5 w-5.5" aria-hidden="true" />
+            </span>
+            <h3 className="text-lg font-bold text-slate-900 mb-1.5">Real-Time Pose Tracking</h3>
+            <p className="text-sm text-slate-500 leading-relaxed">
+              Track motor trajectories directly in your browser using standard webcam devices without auxiliary gear.
+            </p>
+          </Card>
+          <Card hoverable className="p-6">
+            <span className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 mb-4">
+              <Shield className="h-5.5 w-5.5" aria-hidden="true" />
+            </span>
+            <h3 className="text-lg font-bold text-slate-900 mb-1.5">Disease-Specific</h3>
+            <p className="text-sm text-slate-500 leading-relaxed">
+              Rehabilitation exercises specialized for Ischemic, Hemorrhagic, TIA, and Brainstem stroke pathologies.
+            </p>
+          </Card>
+          <Card hoverable className="p-6">
+            <span className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 mb-4">
+              <LineChart className="h-5.5 w-5.5" aria-hidden="true" />
+            </span>
+            <h3 className="text-lg font-bold text-slate-900 mb-1.5">Analytical Insights</h3>
+            <p className="text-sm text-slate-500 leading-relaxed">
+              Assess recovery quality through joint velocity tracking, range-of-motion metrics, and movement smoothness.
+            </p>
+          </Card>
+          <Card hoverable className="p-6">
+            <span className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 mb-4">
+              <Sparkles className="h-5.5 w-5.5" aria-hidden="true" />
+            </span>
+            <h3 className="text-lg font-bold text-slate-900 mb-1.5">Gamification System</h3>
+            <p className="text-sm text-slate-500 leading-relaxed">
+              Keep motivation levels high with daily execution streaks, earned trophies, and point tracking rewards.
+            </p>
+          </Card>
         </div>
       </div>
     </div>

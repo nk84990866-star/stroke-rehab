@@ -6,6 +6,7 @@ import Navbar from './components/Navbar';
 
 // Pages
 import LandingPage from './pages/LandingPage';
+import ProfilePage from './pages/ProfilePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
@@ -20,7 +21,7 @@ import TherapistDashboardPage from './pages/TherapistDashboardPage';
 function App() {
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-surface flex flex-col">
         <Navbar />
         <main className="flex-grow">
           <Routes>
@@ -82,6 +83,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['patient']}>
                   <AchievementsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute allowedRoles={['patient']}>
+                  <ProfilePage />
                 </ProtectedRoute>
               }
             />

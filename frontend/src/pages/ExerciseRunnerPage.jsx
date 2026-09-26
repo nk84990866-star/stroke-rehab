@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getExerciseDetail, saveSession } from '../services/api';
-import { Play, Volume2, ShieldAlert, StopCircle } from 'lucide-react';
+import { Play, Volume2, StopCircle, Timer } from 'lucide-react';
+import { Badge, LoadingState } from '../components/ui';
 import { PoseLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 
 const ExerciseRunnerPage = () => {
@@ -345,28 +346,30 @@ const ExerciseRunnerPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingState fullPage message="Preparing your session…" />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex justify-between items-center">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-card p-5 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-extrabold text-gray-900">{exercise.name}</h1>
-            <p className="text-gray-500 mt-1">Difficulty level: <span className="font-semibold text-blue-600">Level {exercise.level}</span></p>
+            <h1 className="text-2xl font-extrabold text-slate-900">{exercise.name}</h1>
+            <div className="mt-1.5">
+              <Badge variant={exercise.level === 3 ? 'danger' : exercise.level === 2 ? 'warning' : 'success'}>
+                Level {exercise.level}{exercise.level_name ? ` · ${exercise.level_name}` : ''}
+              </Badge>
+            </div>
           </div>
           <div className="flex gap-6 items-center">
-            <div className="text-right">
-              <span className="text-xs font-semibold text-gray-500 uppercase">Time Left</span>
-              <span className="block text-2xl font-extrabold text-blue-600">{timeLeft}s</span>
+            <div className="text-right" aria-live="off">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <Timer className="h-3.5 w-3.5" aria-hidden="true" /> Time Left
+              </span>
+              <span className="block text-2xl font-extrabold text-primary-600 tabular-nums">{timeLeft}s</span>
             </div>
             {running && (
-              <button onClick={stopCamera} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded shadow font-bold flex items-center cursor-pointer">
+              <button onClick={stopCamera} aria-label="Stop session" className="inline-flex items-center px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors cursor-pointer">
                 <StopCircle className="w-5 h-5 mr-2" /> Stop
               </button>
             )}
@@ -374,32 +377,32 @@ const ExerciseRunnerPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col items-center">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Webcam Tracking</h3>
-            {error && <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded text-sm text-red-700 w-full mb-4">{error}</div>}
-            <div ref={containerRef} className="relative w-full aspect-video bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-card p-5 sm:p-6 flex flex-col items-center">
+            <h3 className="text-base font-bold text-slate-900 mb-4">Webcam Tracking</h3>
+            {error && <div role="alert" className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 w-full mb-4">{error}</div>}
+            <div ref={containerRef} className="relative w-full aspect-video bg-slate-100 rounded-xl overflow-hidden flex items-center justify-center">
               <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover transform -scale-x-100" />
               <canvas ref={overlayRef} className="absolute inset-0 w-full h-full transform -scale-x-100 pointer-events-none" />
               {!running && (
-                <button onClick={handleStart} disabled={!modelReady} className="absolute px-6 py-3 bg-blue-600 text-white font-bold rounded-lg shadow hover:bg-blue-700 disabled:opacity-50 flex items-center cursor-pointer z-10">
+                <button onClick={handleStart} disabled={!modelReady} className="absolute px-6 py-3.5 bg-primary-600 text-white font-bold text-base rounded-xl shadow-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center cursor-pointer z-10 transition-colors">
                   <Play className="h-5 w-5 mr-2 fill-current" /> {modelReady ? "Initialize Camera" : "Loading Model..."}
                 </button>
               )}
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col items-center">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Rehabilitation Digital Twin</h3>
-            <canvas ref={twinRef} width={400} height={350} className="border border-gray-200 rounded-lg bg-gray-50" />
+          <div className="bg-white rounded-xl border border-slate-200 shadow-card p-5 sm:p-6 flex flex-col items-center">
+            <h3 className="text-base font-bold text-slate-900 mb-4">Rehabilitation Digital Twin</h3>
+            <canvas ref={twinRef} width={400} height={350} className="border border-slate-200 rounded-xl bg-surface" />
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-100 flex items-center justify-between">
-          <div className="space-y-1">
-            <h4 className="text-xs font-bold text-blue-800 uppercase tracking-widest">AI Rehab Coach</h4>
-            <p className="text-lg font-extrabold text-blue-950">{coachHint}</p>
+        <div className="bg-primary-50/60 border border-primary-100 p-5 sm:p-6 rounded-xl flex items-center justify-between gap-4">
+          <div className="space-y-1 min-w-0">
+            <h4 className="text-xs font-bold text-primary-700 uppercase tracking-widest">AI Rehab Coach</h4>
+            <p className="text-lg font-extrabold text-slate-900" aria-live="polite">{coachHint}</p>
           </div>
-          <button onClick={() => window.speechSynthesis.speak(new SpeechSynthesisUtterance(coachHint))} className="p-3 bg-white text-blue-600 border border-blue-200 rounded-full hover:bg-blue-50 cursor-pointer">
-            <Volume2 className="h-6 w-6" />
+          <button onClick={() => window.speechSynthesis.speak(new SpeechSynthesisUtterance(coachHint))} aria-label="Read coach hint aloud" className="p-3 bg-white text-primary-600 border border-primary-200 rounded-full hover:bg-primary-50 transition-colors cursor-pointer shrink-0">
+            <Volume2 className="h-6 w-6" aria-hidden="true" />
           </button>
         </div>
       </div>

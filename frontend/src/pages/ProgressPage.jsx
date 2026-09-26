@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getProgress } from '../services/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { BarChart2, Activity } from 'lucide-react';
+import { Card, EmptyState, LoadingState, SectionHeader } from '../components/ui';
 
 const ProgressPage = () => {
   const [data, setData] = useState([]);
@@ -22,67 +23,65 @@ const ProgressPage = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingState fullPage message="Loading your progress…" />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-surface min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-extrabold text-gray-900">Recovery Progress</h1>
-          <p className="text-gray-600 mt-1">Visualize historical trends of joint range of motion (ROM) and training accuracy scores.</p>
-        </div>
+        <SectionHeader
+          icon={BarChart2}
+          eyebrow="Analytics"
+          title="Recovery Progress"
+          description="Visualize historical trends of joint range of motion (ROM) and training accuracy scores."
+        />
 
         {data.length === 0 ? (
-          <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 text-center">
-            <BarChart2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-gray-900">No session details recorded</h3>
-            <p className="text-gray-500 mt-1">Your rehabilitation tracking analytics will render here over time.</p>
-          </div>
+          <EmptyState
+            icon={BarChart2}
+            title="No session details recorded"
+            description="Your rehabilitation tracking analytics will render here over time."
+          />
         ) : (
-          <div className="grid grid-cols-1 gap-8">
+          <div className="grid grid-cols-1 gap-6">
             {/* Score & Smoothness Over Time */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Activity className="h-5 w-5 text-blue-600" /> Score & Smoothness Over Time
+            <Card className="p-5 sm:p-6">
+              <h2 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary-600" aria-hidden="true" /> Score &amp; Smoothness Over Time
               </h2>
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={[0, 100]} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#64748b' }} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#64748b' }} />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="score" stroke="#2563eb" name="Accuracy Score (%)" strokeWidth={2} activeDot={{ r: 8 }} />
+                    <Line type="monotone" dataKey="score" stroke="#0f83fd" name="Accuracy Score (%)" strokeWidth={2} activeDot={{ r: 8 }} />
                     <Line type="monotone" dataKey="smoothness" stroke="#8b5cf6" name="Smoothness Index" strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </Card>
 
             {/* Range of Motion Over Time */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <BarChart2 className="h-5 w-5 text-purple-600" /> Range of Motion (Max Extension)
+            <Card className="p-5 sm:p-6">
+              <h2 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                <BarChart2 className="h-5 w-5 text-purple-600" aria-hidden="true" /> Range of Motion (Max Extension)
               </h2>
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={[0, 180]} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#64748b' }} />
+                    <YAxis domain={[0, 180]} tick={{ fontSize: 12, fill: '#64748b' }} />
                     <Tooltip />
                     <Legend />
                     <Line type="monotone" dataKey="rom" stroke="#10b981" name="Max ROM achieved (degrees)" strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </Card>
           </div>
         )}
       </div>

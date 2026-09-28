@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { getSessions } from '../services/api';
-import { Calendar, ChevronRight, ChevronLeft, FileText, CheckCircle, ArrowLeft, X } from 'lucide-react';
+import { Calendar, ChevronRight, ChevronLeft, FileText, CheckCircle, X } from 'lucide-react';
 import { cn } from '../lib/cn';
-import { Card, EmptyStateLink, LoadingState, SectionHeader } from '../components/ui';
+import { BackLink, Card, EmptyStateLink, LoadingState, SectionHeader } from '../components/ui';
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -77,9 +77,9 @@ const ReportsPage = () => {
     <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Back navigation */}
-        <Link to="/dashboard" className="inline-flex items-center text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 gap-1.5 cursor-pointer">
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Dashboard
-        </Link>
+        <BackLink to="/dashboard">
+          Back to Dashboard
+        </BackLink>
 
         <SectionHeader
           icon={FileText}

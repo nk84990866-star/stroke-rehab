@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { getSessionReport } from '../services/api';
-import { ArrowLeft, CheckCircle, BrainCircuit, Crosshair, Gauge, Waves } from 'lucide-react';
-import { Badge, Card, LoadingState, StatCard } from '../components/ui';
+import { CheckCircle, BrainCircuit, Crosshair, Gauge, Waves } from 'lucide-react';
+import { BackLink, Badge, Card, LoadingState, StatCard } from '../components/ui';
 
 const ReportDetailPage = () => {
   const { id } = useParams();
@@ -41,9 +41,9 @@ const ReportDetailPage = () => {
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Back Link */}
-        <Link to="/reports" className="inline-flex items-center text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 gap-1.5 cursor-pointer">
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Sessions
-        </Link>
+        <BackLink to="/reports">
+          Back to Sessions
+        </BackLink>
 
         {/* Header Block */}
         <Card className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

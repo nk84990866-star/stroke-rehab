@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { getExerciseDetail, saveSession } from '../services/api';
 import {
   isVoiceEnabled,
@@ -9,7 +9,6 @@ import {
   stopSpeaking,
 } from '../services/voice';
 import {
-  ArrowLeft,
   Award,
   CheckCircle2,
   Flag,
@@ -23,7 +22,7 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
-import { Badge, Button, Card, ProgressBar, LoadingState, StatCard } from '../components/ui';
+import { BackLink, Badge, Button, Card, ProgressBar, LoadingState, StatCard } from '../components/ui';
 import { EXERCISE_CATEGORY_LABELS } from '../config/labels';
 import { cn } from '../lib/cn';
 import { PoseLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
@@ -53,7 +52,6 @@ const MIN_REP_AMPLITUDE = 40; // dy units (≈ 0.13 normalized offset) — noise
 
 const ExerciseRunnerPage = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
 
   const [exercise, setExercise] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -725,13 +723,9 @@ const ExerciseRunnerPage = () => {
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-card p-5 sm:p-6 space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="min-w-0">
-              <button
-                type="button"
-                onClick={() => navigate('/exercises')}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 mb-1.5 cursor-pointer"
-              >
-                <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Exercises
-              </button>
+              <BackLink to="/exercises" className="mb-1.5">
+                Back to Exercises
+              </BackLink>
               <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-50 truncate">{exercise.name}</h1>
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <Badge variant={exercise.level === 3 ? 'danger' : exercise.level === 2 ? 'warning' : 'success'}>

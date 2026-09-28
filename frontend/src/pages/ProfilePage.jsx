@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Award,
@@ -10,7 +9,7 @@ import {
   Stethoscope,
   UserCircle2,
 } from 'lucide-react';
-import { Card, Badge, SectionHeader, StatCard } from '../components/ui';
+import { BackLink, Card, Badge, SectionHeader, StatCard } from '../components/ui';
 import {
   STROKE_TYPE_LABELS,
   AFFECTED_SIDE_LABELS,
@@ -37,12 +36,9 @@ const ProfilePage = () => {
           title="My Profile"
           description="Your account details and rehabilitation profile."
           actions={
-            <Link
-              to="/dashboard"
-              className="text-sm font-semibold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 cursor-pointer"
-            >
-              ← Back to Dashboard
-            </Link>
+            <BackLink to="/dashboard">
+              Back to Dashboard
+            </BackLink>
           }
         />
 

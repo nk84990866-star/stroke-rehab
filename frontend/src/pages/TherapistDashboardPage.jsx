@@ -272,7 +272,7 @@ const TherapistDashboardPage = () => {
   if (error) {
     return (
       <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <ErrorState
             title="We couldn't load your patient list"
             message="Check your connection and try again. If the problem continues, the service may be temporarily unavailable."

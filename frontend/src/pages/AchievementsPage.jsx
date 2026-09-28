@@ -218,7 +218,7 @@ const AchievementsPage = () => {
 
   return (
     <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6">
         <SectionHeader
           icon={Trophy}
           eyebrow="Milestones"

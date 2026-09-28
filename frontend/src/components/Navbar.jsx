@@ -63,8 +63,8 @@ const Navbar = ({ onOpenMobileNav, mobileNavOpen }) => {
 
   return (
     <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200 dark:border-slate-700 dark:bg-slate-900/90 dark:border-slate-700">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto flex justify-between h-16 items-center">
           {/* Brand */}
           <div className="flex items-center min-w-0">
             <Link to="/" className="flex-shrink-0 flex items-center gap-2 cursor-pointer">

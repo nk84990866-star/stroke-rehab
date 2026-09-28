@@ -23,8 +23,7 @@ import {
 } from 'lucide-react';
 import { getStats, getProgress, getSessions } from '../services/api';
 import { useTheme } from '../context/ThemeContext';
-import { Badge, Card, EmptyStateLink, ErrorState, LoadingState, SectionHeader, StatCard } from '../components/ui';
-import { cn } from '../lib/cn';
+import { Badge, Card, EmptyStateLink, ErrorState, LoadingState, SectionHeader, StatCard, SegmentedControl } from '../components/ui';
 
 const RANGES = [
   { label: '7 Days', value: 7 },
@@ -220,28 +219,14 @@ const ProgressPage = () => {
           title="Your Progress"
           description="A summary of your completed rehabilitation sessions over time."
           actions={
-            <div
-              className="inline-flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl gap-1"
-              role="group"
-              aria-label="Time range filter"
-            >
-              {RANGES.map((r) => (
-                <button
-                  key={r.label}
-                  type="button"
-                  aria-pressed={rangeDays === r.value}
-                  onClick={() => setRangeDays(r.value)}
-                  className={cn(
-                    'px-3 py-2 text-sm font-semibold rounded-lg transition-colors cursor-pointer',
-                    rangeDays === r.value
-                      ? 'bg-white dark:bg-slate-900 text-primary-700 shadow-sm'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100',
-                  )}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              options={RANGES}
+              value={rangeDays}
+              onChange={setRangeDays}
+              semantic="group"
+              ariaLabel="Time range filter"
+              buttonClassName="px-3"
+            />
           }
         />
 

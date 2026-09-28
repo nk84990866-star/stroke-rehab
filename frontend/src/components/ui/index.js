@@ -14,3 +14,4 @@ export { default as EmptyState, EmptyStateLink } from './EmptyState';
 export { default as LoadingState } from './LoadingState';
 export { default as ErrorState } from './ErrorState';
 export { default as ExerciseCard } from './ExerciseCard';
+export { default as SegmentedControl } from './SegmentedControl';

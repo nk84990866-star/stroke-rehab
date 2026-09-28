@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { getExercises, getDailyPlan } from '../services/api';
 import { Award, Dumbbell, Search, SlidersHorizontal, Timer, Users, X } from 'lucide-react';
-import { cn } from '../lib/cn';
-import { Badge, Button, EmptyState, LoadingState, SectionHeader, ExerciseCard } from '../components/ui';
+import { Badge, Button, EmptyState, LoadingState, SectionHeader, ExerciseCard, SegmentedControl } from '../components/ui';
 import {
   STROKE_TYPE_LABELS,
   STROKE_TYPE_SHORT_LABELS,
@@ -134,29 +133,14 @@ const ExercisesPage = () => {
             )}
           </div>
 
-          <div
-            className="inline-flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl gap-1 w-fit"
-            role="tablist"
-            aria-label="Exercise difficulty level"
-          >
-            {LEVEL_TABS.map((tab) => (
-              <button
-                key={tab.value}
-                type="button"
-                role="tab"
-                aria-selected={selectedLevel === tab.value}
-                onClick={() => setSelectedLevel(tab.value)}
-                className={cn(
-                  'px-4 py-2 text-sm font-semibold rounded-lg transition-colors cursor-pointer',
-                  selectedLevel === tab.value
-                    ? 'bg-white dark:bg-slate-900 text-primary-700 shadow-sm'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100',
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            options={LEVEL_TABS}
+            value={selectedLevel}
+            onChange={setSelectedLevel}
+            semantic="tabs"
+            ariaLabel="Exercise difficulty level"
+            className="w-fit"
+          />
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 lg:ml-auto">
             <div className="flex items-center gap-2">

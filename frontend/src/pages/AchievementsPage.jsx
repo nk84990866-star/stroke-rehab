@@ -203,12 +203,12 @@ const AchievementsPage = () => {
       role="status"
       className="flex items-center gap-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3.5"
     >
-      <span className="inline-flex items-center justify-center p-2.5 rounded-xl bg-amber-100 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 shrink-0">
+      <span className="inline-flex items-center justify-center p-2.5 rounded-xl bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 shrink-0">
         <Award className="h-5 w-5" aria-hidden="true" />
       </span>
       <div>
-        <p className="text-sm font-extrabold text-amber-900">Achievement unlocked!</p>
-        <p className="text-sm text-amber-800">
+        <p className="text-sm font-extrabold text-amber-900 dark:text-amber-100">Achievement unlocked!</p>
+        <p className="text-sm text-amber-800 dark:text-amber-200">
           {BADGE_META[recentBadge]?.name || recentBadge}
           {REQUIREMENTS[recentBadge] ? ` — ${REQUIREMENTS[recentBadge].replace(/^Complete/, 'you completed')}` : ''}
         </p>

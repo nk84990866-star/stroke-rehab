@@ -111,12 +111,20 @@ const Navbar = ({ onOpenMobileNav, mobileNavOpen }) => {
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
+                // Inside AppShell the Sidebar footer already shows the user's
+                // name, so this pill is avatar-only (see the name span below).
+                // That span is the button's accessible name, so supply one
+                // explicitly here. Standalone mode leaves it undefined and
+                // falls back to the visible name, exactly as before.
+                aria-label={inShell ? `Account menu for ${user.full_name || 'user'}` : undefined}
                 className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer dark:border-slate-700 dark:hover:bg-slate-800"
               >
                 <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-700 text-xs font-bold uppercase dark:bg-primary-800 dark:text-primary-100">
                   {(user.full_name || '?').trim().charAt(0)}
                 </span>
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 dark:text-slate-200 max-w-[10rem] truncate">{user.full_name}</span>
+                {!inShell && (
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 dark:text-slate-200 max-w-[10rem] truncate">{user.full_name}</span>
+                )}
               </button>
               {menuOpen && (
                 <div

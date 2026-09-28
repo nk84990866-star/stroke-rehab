@@ -6,13 +6,26 @@ import { Activity, Flame, LogOut, Menu, X, UserCircle2 } from 'lucide-react';
 import { getNavItems, isActive } from '../config/navigation';
 import { cn } from '../lib/cn';
 
-const Navbar = () => {
+/**
+ * Navbar — the top bar.
+ *
+ * Rendered in two modes:
+ *  - standalone (public routes): unchanged — owns the desktop links and its
+ *    own mobile dropdown.
+ *  - inside AppShell (`onOpenMobileNav` supplied): the Sidebar is the single
+ *    navigation system, so the desktop links and the mobile dropdown are
+ *    suppressed and the hamburger opens the sidebar drawer instead. Brand,
+ *    theme switcher, streak and the profile dropdown are unchanged.
+ */
+const Navbar = ({ onOpenMobileNav, mobileNavOpen }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+
+  const inShell = Boolean(onOpenMobileNav);
 
   // Close the profile dropdown on outside click
   useEffect(() => {
@@ -62,18 +75,21 @@ const Navbar = () => {
                 NeuroMotion <span className="text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200">AI</span>
               </span>
             </Link>
-            <div className="hidden lg:ml-8 lg:flex lg:items-center lg:gap-1">
-              {links.map((link) => {
-                const Icon = link.icon;
-                const active = isActive(link.path, location.pathname);
-                return (
-                  <Link key={link.path} to={link.path} className={navLinkClass(active)} aria-current={active ? 'page' : undefined}>
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                    {link.name}
-                  </Link>
-                );
-              })}
-            </div>
+            {/* Desktop links — the Sidebar owns navigation inside AppShell. */}
+            {!inShell && (
+              <div className="hidden lg:ml-8 lg:flex lg:items-center lg:gap-1">
+                {links.map((link) => {
+                  const Icon = link.icon;
+                  const active = isActive(link.path, location.pathname);
+                  return (
+                    <Link key={link.path} to={link.path} className={navLinkClass(active)} aria-current={active ? 'page' : undefined}>
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                      {link.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Right side */}
@@ -146,19 +162,20 @@ const Navbar = () => {
             )}
             <button
               type="button"
-              onClick={() => setMobileOpen((v) => !v)}
-              aria-expanded={mobileOpen}
-              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+              onClick={inShell ? onOpenMobileNav : () => setMobileOpen((v) => !v)}
+              aria-expanded={inShell ? Boolean(mobileNavOpen) : mobileOpen}
+              aria-label={inShell ? 'Open navigation menu' : mobileOpen ? 'Close menu' : 'Open menu'}
               className="inline-flex items-center justify-center p-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {mobileOpen && !inShell ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {mobileOpen && (
+      {/* Mobile menu — standalone mode only; inside AppShell the Sidebar
+          drawer is the mobile navigation system. */}
+      {!inShell && mobileOpen && (
         <div className="lg:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 px-3 pt-2 pb-4 space-y-1 shadow-lg dark:bg-slate-900 dark:border-slate-700">
           {links.map((link) => {
             const Icon = link.icon;

@@ -1,7 +1,8 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import AppShell from './components/layout/AppShell';
 import Navbar from './components/Navbar';
 
 // Pages
@@ -18,6 +19,20 @@ import ProgressPage from './pages/ProgressPage';
 import AchievementsPage from './pages/AchievementsPage';
 import TherapistDashboardPage from './pages/TherapistDashboardPage';
 
+/**
+ * PublicShell — layout for the unauthenticated routes.
+ * Renders the top bar only (no sidebar), exactly as before the shell existed.
+ * Navbar self-hides when there is no signed-in user.
+ */
+const PublicShell = () => (
+  <>
+    <Navbar />
+    <main id="main-content" className="flex-grow">
+      <Outlet />
+    </main>
+  </>
+);
+
 function App() {
   return (
     <AuthProvider>
@@ -29,92 +44,45 @@ function App() {
         >
           Skip to main content
         </a>
-        <Navbar />
-        <main id="main-content" className="flex-grow">
-          <Routes>
+        <Routes>
+          {/* Public routes — top bar, no sidebar */}
+          <Route element={<PublicShell />}>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            
-            {/* Patient routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={['patient']}>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/exercises"
-              element={
-                <ProtectedRoute allowedRoles={['patient']}>
-                  <ExercisesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/exercise/:id"
-              element={
-                <ProtectedRoute allowedRoles={['patient']}>
-                  <ExerciseRunnerPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute allowedRoles={['patient']}>
-                  <ReportsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reports/:id"
-              element={
-                <ProtectedRoute allowedRoles={['patient']}>
-                  <ReportDetailPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/progress"
-              element={
-                <ProtectedRoute allowedRoles={['patient']}>
-                  <ProgressPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/achievements"
-              element={
-                <ProtectedRoute allowedRoles={['patient']}>
-                  <AchievementsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute allowedRoles={['patient']}>
-                  <ProfilePage />
-                </ProtectedRoute>
-              }
-            />
+          </Route>
 
-            {/* Therapist routes */}
-            <Route
-              path="/therapist"
-              element={
-                <ProtectedRoute allowedRoles={['therapist']}>
-                  <TherapistDashboardPage />
-                </ProtectedRoute>
-              }
-            />
+          {/* Patient routes — AppShell (sidebar + top bar) */}
+          <Route
+            element={
+              <ProtectedRoute allowedRoles={['patient']}>
+                <AppShell />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/exercises" element={<ExercisesPage />} />
+            <Route path="/exercise/:id" element={<ExerciseRunnerPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/reports/:id" element={<ReportDetailPage />} />
+            <Route path="/progress" element={<ProgressPage />} />
+            <Route path="/achievements" element={<AchievementsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+          </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </main>
+          {/* Therapist routes — AppShell (sidebar + top bar) */}
+          <Route
+            element={
+              <ProtectedRoute allowedRoles={['therapist']}>
+                <AppShell />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/therapist" element={<TherapistDashboardPage />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </div>
     </AuthProvider>
   );

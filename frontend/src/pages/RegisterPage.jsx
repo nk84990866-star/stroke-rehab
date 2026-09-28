@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Activity, ArrowLeft } from 'lucide-react';
-import { Button, Card, FORM_CONTROL_CLASS, FORM_LABEL_CLASS, InlineError } from '../components/ui';
+import { Button, Card, AUTH_PAGE_CLASS, FORM_CONTROL_CLASS, FORM_LABEL_CLASS, InlineError } from '../components/ui';
 
 const RegisterPage = () => {
   const { register, login } = useAuth();
@@ -66,7 +66,7 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="bg-surface dark:bg-slate-950 min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className={AUTH_PAGE_CLASS}>
       <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
         <span className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-primary-600 text-white shadow-sm">
           <Activity className="h-6 w-6" aria-hidden="true" />

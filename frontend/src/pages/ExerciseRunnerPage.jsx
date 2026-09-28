@@ -270,7 +270,8 @@ const ExerciseRunnerPage = () => {
         // Respect prefers-reduced-motion: keep the target marker static
         // instead of pulsing every frame for users who opt out of motion.
         const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-        const radius = reduceMotion ? 15 : 15 + Math.sin(Date.now() / 150) * 3;
+        const baseRadius = exercise?.target_radius ? exercise.target_radius * 3 : 15;
+        const radius = reduceMotion ? baseRadius : baseRadius + Math.sin(Date.now() / 150) * (baseRadius * 0.2);
         ctx.beginPath();
         ctx.arc(targetX, targetY, radius, 0, 2 * Math.PI);
         ctx.fillStyle = 'rgba(16, 185, 129, 0.2)';

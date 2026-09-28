@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Activity } from 'lucide-react';
-import { Button, Card, FORM_CONTROL_CLASS } from '../components/ui';
+import { Button, Card, FORM_CONTROL_CLASS, InlineError } from '../components/ui';
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -41,9 +41,9 @@ const LoginPage = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <Card className="p-6 sm:p-8">
           {error && (
-            <div id="login-error" role="alert" className="mb-5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm rounded-lg px-4 py-3">
+            <InlineError id="login-error">
               {error}
-            </div>
+            </InlineError>
           )}
 
           <form className="space-y-5" onSubmit={handleSubmit}>

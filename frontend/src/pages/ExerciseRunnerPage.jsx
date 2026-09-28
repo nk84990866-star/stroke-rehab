@@ -101,6 +101,10 @@ const ExerciseRunnerPage = () => {
   const sessionMaxDyRef = useRef(0);        // running max dy — per-session calibration
   const poseDetectedRef = useRef(false);
 
+  // Real accuracy tracking
+  const accuracySumRef = useRef(0);
+  const accuracyCountRef = useRef(0);
+
   // Load exercise and model
   useEffect(() => {
     const initialize = async () => {
@@ -429,6 +433,13 @@ const ExerciseRunnerPage = () => {
             const targetCanvasY = shoulderY - (currentTarget.y * 4);
             const distance = Math.sqrt(Math.pow(handX - targetCanvasX, 2) + Math.pow(handY - targetCanvasY, 2));
 
+            let frameAccuracy = 100;
+            if (distance > 35) {
+                frameAccuracy = Math.max(0, 100 - (distance - 35) * 0.5);
+            }
+            accuracySumRef.current += frameAccuracy;
+            accuracyCountRef.current += 1;
+
             if (distance < 35) {
               if (!holdStartTime.current) holdStartTime.current = Date.now();
               const holdDuration = (Date.now() - holdStartTime.current) / 1000;
@@ -492,12 +503,17 @@ const ExerciseRunnerPage = () => {
     setSaving(true);
     setSaveFailed(false);
     try {
+      const finalAccuracy =
+        accuracyCountRef.current > 0
+          ? Number((accuracySumRef.current / accuracyCountRef.current).toFixed(2))
+          : 100;
+
       const result = await saveSession({
         exercise_id: Number(id),
         duration_seconds: exercise.duration_seconds,
-        avg_accuracy_score: score,
+        avg_accuracy_score: finalAccuracy,
         targets_hit: targetsHit,
-        total_targets: targetsHit + 1,
+        total_targets: exercise?.target_positions?.length || (targetsHit + 1),
         joint_angle_data: anglesHistory.current
       });
       setSaveResult({
@@ -516,7 +532,7 @@ const ExerciseRunnerPage = () => {
         smoothness: result?.session?.movement_smoothness_score ?? null,
         avgVelocity: result?.session?.avg_joint_velocity ?? null,
         targetsHit: result?.session?.targets_hit ?? targetsHit,
-        totalTargets: result?.session?.total_targets ?? (targetsHit + 1),
+        totalTargets: result?.session?.total_targets ?? (exercise?.target_positions?.length || (targetsHit + 1)),
         duration: result?.session?.duration_seconds ?? exercise.duration_seconds,
       });
       setStatus('completed');
@@ -571,6 +587,8 @@ const ExerciseRunnerPage = () => {
     lastVideoTime.current = -1;
     poseDetectedRef.current = false;
     setPoseDetected(false);
+    accuracySumRef.current = 0;
+    accuracyCountRef.current = 0;
   };
 
   /* ---- Completion screen: reps are shown only when at least one was measured ---- */

@@ -1,0 +1,1 @@
+export const FORM_CONTROL_CLASS = 'mt-1.5 block w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm';

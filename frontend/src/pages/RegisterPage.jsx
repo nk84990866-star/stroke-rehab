@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Activity, ArrowLeft } from 'lucide-react';
-import { Button, Card } from '../components/ui';
-
-const inputClass =
-  'mt-1.5 block w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm';
+import { Button, Card, FORM_CONTROL_CLASS } from '../components/ui';
 
 const RegisterPage = () => {
   const { register, login } = useAuth();
@@ -99,7 +96,7 @@ const RegisterPage = () => {
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className={inputClass}
+                  className={FORM_CONTROL_CLASS}
                 />
               </div>
 
@@ -114,7 +111,7 @@ const RegisterPage = () => {
                   aria-describedby={error ? 'register-error' : undefined}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className={inputClass}
+                  className={FORM_CONTROL_CLASS}
                 />
               </div>
 
@@ -127,7 +124,7 @@ const RegisterPage = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={inputClass}
+                  className={FORM_CONTROL_CLASS}
                 />
               </div>
 
@@ -137,7 +134,7 @@ const RegisterPage = () => {
                   id="role"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  className={inputClass}
+                  className={FORM_CONTROL_CLASS}
                 >
                   <option value="patient">Patient (Stroke Rehab Candidate)</option>
                   <option value="therapist">Clinician / Therapist</option>
@@ -158,7 +155,7 @@ const RegisterPage = () => {
                       id="strokeType"
                       value={strokeType}
                       onChange={(e) => setStrokeType(e.target.value)}
-                      className={inputClass}
+                      className={FORM_CONTROL_CLASS}
                     >
                       <option value="ischemic">Ischemic Stroke (Blood Clot)</option>
                       <option value="hemorrhagic">Hemorrhagic Stroke (Brain Bleed)</option>
@@ -173,7 +170,7 @@ const RegisterPage = () => {
                       id="affectedSide"
                       value={affectedSide}
                       onChange={(e) => setAffectedSide(e.target.value)}
-                      className={inputClass}
+                      className={FORM_CONTROL_CLASS}
                     >
                       <option value="left">Left Side Affected (Right Brain Stroke)</option>
                       <option value="right">Right Side Affected (Left Brain Stroke)</option>
@@ -186,7 +183,7 @@ const RegisterPage = () => {
                       id="severityLevel"
                       value={severityLevel}
                       onChange={(e) => setSeverityLevel(Number(e.target.value))}
-                      className={inputClass}
+                      className={FORM_CONTROL_CLASS}
                     >
                       <option value={1}>1 - Severe Paralysis (Passive Exercise Support)</option>
                       <option value={2}>2 - Moderate-Severe Impairment</option>
@@ -204,7 +201,7 @@ const RegisterPage = () => {
                       required
                       value={dateOfStroke}
                       onChange={(e) => setDateOfStroke(e.target.value)}
-                      className={inputClass}
+                      className={FORM_CONTROL_CLASS}
                     />
                   </div>
                 </>
@@ -219,7 +216,7 @@ const RegisterPage = () => {
                       value={specialization}
                       placeholder="e.g., Physical Therapist, Occupational Therapist"
                       onChange={(e) => setSpecialization(e.target.value)}
-                      className={inputClass}
+                      className={FORM_CONTROL_CLASS}
                     />
                   </div>
 
@@ -231,7 +228,7 @@ const RegisterPage = () => {
                       required
                       value={licenseNumber}
                       onChange={(e) => setLicenseNumber(e.target.value)}
-                      className={inputClass}
+                      className={FORM_CONTROL_CLASS}
                     />
                   </div>
                 </>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Activity } from 'lucide-react';
-import { Button, Card } from '../components/ui';
+import { Button, Card, FORM_CONTROL_CLASS } from '../components/ui';
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -61,7 +61,7 @@ const LoginPage = () => {
                 aria-describedby={error ? 'login-error' : undefined}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1.5 block w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                className={FORM_CONTROL_CLASS}
               />
             </div>
 
@@ -77,7 +77,7 @@ const LoginPage = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1.5 block w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                className={FORM_CONTROL_CLASS}
               />
             </div>
 

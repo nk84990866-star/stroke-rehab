@@ -2,20 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ThemeSwitcher from './ThemeSwitcher';
-import {
-  Activity,
-  Flame,
-  LogOut,
-  Menu,
-  X,
-  Award,
-  BarChart2,
-  Dumbbell,
-  FileText,
-  LayoutDashboard,
-  User,
-  UserCircle2,
-} from 'lucide-react';
+import { Activity, Flame, LogOut, Menu, X, UserCircle2 } from 'lucide-react';
+import { getNavItems, isActive } from '../config/navigation';
 import { cn } from '../lib/cn';
 
 const Navbar = () => {
@@ -50,26 +38,7 @@ const Navbar = () => {
     navigate('/login');
   };
 
-  const patientLinks = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Exercises', path: '/exercises', icon: Dumbbell },
-    { name: 'Progress', path: '/progress', icon: BarChart2 },
-    { name: 'Reports', path: '/reports', icon: FileText },
-    { name: 'Achievements', path: '/achievements', icon: Award },
-    { name: 'Profile', path: '/profile', icon: User },
-  ];
-
-  const therapistLinks = [
-    { name: 'Clinician Panel', path: '/therapist', icon: User },
-  ];
-
-  const links = user.role === 'therapist' ? therapistLinks : patientLinks;
-
-  // A link is "active" for the section it belongs to (e.g. /exercise/3 lights up Exercises)
-  const isActive = (path) =>
-    location.pathname === path ||
-    (path !== '/dashboard' && location.pathname.startsWith(`${path}/`)) ||
-    (path === '/exercises' && location.pathname.startsWith('/exercise/'));
+  const links = getNavItems(user.role);
 
   const navLinkClass = (active) =>
     cn(
@@ -96,7 +65,7 @@ const Navbar = () => {
             <div className="hidden lg:ml-8 lg:flex lg:items-center lg:gap-1">
               {links.map((link) => {
                 const Icon = link.icon;
-                const active = isActive(link.path);
+                const active = isActive(link.path, location.pathname);
                 return (
                   <Link key={link.path} to={link.path} className={navLinkClass(active)} aria-current={active ? 'page' : undefined}>
                     <Icon className="h-4 w-4" aria-hidden="true" />
@@ -193,7 +162,7 @@ const Navbar = () => {
         <div className="lg:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 px-3 pt-2 pb-4 space-y-1 shadow-lg dark:bg-slate-900 dark:border-slate-700">
           {links.map((link) => {
             const Icon = link.icon;
-            const active = isActive(link.path);
+            const active = isActive(link.path, location.pathname);
             return (
               <Link
                 key={link.path}

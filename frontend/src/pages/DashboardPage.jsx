@@ -218,29 +218,27 @@ const DashboardPage = () => {
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* ============ 1. WELCOME HEADER ============ */}
-        <Card className="p-6 sm:p-7">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-            <div className="min-w-0">
-              <p className="text-xs font-bold uppercase tracking-widest text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 mb-1">
-                {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
-              </p>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50">
-                {firstName ? `Welcome back, ${firstName}!` : 'Welcome back!'}
-              </h1>
-              <p className="text-slate-500 dark:text-slate-400 mt-1.5 max-w-xl text-pretty">
-                Every steady rep builds new pathways — here's your rehabilitation at a glance.
-              </p>
-            </div>
-            <div className="shrink-0">
-              <Button asChild size="lg">
-                <Link to={continueHref} aria-label="Continue today's rehabilitation session">
-                  <Play className="h-4 w-4 fill-current" aria-hidden="true" />
-                  Continue Today's Session
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </Card>
+        <SectionHeader
+          variant="hero"
+          eyebrow={new Date().toLocaleDateString(undefined, {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+          })}
+          title={firstName ? `Welcome back, ${firstName}!` : 'Welcome back!'}
+          description="Every steady rep builds new pathways — here's your rehabilitation at a glance."
+          actions={
+            <Button asChild size="lg">
+              <Link
+                to={continueHref}
+                aria-label="Continue today's rehabilitation session"
+              >
+                <Play className="h-4 w-4 fill-current" aria-hidden="true" />
+                Continue Today's Session
+              </Link>
+            </Button>
+          }
+        />
 
         {/* ============ 2. TODAY'S REHABILITATION PLAN ============ */}
         <Card className="p-6">

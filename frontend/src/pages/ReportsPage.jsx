@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getSessions } from '../services/api';
 import { Calendar, ChevronRight, ChevronLeft, FileText, CheckCircle, X } from 'lucide-react';
 import { cn } from '../lib/cn';
-import { BackLink, Card, EmptyStateLink, LoadingState, SectionHeader } from '../components/ui';
+import { BackLink, Card, EmptyStateLink, ErrorState, LoadingState, SectionHeader } from '../components/ui';
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -15,6 +15,7 @@ const dateKey = (d) =>
 const ReportsPage = () => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   // Calendar state: which month is displayed + which day is selected
   const now = new Date();
@@ -22,19 +23,23 @@ const ReportsPage = () => {
   const [viewMonth, setViewMonth] = useState(now.getMonth()); // 0-11
   const [selectedDate, setSelectedDate] = useState(null); // 'YYYY-MM-DD' or null = show all
 
-  useEffect(() => {
-    const loadSessions = async () => {
-      try {
-        const data = await getSessions();
-        setSessions(data);
-      } catch (err) {
-        console.error('Error loading session logs:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadSessions();
+  const loadSessions = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const data = await getSessions();
+      setSessions(data);
+    } catch (err) {
+      console.error('Error loading session logs:', err);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadSessions();
+  }, [loadSessions]);
 
   // Group sessions by local calendar day
   const sessionsByDate = useMemo(() => {
@@ -71,6 +76,20 @@ const ReportsPage = () => {
 
   if (loading) {
     return <LoadingState fullPage message="Loading your reports…" />;
+  }
+
+  if (loadError) {
+    return (
+      <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <ErrorState
+            title="We couldn't load your reports"
+            message="Check your connection and try again."
+            onRetry={loadSessions}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (

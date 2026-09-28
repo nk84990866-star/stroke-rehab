@@ -1,30 +1,50 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { getSessionReport } from '../services/api';
 import { CheckCircle, BrainCircuit, Crosshair, Gauge, Waves } from 'lucide-react';
-import { BackLink, Badge, Card, LoadingState, StatCard } from '../components/ui';
+import { BackLink, Badge, Card, ErrorState, LoadingState, StatCard } from '../components/ui';
 
 const ReportDetailPage = () => {
   const { id } = useParams();
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+
+  const loadReport = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
+    setReport(null);
+    try {
+      const data = await getSessionReport(id);
+      setReport(data);
+    } catch (err) {
+      console.error('Error loading report:', err);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    const loadReport = async () => {
-      try {
-        const data = await getSessionReport(id);
-        setReport(data);
-      } catch (err) {
-        console.error('Error loading report:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadReport();
-  }, [id]);
+  }, [loadReport]);
 
   if (loading) {
     return <LoadingState fullPage message="Loading report…" />;
+  }
+
+  if (loadError) {
+    return (
+      <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <ErrorState
+            title="We couldn't load this report"
+            message="Check your connection and try again."
+            onRetry={loadReport}
+          />
+        </div>
+      </div>
+    );
   }
 
   if (!report) return null;

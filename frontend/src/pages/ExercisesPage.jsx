@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { getExercises, getDailyPlan } from '../services/api';
 import { Award, Dumbbell, Search, SlidersHorizontal, Timer, Users, X } from 'lucide-react';
-import { Badge, Button, EmptyState, LoadingState, SectionHeader, ExerciseCard, SegmentedControl } from '../components/ui';
+import { Badge, Button, EmptyState, ErrorState, LoadingState, SectionHeader, ExerciseCard, SegmentedControl } from '../components/ui';
 import {
   STROKE_TYPE_LABELS,
   STROKE_TYPE_SHORT_LABELS,
@@ -38,33 +38,38 @@ const ExercisesPage = () => {
   const [selectedSeverity, setSelectedSeverity] = useState('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [planIds, setPlanIds] = useState(() => new Set()); // exercises in today's plan (best-effort)
 
   // Fetch once per level via the existing wrapper; search/stroke/severity
   // filters are client-side (no extra API requests, no new endpoints).
-  useEffect(() => {
-    const loadExercises = async () => {
-      setLoading(true);
-      try {
-        const [data, planData] = await Promise.allSettled([
-          getExercises(selectedLevel || undefined),
-          getDailyPlan(),
-        ]);
-        setExercises(data.status === 'fulfilled' ? data.value : []);
-        // Best-effort: if the plan can't be loaded, the library still works
-        setPlanIds(
-          planData.status === 'fulfilled'
-            ? new Set((planData.value?.exercises || []).map((ex) => ex.id))
-            : new Set(),
-        );
-      } catch (err) {
-        console.error('Error loading exercises:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadExercises();
+  const loadExercises = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const [data, planData] = await Promise.allSettled([
+        getExercises(selectedLevel || undefined),
+        getDailyPlan(),
+      ]);
+      if (data.status === 'rejected') throw data.reason;
+      setExercises(data.value);
+      // Best-effort: if the plan can't be loaded, the library still works
+      setPlanIds(
+        planData.status === 'fulfilled'
+          ? new Set((planData.value?.exercises || []).map((ex) => ex.id))
+          : new Set(),
+      );
+    } catch (err) {
+      console.error('Error loading exercises:', err);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }, [selectedLevel]);
+
+  useEffect(() => {
+    loadExercises();
+  }, [loadExercises]);
 
   const filteredExercises = useMemo(() => {
     return exercises.filter((ex) => {
@@ -181,6 +186,12 @@ const ExercisesPage = () => {
         {/* Results meta / grid with inline loading state */}
         {loading ? (
           <LoadingState message="Loading exercises…" />
+        ) : loadError ? (
+          <ErrorState
+            title="We couldn't load the exercises"
+            message="Check your connection and try again."
+            onRetry={loadExercises}
+          />
         ) : (
           <>
             <p className="text-sm text-slate-500 dark:text-slate-400" aria-live="polite">

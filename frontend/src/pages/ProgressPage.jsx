@@ -65,11 +65,15 @@ const ProgressPage = () => {
   const [sessions, setSessions] = useState(null);   // full session rows
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [progressLoadError, setProgressLoadError] = useState(false);
+  const [sessionsLoadError, setSessionsLoadError] = useState(false);
   const [rangeDays, setRangeDays] = useState(30);
 
   const loadProgress = async () => {
     setLoading(true);
     setError(false);
+    setProgressLoadError(false);
+    setSessionsLoadError(false);
     try {
       const [statsRes, progressRes, sessionsRes] = await Promise.allSettled([
         getStats(),
@@ -81,6 +85,8 @@ const ProgressPage = () => {
       }
       setStats(statsRes.value);
       // Degrade gracefully: if a secondary endpoint fails, show what loaded.
+      setProgressLoadError(progressRes.status === 'rejected');
+      setSessionsLoadError(sessionsRes.status === 'rejected');
       setProgress(progressRes.status === 'fulfilled' ? progressRes.value : []);
       setSessions(sessionsRes.status === 'fulfilled' ? sessionsRes.value : []);
     } catch (err) {
@@ -207,7 +213,9 @@ const ProgressPage = () => {
   const trendSummary =
     filteredProgressData.length > 0
       ? `Score trend across ${filteredProgressData.length} recorded sessions, from ${filteredProgressData[0].date} to ${filteredProgressData[filteredProgressData.length - 1].date}.`
-      : 'No sessions recorded in this period.';
+      : progressLoadError
+        ? 'Score trend data could not be loaded.'
+        : 'No sessions recorded in this period.';
 
   return (
     <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
@@ -236,16 +244,16 @@ const ProgressPage = () => {
             icon={Clock}
             color="primary"
             label="Total Sessions"
-            value={summary.totalSessions}
-            sub={summary.totalSessions === 1 ? 'session' : 'sessions'}
-            footer={`${rangeLabel} · completed sessions only`}
+            value={sessionsLoadError ? '—' : summary.totalSessions}
+            sub={sessionsLoadError ? 'unavailable' : summary.totalSessions === 1 ? 'session' : 'sessions'}
+            footer={sessionsLoadError ? 'Session data could not be loaded' : `${rangeLabel} · completed sessions only`}
           />
           <StatCard
             icon={Star}
             color="purple"
             label="Average Score"
-            value={summary.avgScore != null ? `${Math.round(summary.avgScore * 10) / 10}%` : '—'}
-            footer={summary.bestScore != null ? `Best in range: ${summary.bestScore}%` : 'No scores in range yet'}
+            value={!sessionsLoadError && summary.avgScore != null ? `${Math.round(summary.avgScore * 10) / 10}%` : '—'}
+            footer={sessionsLoadError ? 'Session data could not be loaded' : summary.bestScore != null ? `Best in range: ${summary.bestScore}%` : 'No scores in range yet'}
           />
           <StatCard
             icon={Flame}
@@ -259,8 +267,8 @@ const ProgressPage = () => {
             icon={Timer}
             color="success"
             label="Total Exercise Time"
-            value={fmtDuration(summary.totalSeconds)}
-            footer={`${rangeLabel} · sum of session durations`}
+            value={sessionsLoadError ? '—' : fmtDuration(summary.totalSeconds)}
+            footer={sessionsLoadError ? 'Session data could not be loaded' : `${rangeLabel} · sum of session durations`}
           />
         </div>
 
@@ -271,10 +279,14 @@ const ProgressPage = () => {
               <Activity className="h-5 w-5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" /> Score Trend
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400" aria-live="polite">
-              {activeSessions} session{activeSessions !== 1 ? 's' : ''} in range
+              {sessionsLoadError ? 'Session count unavailable' : `${activeSessions} session${activeSessions !== 1 ? 's' : ''} in range`}
             </p>
           </div>
-          {filteredProgressData.length > 0 ? (
+          {progressLoadError ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">
+              Score trend data could not be loaded.
+            </p>
+          ) : filteredProgressData.length > 0 ? (
             <figure className="m-0">
               <div className="h-72 w-full" role="img" aria-label={`Line chart of session scores over time. ${trendSummary}`}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -303,21 +315,28 @@ const ProgressPage = () => {
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2 mb-4">
               <Waves className="h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" /> Range of Motion
             </h2>
+            {sessionsLoadError && (
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Session metrics could not be loaded.</p>
+            )}
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Max ROM in range</p>
                 <p className="text-xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">
-                  {summary.maxRom != null ? `${Math.round(summary.maxRom * 100) / 100}°` : '—'}
+                  {!sessionsLoadError && summary.maxRom != null ? `${Math.round(summary.maxRom * 100) / 100}°` : '—'}
                 </p>
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Avg ROM in range</p>
                 <p className="text-xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">
-                  {summary.avgRom != null ? `${Math.round(summary.avgRom * 100) / 100}°` : '—'}
+                  {!sessionsLoadError && summary.avgRom != null ? `${Math.round(summary.avgRom * 100) / 100}°` : '—'}
                 </p>
               </div>
             </div>
-            {filteredProgressData.some((p) => Number(p.rom) > 0) ? (
+            {progressLoadError ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center">
+                Range-of-motion chart data could not be loaded.
+              </p>
+            ) : filteredProgressData.some((p) => Number(p.rom) > 0) ? (
               <figure className="m-0">
                 <div className="h-56 w-full" role="img" aria-label="Line chart of maximum range of motion reached per session.">
                   <ResponsiveContainer width="100%" height="100%">
@@ -351,13 +370,20 @@ const ProgressPage = () => {
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2 mb-4">
               <Gauge className="h-5 w-5 text-purple-600 dark:text-purple-400" aria-hidden="true" /> Movement Smoothness
             </h2>
+            {sessionsLoadError && (
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Session metrics could not be loaded.</p>
+            )}
             <div className="mb-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Average in range</p>
               <p className="text-xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">
-                {summary.avgSmoothness != null ? `${Math.round(summary.avgSmoothness * 10) / 10} / 100` : '—'}
+                {!sessionsLoadError && summary.avgSmoothness != null ? `${Math.round(summary.avgSmoothness * 10) / 10} / 100` : '—'}
               </p>
             </div>
-            {filteredProgressData.some((p) => Number(p.smoothness) > 0) ? (
+            {progressLoadError ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center">
+                Movement smoothness chart data could not be loaded.
+              </p>
+            ) : filteredProgressData.some((p) => Number(p.smoothness) > 0) ? (
               <figure className="m-0">
                 <div className="h-56 w-full" role="img" aria-label="Line chart of movement smoothness score per session.">
                   <ResponsiveContainer width="100%" height="100%">
@@ -392,7 +418,11 @@ const ProgressPage = () => {
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2 mb-4">
             <Dumbbell className="h-5 w-5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" /> This Week's Activity
           </h2>
-          <div className="grid grid-cols-7 gap-2 sm:gap-3">
+          {sessionsLoadError ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Weekly session activity could not be loaded.
+            </p>
+          ) : <div className="grid grid-cols-7 gap-2 sm:gap-3">
             {WEEKDAYS.map((day, i) => {
               const count = weekCounts[i];
               return (
@@ -416,10 +446,12 @@ const ProgressPage = () => {
                 </div>
               );
             })}
-          </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">
-            Counts are saved exercise sessions only — planned but not-yet-completed exercises are not included.
-          </p>
+          </div>}
+          {!sessionsLoadError && (
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">
+              Counts are saved exercise sessions only — planned but not-yet-completed exercises are not included.
+            </p>
+          )}
         </Card>
 
         {/* ============ RECENT SESSIONS ============ */}
@@ -428,7 +460,11 @@ const ProgressPage = () => {
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Sessions in Range</h2>
             <SectionActionLink to="/reports">All Reports</SectionActionLink>
           </div>
-          {filteredSessions.length > 0 ? (
+          {sessionsLoadError ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400 p-6">
+              Sessions in this period could not be loaded.
+            </p>
+          ) : filteredSessions.length > 0 ? (
             <div className="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">
               {filteredSessions.slice(0, 10).map((session) => (
                 <Link

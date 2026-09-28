@@ -108,7 +108,7 @@ const ExercisesPage = () => {
         />
 
         {/* Search + filters */}
-        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+        <div className="flex flex-col lg:flex-row lg:flex-wrap lg:items-center gap-4">
           <div className="relative lg:w-80">
             <label htmlFor="exercise-search" className="sr-only">
               Search exercises by name, description, or target area

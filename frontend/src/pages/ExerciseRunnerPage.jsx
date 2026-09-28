@@ -636,7 +636,7 @@ const ExerciseRunnerPage = () => {
   /* ================= COMPLETION SCREEN (real metrics only) ================= */
   if (status === 'completed' && saveResult) {
     return (
-      <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <Card className="p-8 text-center">
             <span className="inline-flex items-center justify-center p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-100 mb-4">
@@ -718,7 +718,7 @@ const ExerciseRunnerPage = () => {
   const statusMeta = STATUS_META[status] || STATUS_META.ready;
 
   return (
-    <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* ============ HEADER ============ */}

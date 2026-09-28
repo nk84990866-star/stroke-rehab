@@ -158,7 +158,7 @@ const AchievementsPage = () => {
 
   if (error) {
     return (
-      <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <ErrorState
             title="We couldn't load your achievements"
@@ -176,7 +176,7 @@ const AchievementsPage = () => {
   /* ---- Fully empty account ---- */
   if (stats && stats.total_sessions === 0) {
     return (
-      <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <SectionHeader
             icon={Trophy}
@@ -217,7 +217,7 @@ const AchievementsPage = () => {
   ) : null;
 
   return (
-    <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <SectionHeader
           icon={Trophy}

@@ -167,7 +167,7 @@ const ProgressPage = () => {
 
   if (error) {
     return (
-      <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <ErrorState
             title="We couldn't load your progress"
@@ -182,7 +182,7 @@ const ProgressPage = () => {
   /* ---------- Fully empty account ---------- */
   if (stats && stats.total_sessions === 0) {
     return (
-      <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto space-y-6">
           <SectionHeader
             icon={BarChart2}
@@ -211,7 +211,7 @@ const ProgressPage = () => {
       : 'No sessions recorded in this period.';
 
   return (
-    <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
 
         <SectionHeader

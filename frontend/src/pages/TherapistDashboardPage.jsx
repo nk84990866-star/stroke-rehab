@@ -271,7 +271,7 @@ const TherapistDashboardPage = () => {
 
   if (error) {
     return (
-      <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <ErrorState
             title="We couldn't load your patient list"
@@ -284,7 +284,7 @@ const TherapistDashboardPage = () => {
   }
 
   return (
-    <div className="bg-surface dark:bg-slate-950 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
         <SectionHeader
           icon={Stethoscope}

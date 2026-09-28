@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { getStats, getProgress, getSessions } from '../services/api';
 import { useTheme } from '../context/ThemeContext';
-import { Badge, Card, EmptyStateLink, ErrorState, LoadingState, SectionHeader, StatCard, SegmentedControl } from '../components/ui';
+import { Badge, Card, EmptyStateLink, ErrorState, LoadingState, SectionHeader, StatCard, SegmentedControl, SectionActionLink } from '../components/ui';
 
 const RANGES = [
   { label: '7 Days', value: 7 },
@@ -426,9 +426,7 @@ const ProgressPage = () => {
         <Card className="overflow-hidden">
           <div className="flex items-center justify-between gap-3 p-5 sm:p-6 pb-4">
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Sessions in Range</h2>
-            <Link to="/reports" className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 cursor-pointer">
-              All Reports <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
+            <SectionActionLink to="/reports">All Reports</SectionActionLink>
           </div>
           {filteredSessions.length > 0 ? (
             <div className="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">

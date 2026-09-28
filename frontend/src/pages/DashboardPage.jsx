@@ -31,6 +31,7 @@ import {
   SectionHeader,
   StatCard,
   ExerciseCard,
+  SectionActionLink,
 } from '../components/ui';
 import ProgressRing from '../components/dashboard/ProgressRing';
 import { BADGE_META } from '../config/labels';
@@ -377,12 +378,7 @@ const DashboardPage = () => {
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
                 <BarChart2 className="h-5 w-5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" /> Your Progress
               </h2>
-              <Link
-                to="/progress"
-                className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 cursor-pointer"
-              >
-                View Full Progress <ChevronRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
+              <SectionActionLink to="/progress">View Full Progress</SectionActionLink>
             </div>
 
             {progressSeries.length > 0 ? (
@@ -422,12 +418,7 @@ const DashboardPage = () => {
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-amber-500" aria-hidden="true" /> Achievements
               </h2>
-              <Link
-                to="/achievements"
-                className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 cursor-pointer"
-              >
-                View All <ChevronRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
+              <SectionActionLink to="/achievements">View All</SectionActionLink>
             </div>
             <div className="flex flex-wrap gap-2">
               {badgePreview.map(({ key, earned }) => (
@@ -450,12 +441,7 @@ const DashboardPage = () => {
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
                 <History className="h-5 w-5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" /> Recent Activity
               </h2>
-              <Link
-                to="/reports"
-                className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 cursor-pointer"
-              >
-                View Reports <ChevronRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
+              <SectionActionLink to="/reports">View Reports</SectionActionLink>
             </div>
             {recentSessions.length > 0 ? (
               <div className="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">

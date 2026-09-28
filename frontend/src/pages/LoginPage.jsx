@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Activity } from 'lucide-react';
-import { Button, Card, FORM_CONTROL_CLASS, InlineError } from '../components/ui';
+import { Button, Card, FORM_CONTROL_CLASS, FORM_LABEL_CLASS, InlineError } from '../components/ui';
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -48,7 +48,7 @@ const LoginPage = () => {
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <label htmlFor="email" className={FORM_LABEL_CLASS}>
                 Email address
               </label>
               <input
@@ -66,7 +66,7 @@ const LoginPage = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <label htmlFor="password" className={FORM_LABEL_CLASS}>
                 Password
               </label>
               <input

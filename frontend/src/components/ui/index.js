@@ -18,3 +18,4 @@ export { default as SegmentedControl } from './SegmentedControl';
 export { FORM_CONTROL_CLASS } from './formControlClass';
 export { default as SectionActionLink } from './SectionActionLink';
 export { default as InlineError } from './InlineError';
+export { FORM_LABEL_CLASS } from './formLabelClass';

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Activity, ArrowLeft } from 'lucide-react';
-import { Button, Card, FORM_CONTROL_CLASS, InlineError } from '../components/ui';
+import { Button, Card, FORM_CONTROL_CLASS, FORM_LABEL_CLASS, InlineError } from '../components/ui';
 
 const RegisterPage = () => {
   const { register, login } = useAuth();
@@ -88,7 +88,7 @@ const RegisterPage = () => {
           {step === 1 ? (
             <form className="space-y-5" onSubmit={handleNext}>
               <div>
-                <label htmlFor="fullName" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Full Name</label>
+                <label htmlFor="fullName" className={FORM_LABEL_CLASS}>Full Name</label>
                 <input
                   id="fullName"
                   type="text"
@@ -101,7 +101,7 @@ const RegisterPage = () => {
               </div>
 
               <div>
-                <label htmlFor="regEmail" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Email Address</label>
+                <label htmlFor="regEmail" className={FORM_LABEL_CLASS}>Email Address</label>
                 <input
                   id="regEmail"
                   type="email"
@@ -116,7 +116,7 @@ const RegisterPage = () => {
               </div>
 
               <div>
-                <label htmlFor="regPassword" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Password</label>
+                <label htmlFor="regPassword" className={FORM_LABEL_CLASS}>Password</label>
                 <input
                   id="regPassword"
                   type="password"
@@ -129,7 +129,7 @@ const RegisterPage = () => {
               </div>
 
               <div>
-                <label htmlFor="role" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Account Type</label>
+                <label htmlFor="role" className={FORM_LABEL_CLASS}>Account Type</label>
                 <select
                   id="role"
                   value={role}
@@ -150,7 +150,7 @@ const RegisterPage = () => {
               {role === 'patient' ? (
                 <>
                   <div>
-                    <label htmlFor="strokeType" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Stroke Classification</label>
+                    <label htmlFor="strokeType" className={FORM_LABEL_CLASS}>Stroke Classification</label>
                     <select
                       id="strokeType"
                       value={strokeType}
@@ -165,7 +165,7 @@ const RegisterPage = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="affectedSide" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Affected Side</label>
+                    <label htmlFor="affectedSide" className={FORM_LABEL_CLASS}>Affected Side</label>
                     <select
                       id="affectedSide"
                       value={affectedSide}
@@ -178,7 +178,7 @@ const RegisterPage = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="severityLevel" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Severity Level (1-5)</label>
+                    <label htmlFor="severityLevel" className={FORM_LABEL_CLASS}>Severity Level (1-5)</label>
                     <select
                       id="severityLevel"
                       value={severityLevel}
@@ -194,7 +194,7 @@ const RegisterPage = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="dateOfStroke" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Date of Stroke Incident</label>
+                    <label htmlFor="dateOfStroke" className={FORM_LABEL_CLASS}>Date of Stroke Incident</label>
                     <input
                       id="dateOfStroke"
                       type="date"
@@ -208,7 +208,7 @@ const RegisterPage = () => {
               ) : (
                 <>
                   <div>
-                    <label htmlFor="specialization" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Specialization</label>
+                    <label htmlFor="specialization" className={FORM_LABEL_CLASS}>Specialization</label>
                     <input
                       id="specialization"
                       type="text"
@@ -221,7 +221,7 @@ const RegisterPage = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="licenseNumber" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Medical License Number</label>
+                    <label htmlFor="licenseNumber" className={FORM_LABEL_CLASS}>Medical License Number</label>
                     <input
                       id="licenseNumber"
                       type="text"

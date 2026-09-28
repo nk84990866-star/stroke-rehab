@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Play, Clock, ShieldAlert } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import Badge from './Badge';
+import Card from './Card';
+import Button from './Button';
 import { EXERCISE_LEVELS, EXERCISE_CATEGORY_LABELS, SPEED_LABELS, getExerciseIcon } from '../../config/labels';
 
 /**
@@ -18,7 +20,7 @@ const ExerciseCard = ({ exercise, to, cta = 'Start Training', statusBadge, meta,
   const href = to || `/exercise/${exercise.id}`;
 
   return (
-    <div className={cn('bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-card p-5 sm:p-6 flex flex-col', className)}>
+    <Card className={cn('p-5 sm:p-6 flex flex-col', className)}>
       <div className="flex items-start justify-between gap-3 mb-4">
         <span className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 border border-primary-100 dark:border-primary-900">
           <Icon className="h-5.5 w-5.5" aria-hidden="true" />
@@ -54,14 +56,13 @@ const ExerciseCard = ({ exercise, to, cta = 'Start Training', statusBadge, meta,
       </div>
 
       <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
-        <Link
-          to={href}
-          className="w-full inline-flex justify-center items-center px-4 py-2.5 text-sm font-semibold rounded-lg bg-primary-600 text-white hover:bg-primary-700 shadow-sm transition-colors gap-2 cursor-pointer"
-        >
-          <Play className="h-4 w-4 fill-current" aria-hidden="true" /> {cta}
-        </Link>
+        <Button asChild variant="primary" className="w-full">
+          <Link to={href}>
+            <Play className="h-4 w-4 fill-current" aria-hidden="true" /> {cta}
+          </Link>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 };
 

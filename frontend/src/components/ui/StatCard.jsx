@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '../../lib/cn';
+import Card from './Card';
 
 const ICON_COLORS = {
   primary: 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 border-primary-100 dark:border-primary-900',
@@ -14,7 +15,7 @@ const ICON_COLORS = {
  * Optional `footer` renders a line of muted text under the value.
  */
 const StatCard = ({ icon: Icon, label, value, sub, footer, color = 'primary', className }) => (
-  <div className={cn('bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-card p-5', className)}>
+  <Card className={cn('p-5', className)}>
     <div className="flex items-center gap-4">
       {Icon && (
         <span className={cn('inline-flex items-center justify-center p-3 rounded-xl border', ICON_COLORS[color])}>
@@ -30,7 +31,7 @@ const StatCard = ({ icon: Icon, label, value, sub, footer, color = 'primary', cl
       </div>
     </div>
     {footer && <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">{footer}</p>}
-  </div>
+  </Card>
 );
 
 export default StatCard;

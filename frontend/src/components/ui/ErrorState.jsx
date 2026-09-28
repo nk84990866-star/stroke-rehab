@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { cn } from '../../lib/cn';
+import Button from './Button';
 
 /**
  * ErrorState — friendly inline error panel with optional retry action.
@@ -17,13 +18,9 @@ const ErrorState = ({ title = 'Something went wrong', message, onRetry, classNam
     <h3 className="text-lg font-bold text-slate-900 dark:text-slate-50">{title}</h3>
     {message && <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">{message}</p>}
     {onRetry && (
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-5 inline-flex items-center px-4 py-2.5 text-sm font-semibold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-      >
+      <Button variant="outline" className="mt-5" onClick={onRetry}>
         Try again
-      </button>
+      </Button>
     )}
   </div>
 );

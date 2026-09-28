@@ -104,6 +104,8 @@ const ExerciseRunnerPage = () => {
   // Real accuracy tracking
   const accuracySumRef = useRef(0);
   const accuracyCountRef = useRef(0);
+  const targetActiveSinceRef = useRef(null);
+  const lastTargetIndexRef = useRef(-1);
 
   // Load exercise and model
   useEffect(() => {
@@ -223,6 +225,8 @@ const ExerciseRunnerPage = () => {
       runningRef.current = true;
       setStatus('in_progress');
       setCoachHint('Session resumed. Reach toward the target!');
+      targetActiveSinceRef.current = Date.now();
+      holdStartTime.current = null;
     }
   };
 
@@ -430,35 +434,55 @@ const ExerciseRunnerPage = () => {
 
           // Target Hit Logic
           if (currentTarget) {
-            const targetCanvasX = shoulderX + (currentTarget.x * 4);
-            const targetCanvasY = shoulderY - (currentTarget.y * 4);
-            const distance = Math.sqrt(Math.pow(handX - targetCanvasX, 2) + Math.pow(handY - targetCanvasY, 2));
-
-            let frameAccuracy = 100;
-            if (distance > 35) {
-                frameAccuracy = Math.max(0, 100 - (distance - 35) * 0.5);
-            }
-            accuracySumRef.current += frameAccuracy;
-            accuracyCountRef.current += 1;
-
-            if (distance < 35) {
-              if (!holdStartTime.current) holdStartTime.current = Date.now();
-              const holdDuration = (Date.now() - holdStartTime.current) / 1000;
-
-              if (holdDuration >= (currentTarget.hold_sec || 1.0)) {
-                currentTargetIndex.current += 1;
-                setTargetsHit(prev => prev + 1);
-                setCoachHint("Target Hit! Move to the next target.");
-                holdStartTime.current = null;
-              } else {
-                setCoachHint(`Hold arm steady: ${Math.max(0, (currentTarget.hold_sec || 1.0) - holdDuration).toFixed(1)}s`);
-              }
-            } else {
+            if (currentTargetIndex.current !== lastTargetIndexRef.current) {
+              lastTargetIndexRef.current = currentTargetIndex.current;
+              targetActiveSinceRef.current = Date.now();
               holdStartTime.current = null;
-              if (handY > targetCanvasY + 30) setCoachHint("Lift arm higher!");
-              else if (handX < targetCanvasX - 30) setCoachHint("Reach further right!");
-              else if (handX > targetCanvasX + 30) setCoachHint("Reach further left!");
-              else setCoachHint("Reach toward the green target!");
+            }
+
+            let skipHitLogic = false;
+            const targetTimeLimit = Number(currentTarget?.time_limit);
+            if (Number.isFinite(targetTimeLimit) && targetTimeLimit > 0 && targetActiveSinceRef.current !== null) {
+              const targetElapsed = (Date.now() - targetActiveSinceRef.current) / 1000;
+              if (targetElapsed >= targetTimeLimit) {
+                currentTargetIndex.current += 1;
+                holdStartTime.current = null;
+                setCoachHint("Too slow! Next target.");
+                skipHitLogic = true;
+              }
+            }
+
+            if (!skipHitLogic) {
+              const targetCanvasX = shoulderX + (currentTarget.x * 4);
+              const targetCanvasY = shoulderY - (currentTarget.y * 4);
+              const distance = Math.sqrt(Math.pow(handX - targetCanvasX, 2) + Math.pow(handY - targetCanvasY, 2));
+
+              let frameAccuracy = 100;
+              if (distance > 35) {
+                  frameAccuracy = Math.max(0, 100 - (distance - 35) * 0.5);
+              }
+              accuracySumRef.current += frameAccuracy;
+              accuracyCountRef.current += 1;
+
+              if (distance < 35) {
+                if (!holdStartTime.current) holdStartTime.current = Date.now();
+                const holdDuration = (Date.now() - holdStartTime.current) / 1000;
+
+                if (holdDuration >= (currentTarget.hold_sec || 1.0)) {
+                  currentTargetIndex.current += 1;
+                  setTargetsHit(prev => prev + 1);
+                  setCoachHint("Target Hit! Move to the next target.");
+                  holdStartTime.current = null;
+                } else {
+                  setCoachHint(`Hold arm steady: ${Math.max(0, (currentTarget.hold_sec || 1.0) - holdDuration).toFixed(1)}s`);
+                }
+              } else {
+                holdStartTime.current = null;
+                if (handY > targetCanvasY + 30) setCoachHint("Lift arm higher!");
+                else if (handX < targetCanvasX - 30) setCoachHint("Reach further right!");
+                else if (handX > targetCanvasX + 30) setCoachHint("Reach further left!");
+                else setCoachHint("Reach toward the green target!");
+              }
             }
           }
         }
@@ -590,6 +614,8 @@ const ExerciseRunnerPage = () => {
     setPoseDetected(false);
     accuracySumRef.current = 0;
     accuracyCountRef.current = 0;
+    targetActiveSinceRef.current = null;
+    lastTargetIndexRef.current = -1;
   };
 
   /* ---- Completion screen: reps are shown only when at least one was measured ---- */

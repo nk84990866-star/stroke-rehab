@@ -535,7 +535,7 @@ const ExerciseRunnerPage = () => {
 
       const result = await saveSession({
         exercise_id: Number(id),
-        duration_seconds: exercise.duration_seconds,
+        duration_seconds: Math.max(1, elapsed),
         avg_accuracy_score: finalAccuracy,
         targets_hit: targetsHit,
         total_targets: exercise?.target_positions?.length || (targetsHit + 1),
@@ -558,7 +558,7 @@ const ExerciseRunnerPage = () => {
         avgVelocity: result?.session?.avg_joint_velocity ?? null,
         targetsHit: result?.session?.targets_hit ?? targetsHit,
         totalTargets: result?.session?.total_targets ?? (exercise?.target_positions?.length || (targetsHit + 1)),
-        duration: result?.session?.duration_seconds ?? exercise.duration_seconds,
+        duration: result?.session?.duration_seconds ?? Math.max(1, elapsed),
       });
       setStatus('completed');
       speak('Exercise Completed', { force: true });

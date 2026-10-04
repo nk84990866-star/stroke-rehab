@@ -25,6 +25,7 @@ import {
 import { BackLink, Badge, Button, Card, ProgressBar, LoadingState, Modal, StatCard } from '../components/ui';
 import { EXERCISE_CATEGORY_LABELS } from '../config/labels';
 import { cn } from '../lib/cn';
+import { calculateProjectedElbowAngle } from '../lib/poseGeometry';
 import { PoseLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 
 /** Session status machine: READY → IN PROGRESS → COMPLETING → COMPLETED (or PAUSED). */
@@ -85,6 +86,8 @@ const ExerciseRunnerPage = () => {
 
   // Rehab tracking state
   const anglesHistory = useRef([]);
+  // Kept separate from legacy screen-space displacement and out of scoring/persistence.
+  const projectedElbowAnglesHistory = useRef([]);
   const frameIdRef = useRef(null);
   const currentTargetIndex = useRef(0);
   const holdStartTime = useRef(null);
@@ -177,6 +180,7 @@ const ExerciseRunnerPage = () => {
         setCoachHint("Raise your arm toward the green target!");
         currentTargetIndex.current = 0;
         anglesHistory.current = [];
+        projectedElbowAnglesHistory.current = [];
         smoothedStateRef.current = null;   // fresh smoothing per session
         activeSideRef.current = null;      // re-select tracked arm
         lastVideoTime.current = -1;
@@ -409,6 +413,13 @@ const ExerciseRunnerPage = () => {
             const toDeg = (v) => Math.min(180, Math.abs(v) * 0.6);
             anglesHistory.current.push([toDeg(dx), toDeg(dy)]);
 
+            // 2D image-plane projected elbow angle derived from MediaPipe normalized shoulder/elbow/wrist coordinates.
+            // Keep separate: joint_angle_data remains the legacy displacement pair and this value is not used for scoring or persistence.
+            const projectedElbowAngle = calculateProjectedElbowAngle(shoulder, elbow, wrist);
+            if (projectedElbowAngle !== null) {
+              projectedElbowAnglesHistory.current.push(projectedElbowAngle);
+            }
+
             // --- Repetition counting (measurement only; does not affect
             // angles, targets, or scoring). Uses the smoothed dy already
             // computed above. See MIN_REP_AMPLITUDE doc for the rule. ---
@@ -608,6 +619,7 @@ const ExerciseRunnerPage = () => {
     setCoachHint('Camera ready. Press Start Exercise when you are.');
     currentTargetIndex.current = 0;
     anglesHistory.current = [];
+    projectedElbowAnglesHistory.current = [];
     smoothedStateRef.current = null;
     activeSideRef.current = null;
     holdStartTime.current = null;

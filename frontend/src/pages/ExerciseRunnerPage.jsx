@@ -25,8 +25,13 @@ import {
 import { BackLink, Badge, Button, Card, ProgressBar, LoadingState, Modal, StatCard } from '../components/ui';
 import { EXERCISE_CATEGORY_LABELS } from '../config/labels';
 import { cn } from '../lib/cn';
-import { calculateProjectedElbowAngle } from '../lib/poseGeometry';
+import {
+  calculateProjectedElbowAngle,
+  calculateProjectedElbowDiagnostic,
+} from '../lib/poseGeometry';
 import { PoseLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
+
+const PROJECTED_ELBOW_DIAGNOSTICS_KEY = '__neuroMotionProjectedElbowDiagnostics';
 
 /** Session status machine: READY → IN PROGRESS → COMPLETING → COMPLETED (or PAUSED). */
 const STATUS_META = {
@@ -86,8 +91,9 @@ const ExerciseRunnerPage = () => {
 
   // Rehab tracking state
   const anglesHistory = useRef([]);
-  // Kept separate from legacy screen-space displacement and out of scoring/persistence.
+  // Persisted separately from legacy displacement and excluded from scoring.
   const projectedElbowAnglesHistory = useRef([]);
+  const projectedElbowDiagnosticsRef = useRef([]);
   const frameIdRef = useRef(null);
   const currentTargetIndex = useRef(0);
   const holdStartTime = useRef(null);
@@ -182,6 +188,13 @@ const ExerciseRunnerPage = () => {
         currentTargetIndex.current = 0;
         anglesHistory.current = [];
         projectedElbowAnglesHistory.current = [];
+        if (import.meta.env.DEV) {
+          projectedElbowDiagnosticsRef.current = [];
+          window[PROJECTED_ELBOW_DIAGNOSTICS_KEY] = projectedElbowDiagnosticsRef.current;
+          console.info(
+            `Local projected-elbow diagnostics reset. Inspect window.${PROJECTED_ELBOW_DIAGNOSTICS_KEY}.`,
+          );
+        }
         sessionStartPerformanceNowRef.current = performance.now();
         smoothedStateRef.current = null;   // fresh smoothing per session
         activeSideRef.current = null;      // re-select tracked arm
@@ -332,6 +345,48 @@ const ExerciseRunnerPage = () => {
                 activeSideRef.current = side;
                 selectedSide = side;
                 sideIdx = side === 'left' ? { s: 11, e: 13, w: 15 } : { s: 12, e: 14, w: 16 };
+              }
+
+              if (import.meta.env.DEV && sessionStartPerformanceNowRef.current !== null) {
+                const video = videoRef.current;
+                const getLandmarkRecord = (landmark) => {
+                  const visibilityStatus =
+                    landmark == null
+                      ? 'missing_landmark'
+                      : typeof landmark !== 'object'
+                        ? 'invalid_landmark'
+                      : !('visibility' in landmark)
+                        ? 'missing'
+                        : Number.isFinite(landmark.visibility)
+                          ? 'present'
+                          : 'invalid';
+                  return {
+                    x: Number.isFinite(landmark?.x) ? landmark.x : null,
+                    y: Number.isFinite(landmark?.y) ? landmark.y : null,
+                    visibility: visibilityStatus === 'present' ? landmark.visibility : null,
+                    visibility_status: visibilityStatus,
+                  };
+                };
+                const shoulder = lm?.[sideIdx.s] ?? null;
+                const elbow = lm?.[sideIdx.e] ?? null;
+                const wrist = lm?.[sideIdx.w] ?? null;
+                const diagnostic = calculateProjectedElbowDiagnostic(
+                  shoulder,
+                  elbow,
+                  wrist,
+                  video.videoWidth,
+                  video.videoHeight,
+                );
+                projectedElbowDiagnosticsRef.current.push({
+                  elapsed_ms: performance.now() - sessionStartPerformanceNowRef.current,
+                  side: selectedSide,
+                  shoulder: getLandmarkRecord(shoulder),
+                  elbow: getLandmarkRecord(elbow),
+                  wrist: getLandmarkRecord(wrist),
+                  video_width: video.videoWidth,
+                  video_height: video.videoHeight,
+                  ...diagnostic,
+                });
               }
 
               // Draw webcam overlay (raw landmark coords; CSS mirrors both
@@ -634,6 +689,13 @@ const ExerciseRunnerPage = () => {
     currentTargetIndex.current = 0;
     anglesHistory.current = [];
     projectedElbowAnglesHistory.current = [];
+    if (import.meta.env.DEV) {
+      projectedElbowDiagnosticsRef.current = [];
+      window[PROJECTED_ELBOW_DIAGNOSTICS_KEY] = projectedElbowDiagnosticsRef.current;
+      console.info(
+        `Local projected-elbow diagnostics reset. Inspect window.${PROJECTED_ELBOW_DIAGNOSTICS_KEY}.`,
+      );
+    }
     sessionStartPerformanceNowRef.current = null;
     smoothedStateRef.current = null;
     activeSideRef.current = null;

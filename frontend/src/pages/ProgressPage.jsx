@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   LineChart,
@@ -55,6 +55,13 @@ const tickDate = (dateStr) => {
   return Number.isNaN(d.getTime()) ? dateStr : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 };
 
+const PartialLoadState = ({ title, message, loading, loadingMessage, onRetry }) =>
+  loading ? (
+    <LoadingState message={loadingMessage} className="py-4" />
+  ) : (
+    <ErrorState title={title} message={message} onRetry={onRetry} className="p-4" />
+  );
+
 const ProgressPage = () => {
   const { resolvedTheme } = useTheme();
   // Recharts needs literal colors; resolvedTheme flips them on theme change.
@@ -65,33 +72,58 @@ const ProgressPage = () => {
   const [sessions, setSessions] = useState(null);   // full session rows
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [statsLoadError, setStatsLoadError] = useState(false);
   const [progressLoadError, setProgressLoadError] = useState(false);
   const [sessionsLoadError, setSessionsLoadError] = useState(false);
+  const [retryingSources, setRetryingSources] = useState({});
+  const requestVersionsRef = useRef({ stats: 0, progress: 0, sessions: 0 });
   const [rangeDays, setRangeDays] = useState(30);
+
+  const loadSource = async (source, isRetry = false) => {
+    const sourceConfig = {
+      stats: { request: getStats, setData: setStats, setError: setStatsLoadError },
+      progress: { request: getProgress, setData: setProgress, setError: setProgressLoadError },
+      sessions: { request: getSessions, setData: setSessions, setError: setSessionsLoadError },
+    }[source];
+    const requestVersion = ++requestVersionsRef.current[source];
+
+    if (isRetry) {
+      setRetryingSources((current) => ({ ...current, [source]: true }));
+    }
+
+    try {
+      const data = await sourceConfig.request();
+      if (requestVersionsRef.current[source] === requestVersion) {
+        sourceConfig.setData(data);
+        sourceConfig.setError(false);
+      }
+      return true;
+    } catch (err) {
+      console.error(`Error loading ${source} data:`, err);
+      if (requestVersionsRef.current[source] === requestVersion) {
+        sourceConfig.setError(true);
+      }
+      return false;
+    } finally {
+      if (isRetry && requestVersionsRef.current[source] === requestVersion) {
+        setRetryingSources((current) => ({ ...current, [source]: false }));
+      }
+    }
+  };
 
   const loadProgress = async () => {
     setLoading(true);
     setError(false);
+    setStatsLoadError(false);
     setProgressLoadError(false);
     setSessionsLoadError(false);
     try {
-      const [statsRes, progressRes, sessionsRes] = await Promise.allSettled([
-        getStats(),
-        getProgress(),
-        getSessions(),
+      const results = await Promise.all([
+        loadSource('stats'),
+        loadSource('progress'),
+        loadSource('sessions'),
       ]);
-      if (statsRes.status !== 'fulfilled') {
-        throw new Error('Progress data unavailable');
-      }
-      setStats(statsRes.value);
-      // Degrade gracefully: if a secondary endpoint fails, show what loaded.
-      setProgressLoadError(progressRes.status === 'rejected');
-      setSessionsLoadError(sessionsRes.status === 'rejected');
-      setProgress(progressRes.status === 'fulfilled' ? progressRes.value : []);
-      setSessions(sessionsRes.status === 'fulfilled' ? sessionsRes.value : []);
-    } catch (err) {
-      console.error('Error loading progress:', err);
-      setError(true);
+      setError(results.every((succeeded) => !succeeded));
     } finally {
       setLoading(false);
     }
@@ -185,7 +217,7 @@ const ProgressPage = () => {
   }
 
   /* ---------- Fully empty account ---------- */
-  if (stats && stats.total_sessions === 0) {
+  if (stats && stats.total_sessions === 0 && !statsLoadError && !progressLoadError && !sessionsLoadError) {
     return (
       <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto space-y-6">
@@ -238,6 +270,38 @@ const ProgressPage = () => {
           }
         />
 
+        {(statsLoadError || progressLoadError || sessionsLoadError) && (
+          <div className="space-y-3">
+            {statsLoadError && (
+              <PartialLoadState
+                title="Session summary data is unavailable"
+                message="Your current streak could not be loaded."
+                loading={retryingSources.stats}
+                loadingMessage="Retrying session summary data…"
+                onRetry={() => loadSource('stats', true)}
+              />
+            )}
+            {progressLoadError && (
+              <PartialLoadState
+                title="Progress chart data is unavailable"
+                message="Score, range-of-motion, and smoothness trend data could not be loaded."
+                loading={retryingSources.progress}
+                loadingMessage="Retrying progress chart data…"
+                onRetry={() => loadSource('progress', true)}
+              />
+            )}
+            {sessionsLoadError && (
+              <PartialLoadState
+                title="Session summary and activity data is unavailable"
+                message="Session totals, timing, weekly activity, and recent sessions could not be loaded."
+                loading={retryingSources.sessions}
+                loadingMessage="Retrying session data…"
+                onRetry={() => loadSource('sessions', true)}
+              />
+            )}
+          </div>
+        )}
+
         {/* ============ SUMMARY CARDS (range-scoped, real values) ============ */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
           <StatCard
@@ -259,9 +323,9 @@ const ProgressPage = () => {
             icon={Flame}
             color="warning"
             label="Current Streak"
-            value={stats?.streak ?? 0}
-            sub={(stats?.streak ?? 0) === 1 ? 'day' : 'days'}
-            footer="Consecutive days with at least one session"
+            value={statsLoadError ? '—' : stats?.streak ?? 0}
+            sub={statsLoadError ? 'unavailable' : (stats?.streak ?? 0) === 1 ? 'day' : 'days'}
+            footer={statsLoadError ? 'Streak data could not be loaded' : 'Consecutive days with at least one session'}
           />
           <StatCard
             icon={Timer}

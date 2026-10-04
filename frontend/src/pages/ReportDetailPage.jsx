@@ -75,8 +75,11 @@ const ReportDetailPage = () => {
             </div>
           </div>
           <div className="text-right shrink-0">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Session Score</span>
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Average Reaching Accuracy</span>
             <span className="text-4xl font-black text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 tabular-nums">{report.metrics?.accuracy_score}%</span>
+            <p className="max-w-xs mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Average of frame-by-frame tracked hand-to-target scores while a target was active; scores decrease as distance increases.
+            </p>
           </div>
         </Card>
 
@@ -86,33 +89,43 @@ const ReportDetailPage = () => {
             icon={Waves}
             label="Max ROM Achieved"
             value={`${fmt(report.metrics?.max_rom_achieved)}°`}
-            footer="Maximum extension reached during reaching sequences"
+            footer="Highest arm-angle estimate recorded by the app from tracked movement in this session."
           />
           <StatCard
             icon={Gauge}
             color="purple"
             label="Movement Smoothness"
             value={`${fmt(report.metrics?.smoothness_score, 1)}/100`}
-            footer="Clinical jerk index (higher is smoother)"
+            footer="Based on changes in tracked hand position during active reaches; higher values mean smoother paths."
           />
           <StatCard
             icon={Crosshair}
             color="success"
-            label="Reaching Accuracy"
+            label="Targets Hit"
             value={report.metrics?.targets_hit_ratio}
             footer={
-              report.metrics?.accuracy_score != null
-                ? `Precision score: ${fmt(report.metrics.accuracy_score, 1)}% · Targets reached / presented`
-                : 'Targets successfully reached / overall targets presented'
+              <span className="block space-y-1">
+                <span className="block">
+                  Targets hit / targets in the exercise. A hit counts when the tracked hand stays within the target's on-screen range for its required hold.
+                </span>
+                {report.metrics?.accuracy_score != null && (
+                  <span className="block">
+                    Accuracy: {fmt(report.metrics.accuracy_score, 1)}% average of frame scores while a target was active; scores decrease as tracked hand-to-target distance increases.
+                  </span>
+                )}
+              </span>
             }
           />
         </div>
 
-        {/* AI Recommendations Panel */}
+        {/* Rule-based recommendations panel */}
         <Card className="bg-primary-50/60 border-primary-100 dark:border-primary-900 p-6 space-y-4">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
-            <BrainCircuit className="h-5 w-5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" /> Clinic AI Rehabilitation Recommendations
+            <BrainCircuit className="h-5 w-5 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" aria-hidden="true" /> Rule-based training suggestions
           </h2>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            The app selects these suggestions from this session's recorded metrics and exercise level. Each suggestion describes the metric or condition behind it; the measured values are shown above. These are for training context only, not a diagnosis or clinical decision.
+          </p>
           <ul className="space-y-2.5">
             {report.recommendations?.map((rec, i) => (
               <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-slate-200">

@@ -22,7 +22,7 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
-import { BackLink, Badge, Button, Card, ProgressBar, LoadingState, StatCard } from '../components/ui';
+import { BackLink, Badge, Button, Card, ProgressBar, LoadingState, Modal, StatCard } from '../components/ui';
 import { EXERCISE_CATEGORY_LABELS } from '../config/labels';
 import { cn } from '../lib/cn';
 import { PoseLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
@@ -56,6 +56,7 @@ const ExerciseRunnerPage = () => {
   const [exercise, setExercise] = useState(null);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
+  const [safetyPromptOpen, setSafetyPromptOpen] = useState(false);
   const [status, setStatus] = useState('ready'); // ready | in_progress | paused | completing | completed
   const [score, setScore] = useState(100.0);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -204,6 +205,11 @@ const ExerciseRunnerPage = () => {
         setError('The camera could not be started. Please check your device and try again.');
       }
     }
+  };
+
+  const handleConfirmSafety = () => {
+    setSafetyPromptOpen(false);
+    handleStart();
   };
 
   // Pause: stop the detection loop but keep angle history and smoothing state
@@ -718,6 +724,32 @@ const ExerciseRunnerPage = () => {
   return (
     <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
+        <Modal
+          open={safetyPromptOpen}
+          onClose={() => setSafetyPromptOpen(false)}
+          title="Before you begin"
+          footer={
+            <>
+              <Button variant="outline" onClick={() => setSafetyPromptOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleConfirmSafety}>
+                I'm ready — start exercise
+              </Button>
+            </>
+          }
+        >
+          <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
+            Take a moment to check your setup:
+          </p>
+          <ul className="list-disc pl-5 space-y-2 text-sm text-slate-700 dark:text-slate-200">
+            <li>Choose a stable, comfortable sitting or standing position for this exercise.</li>
+            <li>Keep your exercising arm and upper body visible to the camera, with clear view and adequate lighting.</li>
+            <li>Make sure the surrounding area is clear enough for the movement.</li>
+            <li>Follow the exercise instructions shown here and any guidance from your therapist.</li>
+            <li>Stop if you feel pain, dizziness, or other concerning symptoms, and seek appropriate professional guidance.</li>
+          </ul>
+        </Modal>
 
         {/* ============ HEADER ============ */}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-card p-5 sm:p-6 space-y-4">
@@ -820,7 +852,7 @@ const ExerciseRunnerPage = () => {
               <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover transform -scale-x-100" />
               <canvas ref={overlayRef} className="absolute inset-0 w-full h-full transform -scale-x-100 pointer-events-none" />
               {status === 'ready' && !running && (
-                <button onClick={handleStart} disabled={!modelReady || cameraStarting} className="absolute px-6 py-3.5 bg-primary-600 text-white font-bold text-base rounded-xl shadow-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center cursor-pointer z-10 transition-colors">
+                <button onClick={() => setSafetyPromptOpen(true)} disabled={!modelReady || cameraStarting} className="absolute px-6 py-3.5 bg-primary-600 text-white font-bold text-base rounded-xl shadow-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center cursor-pointer z-10 transition-colors">
                   <Play className="h-5 w-5 mr-2 fill-current" aria-hidden="true" />
                   {cameraStarting ? 'Starting camera…' : modelReady ? 'Start Exercise' : 'Loading AI model…'}
                 </button>
@@ -874,7 +906,7 @@ const ExerciseRunnerPage = () => {
             </div>
           ) : status === 'ready' ? (
             <div className="flex justify-center">
-              <Button size="lg" onClick={handleStart} disabled={!modelReady || cameraStarting} className="min-w-[220px] min-h-[48px]">
+              <Button size="lg" onClick={() => setSafetyPromptOpen(true)} disabled={!modelReady || cameraStarting} className="min-w-[220px] min-h-[48px]">
                 <Play className="h-5 w-5 fill-current" aria-hidden="true" />
                 {cameraStarting ? 'Starting camera…' : modelReady ? 'Start Exercise' : 'Loading AI model…'}
               </Button>

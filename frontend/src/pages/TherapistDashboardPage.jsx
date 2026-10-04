@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 import {
   Activity,
@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Flame,
   Gauge,
+  Loader2,
   RefreshCw,
   Search,
   Stethoscope,
@@ -214,14 +215,26 @@ const TherapistDashboardPage = () => {
   const [error, setError] = useState(false);
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState(null);
-  const [savingSeverityId, setSavingSeverityId] = useState(null);
+  const [savingSeverityIds, setSavingSeverityIds] = useState(() => new Set());
+  const savingSeverityIdsRef = useRef(new Set());
+  const [severityFeedbackById, setSeverityFeedbackById] = useState({});
+  const severityUpdateVersionRef = useRef(0);
+  const confirmedSeverityByIdRef = useRef(new Map());
 
   const loadPatients = async () => {
+    const requestSeverityVersion = severityUpdateVersionRef.current;
     setLoading(true);
     setError(false);
     try {
       const data = await getAssignedPatients();
-      setPatients(data);
+      setPatients(
+        data.map((patient) => {
+          const confirmedUpdate = confirmedSeverityByIdRef.current.get(patient.id);
+          return confirmedUpdate && confirmedUpdate.version > requestSeverityVersion
+            ? { ...patient, severity_level: confirmedUpdate.severityLevel }
+            : patient;
+        }),
+      );
     } catch (err) {
       console.error('Error loading patient list:', err);
       setError(true);
@@ -235,14 +248,51 @@ const TherapistDashboardPage = () => {
   }, []);
 
   const handleSeverityChange = async (patientId, newLevel) => {
-    setSavingSeverityId(patientId);
+    const patient = patients.find((item) => item.id === patientId);
+    if (
+      !patient ||
+      Number(patient.severity_level) === newLevel ||
+      savingSeverityIdsRef.current.has(patientId)
+    ) {
+      return;
+    }
+
+    const savingIds = new Set(savingSeverityIdsRef.current);
+    savingIds.add(patientId);
+    savingSeverityIdsRef.current = savingIds;
+    setSavingSeverityIds(savingIds);
+    setSeverityFeedbackById((current) => ({
+      ...current,
+      [patientId]: { status: 'saving' },
+    }));
     try {
-      await updatePatientSeverity(patientId, newLevel);
-      await loadPatients();
+      const response = await updatePatientSeverity(patientId, newLevel);
+      const confirmedSeverity = response.patient.severity_level;
+      const version = ++severityUpdateVersionRef.current;
+      confirmedSeverityByIdRef.current.set(patientId, {
+        severityLevel: confirmedSeverity,
+        version,
+      });
+      setPatients((current) =>
+        current.map((item) =>
+          item.id === patientId ? { ...item, severity_level: confirmedSeverity } : item,
+        ),
+      );
+      setSeverityFeedbackById((current) => ({
+        ...current,
+        [patientId]: { status: 'success' },
+      }));
     } catch (err) {
       console.error('Error adjusting severity:', err);
+      setSeverityFeedbackById((current) => ({
+        ...current,
+        [patientId]: { status: 'error' },
+      }));
     } finally {
-      setSavingSeverityId(null);
+      const updatedSavingIds = new Set(savingSeverityIdsRef.current);
+      updatedSavingIds.delete(patientId);
+      savingSeverityIdsRef.current = updatedSavingIds;
+      setSavingSeverityIds(updatedSavingIds);
     }
   };
 
@@ -435,7 +485,8 @@ const TherapistDashboardPage = () => {
                             <select
                               id={`severity-${patient.id}`}
                               value={patient.severity_level}
-                              disabled={savingSeverityId === patient.id}
+                              aria-describedby={`severity-help-${patient.id}`}
+                              disabled={savingSeverityIds.has(patient.id)}
                               onChange={(e) => handleSeverityChange(patient.id, Number(e.target.value))}
                               className="py-2 px-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm font-semibold cursor-pointer disabled:opacity-60"
                             >
@@ -445,9 +496,25 @@ const TherapistDashboardPage = () => {
                                 </option>
                               ))}
                             </select>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                            <p id={`severity-help-${patient.id}`} className="text-xs text-slate-500 dark:text-slate-400">
                               Changing severity adjusts this patient's prescribed program and daily plan.
                             </p>
+                            {severityFeedbackById[patient.id]?.status === 'saving' && (
+                              <p role="status" aria-live="polite" className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-700 dark:text-primary-300">
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                                Saving severity update…
+                              </p>
+                            )}
+                            {severityFeedbackById[patient.id]?.status === 'success' && (
+                              <p role="status" aria-live="polite" className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                                Severity updated successfully.
+                              </p>
+                            )}
+                            {severityFeedbackById[patient.id]?.status === 'error' && (
+                              <p role="alert" className="text-xs font-medium text-red-700 dark:text-red-300">
+                                Severity update failed. The displayed value was kept; select a level to try again.
+                              </p>
+                            )}
                           </div>
                         </div>
                       )}

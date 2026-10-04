@@ -17,34 +17,34 @@ def generate_session_report(session, user, exercise):
     
     # Analyze accuracy
     if accuracy >= 90:
-        recommendations.append("Excellent precision achieved. Recommended to try a higher difficulty level or a faster speed setting.")
+        recommendations.append("Session accuracy was 90% or higher. Consider trying a higher exercise difficulty or faster pace if appropriate.")
     elif accuracy >= 70:
-        recommendations.append("Good accuracy. Continue training at current level to stabilize movement patterns.")
+        recommendations.append("Session accuracy was at least 70% and below 90%. Consider continuing at this exercise level and following the exercise instructions.")
     else:
-        recommendations.append("Accuracy is below target. Focus on reaching slowly and holding your arm steady at the targets.")
+        recommendations.append("Session accuracy was below 70%. Consider reaching slowly and holding steady at each target as instructed.")
 
     # Analyze range of motion (ROM)
     if rom >= 135:
-        recommendations.append("Range of motion is near-normal. Maintain training to build muscular endurance.")
+        recommendations.append("The app recorded a maximum arm-angle estimate of 135° or more in this session. Continue following the exercise instructions.")
     elif rom >= 90:
-        recommendations.append("Moderate joint extension. Keep expanding joint movement; consider using arm supporting tables.")
+        recommendations.append("The app recorded a maximum arm-angle estimate from 90° to under 135° in this session. Follow the exercise instructions and any guidance from your therapist.")
     else:
-        recommendations.append("Severely limited range of motion. Recommend active-assisted therapist guidance and physical support.")
+        recommendations.append("The app recorded a maximum arm-angle estimate below 90° in this session. Follow the exercise instructions and ask your therapist for guidance if needed.")
 
     # Analyze movement smoothness
     if smoothness >= 80:
-        recommendations.append("High coordination with minimal velocity jerks. Smooth motor path indicates strong neuroplastic recovery.")
+        recommendations.append("Your movement smoothness score was 80 or higher. Continue practicing controlled reaches as instructed.")
     elif smoothness >= 50:
-        recommendations.append("Moderate jerkiness. Focus on single, continuous movements instead of segment-by-segment reaching.")
+        recommendations.append("Your movement smoothness score was from 50 to under 80. Consider practicing slow, continuous reaches.")
     else:
-        recommendations.append("Highly fragmented reaching patterns. Patient is relying heavily on secondary corrective motions. Focus on slow, passive ranges of motion.")
+        recommendations.append("Your movement smoothness score was below 50. Consider focusing on slow, controlled reaches and following the exercise instructions.")
 
     # High speed analysis
     if exercise.level == 3:
         if accuracy >= 85:
-            recommendations.append("Outstanding speed performance. Patient is achieving speeds resembling functional healthy levels.")
+            recommendations.append("At exercise level 3, session accuracy was 85% or higher. If appropriate, consider maintaining this pace while following the exercise instructions.")
         else:
-            recommendations.append("Speed is high but accuracy suffered. Slow down to prioritize landing accuracy before pushing for rapid movement.")
+            recommendations.append("At exercise level 3, session accuracy was below 85%. Consider slowing your reaches and focusing on the targets.")
 
     return {
         "session_id": session.id,

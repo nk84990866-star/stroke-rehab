@@ -140,8 +140,8 @@ def _validate_session_payload(data):
 def _validate_projected_elbow_angle_data(data):
     if not isinstance(data, dict) or set(data) != PROJECTED_ELBOW_ANGLE_FIELDS:
         return "projected_elbow_angle_data must contain version, coordinate_system, and samples"
-    if type(data["version"]) is not int or data["version"] != 1:
-        return "projected_elbow_angle_data version must be 1"
+    if type(data["version"]) is not int or data["version"] not in (1, 2):
+        return "projected_elbow_angle_data version must be 1 or 2"
     if data["coordinate_system"] != PROJECTED_ELBOW_ANGLE_COORDINATE_SYSTEM:
         return "Unsupported projected_elbow_angle_data coordinate_system"
 

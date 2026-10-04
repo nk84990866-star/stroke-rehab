@@ -472,9 +472,15 @@ const ExerciseRunnerPage = () => {
             const toDeg = (v) => Math.min(180, Math.abs(v) * 0.6);
             anglesHistory.current.push([toDeg(dx), toDeg(dy)]);
 
-            // 2D image-plane projected elbow angle derived from MediaPipe normalized shoulder/elbow/wrist coordinates.
+            // Aspect-corrected 2D image-plane angle; invalid visibility or geometry is omitted.
             // Keep separate from legacy joint_angle_data; not used for scoring.
-            const projectedElbowAngle = calculateProjectedElbowAngle(shoulder, elbow, wrist);
+            const projectedElbowAngle = calculateProjectedElbowAngle(
+              shoulder,
+              elbow,
+              wrist,
+              videoRef.current?.videoWidth,
+              videoRef.current?.videoHeight,
+            );
             if (projectedElbowAngle !== null && sessionStartPerformanceNowRef.current !== null) {
               projectedElbowAnglesHistory.current.push({
                 angle_deg: projectedElbowAngle,
@@ -618,7 +624,7 @@ const ExerciseRunnerPage = () => {
         total_targets: exercise?.target_positions?.length || (targetsHit + 1),
         joint_angle_data: anglesHistory.current,
         projected_elbow_angle_data: {
-          version: 1,
+          version: 2,
           coordinate_system: 'mediapipe_normalized_image_xy',
           samples: projectedElbowAnglesHistory.current,
         }

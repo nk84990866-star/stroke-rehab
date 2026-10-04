@@ -126,9 +126,9 @@ class BackendSecurityTests(unittest.TestCase):
             "joint_angle_data": [[10, 20]],
         }
 
-    def valid_projected_elbow_angle_data(self):
+    def valid_projected_elbow_angle_data(self, version=1):
         return {
-            "version": 1,
+            "version": version,
             "coordinate_system": "mediapipe_normalized_image_xy",
             "samples": [
                 {"angle_deg": 92.4, "elapsed_ms": 1234.5, "side": "left"},
@@ -463,6 +463,25 @@ class BackendSecurityTests(unittest.TestCase):
             projected_data,
         )
 
+    def test_v2_projected_data_round_trips_without_changing_legacy_data(self):
+        projected_data = self.valid_projected_elbow_angle_data(version=2)
+        payload = {
+            **self.valid_session_payload(),
+            "projected_elbow_angle_data": projected_data,
+        }
+        response = self.login(self.patient).post("/api/sessions", json=payload)
+
+        self.assertEqual(response.status_code, 201, response.get_data(as_text=True))
+        session = response.get_json()["session"]
+        self.assertEqual(session["joint_angle_data"], payload["joint_angle_data"])
+        self.assertEqual(session["projected_elbow_angle_data"], projected_data)
+        with self.app.app_context():
+            saved = ExerciseSession.query.one()
+            self.assertEqual(
+                json.loads(saved.projected_elbow_angle_data_json),
+                projected_data,
+            )
+
     def test_omitted_and_explicit_null_projected_data_store_null(self):
         client = self.login(self.patient)
         omitted = client.post("/api/sessions", json=self.valid_session_payload())
@@ -485,7 +504,7 @@ class BackendSecurityTests(unittest.TestCase):
     def test_invalid_projected_elbow_data_is_rejected_without_creating_session(self):
         valid = self.valid_projected_elbow_angle_data()
         cases = [
-            ("wrong version", {**valid, "version": 2}),
+            ("unsupported version", {**valid, "version": 3}),
             ("boolean version", {**valid, "version": True}),
             ("wrong coordinate system", {**valid, "coordinate_system": "world"}),
             ("wrong samples type", {**valid, "samples": {}}),

@@ -34,6 +34,18 @@ SESSION_PAYLOAD_FIELDS = {
     "total_targets",
     "joint_angle_data",
 }
+PROJECTED_ELBOW_ANGLE_FIELD = "projected_elbow_angle_data"
+PROJECTED_ELBOW_ANGLE_FIELDS = {
+    "version",
+    "coordinate_system",
+    "samples",
+}
+PROJECTED_ELBOW_ANGLE_SAMPLE_FIELDS = {
+    "angle_deg",
+    "elapsed_ms",
+    "side",
+}
+PROJECTED_ELBOW_ANGLE_COORDINATE_SYSTEM = "mediapipe_normalized_image_xy"
 
 
 def _session_payload_error(message, status=400):
@@ -74,7 +86,8 @@ def _validate_session_payload(data):
     if missing_fields:
         return f"Missing required session field: {sorted(missing_fields)[0]}"
 
-    if data.keys() - SESSION_PAYLOAD_FIELDS:
+    allowed_fields = SESSION_PAYLOAD_FIELDS | {PROJECTED_ELBOW_ANGLE_FIELD}
+    if data.keys() - allowed_fields:
         return "Session payload contains unsupported fields"
 
     exercise_id = data["exercise_id"]
@@ -114,6 +127,48 @@ def _validate_session_payload(data):
 
     if targets_hit > len(joint_angles):
         return "targets_hit exceeds the recorded movement samples"
+
+    projected_data = data.get(PROJECTED_ELBOW_ANGLE_FIELD)
+    if projected_data is not None:
+        projected_error = _validate_projected_elbow_angle_data(projected_data)
+        if projected_error:
+            return projected_error
+
+    return None
+
+
+def _validate_projected_elbow_angle_data(data):
+    if not isinstance(data, dict) or set(data) != PROJECTED_ELBOW_ANGLE_FIELDS:
+        return "projected_elbow_angle_data must contain version, coordinate_system, and samples"
+    if type(data["version"]) is not int or data["version"] != 1:
+        return "projected_elbow_angle_data version must be 1"
+    if data["coordinate_system"] != PROJECTED_ELBOW_ANGLE_COORDINATE_SYSTEM:
+        return "Unsupported projected_elbow_angle_data coordinate_system"
+
+    samples = data["samples"]
+    if not isinstance(samples, list):
+        return "projected_elbow_angle_data samples must be an array"
+    if len(samples) > MAX_JOINT_ANGLE_SAMPLES:
+        return "projected_elbow_angle_data contains too many samples"
+
+    previous_elapsed_ms = None
+    for sample in samples:
+        if not isinstance(sample, dict) or set(sample) != PROJECTED_ELBOW_ANGLE_SAMPLE_FIELDS:
+            return "Each projected elbow-angle sample must contain angle_deg, elapsed_ms, and side"
+
+        angle = sample["angle_deg"]
+        if not _is_finite_json_number(angle) or not 0 <= angle <= 180:
+            return "Projected elbow angle must be a finite number from 0 to 180"
+
+        elapsed_ms = sample["elapsed_ms"]
+        if not _is_finite_json_number(elapsed_ms) or elapsed_ms < 0:
+            return "Projected elbow-angle elapsed_ms must be a finite non-negative number"
+        if previous_elapsed_ms is not None and elapsed_ms < previous_elapsed_ms:
+            return "Projected elbow-angle samples must be ordered by elapsed_ms"
+        previous_elapsed_ms = elapsed_ms
+
+        if sample["side"] not in ("left", "right"):
+            return "Projected elbow-angle side must be left or right"
 
     return None
 
@@ -186,6 +241,11 @@ def save_session():
         overall_score=overall_score,
         level_played=exercise.level,
         joint_angle_data_json=json.dumps(joint_angles),
+        projected_elbow_angle_data_json=(
+            json.dumps(data[PROJECTED_ELBOW_ANGLE_FIELD])
+            if data.get(PROJECTED_ELBOW_ANGLE_FIELD) is not None
+            else None
+        ),
         ended_at=datetime.utcnow()
     )
 

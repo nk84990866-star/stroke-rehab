@@ -94,6 +94,7 @@ const ExerciseRunnerPage = () => {
   const lastVideoTime = useRef(-1);
   const smoothedStateRef = useRef(null);   // EMA smoothing state for twin movement
   const activeSideRef = useRef(null);      // which arm is tracked: 'left' | 'right'
+  const sessionStartPerformanceNowRef = useRef(null);
   const containerRef = useRef(null);       // webcam box — aspect set from the real stream
 
   // Repetition tracking (see MIN_REP_AMPLITUDE note above for the rule)
@@ -181,6 +182,7 @@ const ExerciseRunnerPage = () => {
         currentTargetIndex.current = 0;
         anglesHistory.current = [];
         projectedElbowAnglesHistory.current = [];
+        sessionStartPerformanceNowRef.current = performance.now();
         smoothedStateRef.current = null;   // fresh smoothing per session
         activeSideRef.current = null;      // re-select tracked arm
         lastVideoTime.current = -1;
@@ -315,6 +317,7 @@ const ExerciseRunnerPage = () => {
               // raised highest. Sticky (hysteresis) so it doesn't flicker
               // between arms — switching needs a clear 0.06 advantage.
               let sideIdx = { s: 12, e: 14, w: 16 }; // default: right arm
+              let selectedSide = 'right';
               if (lm && lm[11] && lm[12] && lm[15] && lm[16]) {
                 const rightScore = Math.max(0, lm[12].y - lm[16].y); // wrist above shoulder?
                 const leftScore  = Math.max(0, lm[11].y - lm[15].y);
@@ -327,6 +330,7 @@ const ExerciseRunnerPage = () => {
                   side = 'right';
                 }
                 activeSideRef.current = side;
+                selectedSide = side;
                 sideIdx = side === 'left' ? { s: 11, e: 13, w: 15 } : { s: 12, e: 14, w: 16 };
               }
 
@@ -414,10 +418,15 @@ const ExerciseRunnerPage = () => {
             anglesHistory.current.push([toDeg(dx), toDeg(dy)]);
 
             // 2D image-plane projected elbow angle derived from MediaPipe normalized shoulder/elbow/wrist coordinates.
-            // Keep separate: joint_angle_data remains the legacy displacement pair and this value is not used for scoring or persistence.
+            // Keep separate from legacy joint_angle_data; not used for scoring.
             const projectedElbowAngle = calculateProjectedElbowAngle(shoulder, elbow, wrist);
-            if (projectedElbowAngle !== null) {
-              projectedElbowAnglesHistory.current.push(projectedElbowAngle);
+            if (projectedElbowAngle !== null && sessionStartPerformanceNowRef.current !== null) {
+              projectedElbowAnglesHistory.current.push({
+                angle_deg: projectedElbowAngle,
+                // Monotonic processing time, not a camera-exposure timestamp.
+                elapsed_ms: performance.now() - sessionStartPerformanceNowRef.current,
+                side: selectedSide,
+              });
             }
 
             // --- Repetition counting (measurement only; does not affect
@@ -552,7 +561,12 @@ const ExerciseRunnerPage = () => {
         avg_accuracy_score: finalAccuracy,
         targets_hit: targetsHit,
         total_targets: exercise?.target_positions?.length || (targetsHit + 1),
-        joint_angle_data: anglesHistory.current
+        joint_angle_data: anglesHistory.current,
+        projected_elbow_angle_data: {
+          version: 1,
+          coordinate_system: 'mediapipe_normalized_image_xy',
+          samples: projectedElbowAnglesHistory.current,
+        }
       });
       setSaveResult({
         sessionId: result?.session?.id || null,
@@ -620,6 +634,7 @@ const ExerciseRunnerPage = () => {
     currentTargetIndex.current = 0;
     anglesHistory.current = [];
     projectedElbowAnglesHistory.current = [];
+    sessionStartPerformanceNowRef.current = null;
     smoothedStateRef.current = null;
     activeSideRef.current = null;
     holdStartTime.current = null;

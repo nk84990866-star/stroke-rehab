@@ -5,6 +5,8 @@ import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_login import LoginManager
+from sqlalchemy import inspect
+from sqlalchemy.exc import SQLAlchemyError
 
 from backend.config import Config
 from backend.models import db, User, Exercise
@@ -15,6 +17,63 @@ from backend.routes.auth import auth_bp
 from backend.routes.exercises import exercises_bp
 from backend.routes.sessions import sessions_bp
 from backend.routes.patients import patients_bp
+
+
+PROJECTED_ELBOW_ANGLE_COLUMN = "projected_elbow_angle_data_json"
+
+
+class _RequiredSchemaMigrationError(RuntimeError):
+    """A required schema upgrade failed while the database was reachable."""
+
+
+def _database_is_available(engine):
+    try:
+        with engine.connect() as connection:
+            connection.execute(db.text("SELECT 1"))
+        return True
+    except SQLAlchemyError:
+        return False
+
+
+def _ensure_projected_elbow_angle_column(engine):
+    """Idempotently add the optional session column to existing databases."""
+    try:
+        with engine.begin() as connection:
+            columns = {
+                column["name"]
+                for column in inspect(connection).get_columns("exercise_sessions")
+            }
+            if PROJECTED_ELBOW_ANGLE_COLUMN in columns:
+                return False
+            connection.execute(
+                db.text(
+                    "ALTER TABLE exercise_sessions "
+                    f"ADD COLUMN {PROJECTED_ELBOW_ANGLE_COLUMN} TEXT NULL"
+                )
+            )
+            return True
+    except SQLAlchemyError:
+        # Multiple application workers may race on first startup. Suppress an
+        # ALTER error only when another worker successfully added this column.
+        columns = {
+            column["name"]
+            for column in inspect(engine).get_columns("exercise_sessions")
+        }
+        if PROJECTED_ELBOW_ANGLE_COLUMN in columns:
+            return False
+        raise
+
+
+def _ensure_projected_elbow_angle_column_or_defer(engine):
+    try:
+        return _ensure_projected_elbow_angle_column(engine)
+    except SQLAlchemyError as exc:
+        if _database_is_available(engine):
+            raise _RequiredSchemaMigrationError(
+                "Required projected elbow-angle database migration failed"
+            ) from exc
+        raise
+
 
 def create_app():
     app = Flask(__name__)
@@ -86,7 +145,10 @@ def create_app():
     with app.app_context():
         try:
             db.create_all()
+            _ensure_projected_elbow_angle_column_or_defer(db.engine)
             seed_exercises(db, Exercise)
+        except _RequiredSchemaMigrationError:
+            raise
         except Exception as exc:
             import sys
             print(f"[STARTUP WARNING] Database setup failed — check DATABASE_URL!", file=sys.stderr, flush=True)

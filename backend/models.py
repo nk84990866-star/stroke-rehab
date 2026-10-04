@@ -172,6 +172,7 @@ class ExerciseSession(db.Model):
 
     # --- Time-series data ---
     joint_angle_data_json = db.Column(db.Text, default="[]")
+    projected_elbow_angle_data_json = db.Column(db.Text, nullable=True)
     notes = db.Column(db.Text)
 
     # --- Relationship ---
@@ -183,6 +184,12 @@ class ExerciseSession(db.Model):
             return json.loads(self.joint_angle_data_json or "[]")
         except (json.JSONDecodeError, TypeError):
             return []
+
+    @property
+    def projected_elbow_angle_data(self):
+        if self.projected_elbow_angle_data_json is None:
+            return None
+        return json.loads(self.projected_elbow_angle_data_json)
 
     def to_dict(self):
         return {
@@ -203,6 +210,7 @@ class ExerciseSession(db.Model):
             "overall_score": self.overall_score,
             "level_played": self.level_played,
             "joint_angle_data": self.joint_angle_data,
+            "projected_elbow_angle_data": self.projected_elbow_angle_data,
             "notes": self.notes,
         }
 

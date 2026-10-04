@@ -1,13 +1,24 @@
 """Focused backend security and session-integrity tests."""
 
 import os
+import json
 import unittest
+from unittest.mock import patch
+
+from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.exc import SQLAlchemyError
 
 # backend.app creates an application during import. Force its database URL to
 # an isolated in-memory SQLite database before importing it.
 os.environ["DATABASE_URL"] = "sqlite://"
 
-from backend.app import app  # noqa: E402
+from backend.app import (  # noqa: E402
+    PROJECTED_ELBOW_ANGLE_COLUMN,
+    _RequiredSchemaMigrationError,
+    _ensure_projected_elbow_angle_column,
+    app,
+    create_app,
+)
 from backend.models import Achievement, Exercise, ExerciseSession, User, db  # noqa: E402
 from backend.routes.sessions import (  # noqa: E402
     MAX_JOINT_ANGLE_SAMPLES,
@@ -112,6 +123,16 @@ class BackendSecurityTests(unittest.TestCase):
             "targets_hit": 1,
             "total_targets": target_count,
             "joint_angle_data": [[10, 20]],
+        }
+
+    def valid_projected_elbow_angle_data(self):
+        return {
+            "version": 1,
+            "coordinate_system": "mediapipe_normalized_image_xy",
+            "samples": [
+                {"angle_deg": 92.4, "elapsed_ms": 1234.5, "side": "left"},
+                {"angle_deg": 91, "elapsed_ms": 1260, "side": "right"},
+            ],
         }
 
     def session_count(self):
@@ -302,6 +323,203 @@ class BackendSecurityTests(unittest.TestCase):
                 self.assert_rejected_without_session(
                     client, {**self.valid_session_payload(), field: value}
                 )
+
+    def test_existing_database_column_migration_is_additive_and_idempotent(self):
+        engine = create_engine("sqlite://")
+        try:
+            with engine.begin() as connection:
+                connection.execute(text(
+                    "CREATE TABLE exercise_sessions "
+                    "(id INTEGER PRIMARY KEY, joint_angle_data_json TEXT)"
+                ))
+                connection.execute(text(
+                    "INSERT INTO exercise_sessions (id, joint_angle_data_json) "
+                    "VALUES (1, '[[10, 20]]')"
+                ))
+
+            self.assertTrue(_ensure_projected_elbow_angle_column(engine))
+            self.assertFalse(_ensure_projected_elbow_angle_column(engine))
+            columns = {
+                column["name"]: column
+                for column in inspect(engine).get_columns("exercise_sessions")
+            }
+            self.assertIn(PROJECTED_ELBOW_ANGLE_COLUMN, columns)
+            self.assertTrue(columns[PROJECTED_ELBOW_ANGLE_COLUMN]["nullable"])
+            with engine.connect() as connection:
+                row = connection.execute(text(
+                    "SELECT id, joint_angle_data_json, projected_elbow_angle_data_json "
+                    "FROM exercise_sessions WHERE id = 1"
+                )).one()
+            self.assertEqual(row.joint_angle_data_json, "[[10, 20]]")
+            self.assertIsNone(row.projected_elbow_angle_data_json)
+        finally:
+            engine.dispose()
+
+    def test_reachable_database_migration_failure_fails_startup(self):
+        migration_error = SQLAlchemyError("DDL permission denied")
+        with (
+            patch("backend.app.db.create_all"),
+            patch("backend.app._ensure_projected_elbow_angle_column", side_effect=migration_error),
+            patch("backend.app._database_is_available", return_value=True),
+            patch("backend.app.seed_exercises"),
+        ):
+            with self.assertRaises(_RequiredSchemaMigrationError):
+                create_app()
+
+    def test_unavailable_database_keeps_degraded_startup_behavior(self):
+        with (
+            patch("backend.app.db.create_all"),
+            patch(
+                "backend.app._ensure_projected_elbow_angle_column",
+                side_effect=SQLAlchemyError("database unavailable"),
+            ),
+            patch("backend.app._database_is_available", return_value=False),
+            patch("backend.app.seed_exercises"),
+        ):
+            degraded_app = create_app()
+
+        self.assertIsNotNone(degraded_app)
+
+    def test_legacy_session_payload_and_metrics_are_unchanged_with_projected_data(self):
+        client = self.login(self.patient)
+        legacy_payload = self.valid_session_payload()
+        legacy_response = client.post("/api/sessions", json=legacy_payload)
+        self.assertEqual(legacy_response.status_code, 201)
+        legacy_session = legacy_response.get_json()["session"]
+        self.assertEqual(legacy_session["joint_angle_data"], legacy_payload["joint_angle_data"])
+        self.assertIsNone(legacy_session["projected_elbow_angle_data"])
+
+        payload_with_projected = {
+            **legacy_payload,
+            "projected_elbow_angle_data": self.valid_projected_elbow_angle_data(),
+        }
+        projected_response = client.post("/api/sessions", json=payload_with_projected)
+        self.assertEqual(projected_response.status_code, 201)
+        projected_session = projected_response.get_json()["session"]
+        self.assertEqual(projected_session["joint_angle_data"], legacy_payload["joint_angle_data"])
+        self.assertEqual(
+            projected_session["projected_elbow_angle_data"],
+            payload_with_projected["projected_elbow_angle_data"],
+        )
+        for field in (
+            "avg_accuracy_score",
+            "max_rom_achieved",
+            "avg_joint_velocity",
+            "movement_smoothness_score",
+            "overall_score",
+            "targets_hit",
+            "total_targets",
+        ):
+            self.assertEqual(projected_session[field], legacy_session[field], field)
+
+        with self.app.app_context():
+            saved = ExerciseSession.query.order_by(ExerciseSession.id.desc()).first()
+            self.assertEqual(
+                json.loads(saved.projected_elbow_angle_data_json),
+                payload_with_projected["projected_elbow_angle_data"],
+            )
+
+    def test_empty_projected_sample_list_is_persisted(self):
+        projected_data = {
+            "version": 1,
+            "coordinate_system": "mediapipe_normalized_image_xy",
+            "samples": [],
+        }
+        response = self.login(self.patient).post(
+            "/api/sessions",
+            json={
+                **self.valid_session_payload(),
+                "projected_elbow_angle_data": projected_data,
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            response.get_json()["session"]["projected_elbow_angle_data"],
+            projected_data,
+        )
+
+    def test_omitted_and_explicit_null_projected_data_store_null(self):
+        client = self.login(self.patient)
+        omitted = client.post("/api/sessions", json=self.valid_session_payload())
+        explicit_null = client.post(
+            "/api/sessions",
+            json={
+                **self.valid_session_payload(),
+                "projected_elbow_angle_data": None,
+            },
+        )
+        self.assertEqual(omitted.status_code, 201)
+        self.assertEqual(explicit_null.status_code, 201)
+        self.assertIsNone(omitted.get_json()["session"]["projected_elbow_angle_data"])
+        self.assertIsNone(explicit_null.get_json()["session"]["projected_elbow_angle_data"])
+        with self.app.app_context():
+            sessions = ExerciseSession.query.order_by(ExerciseSession.id).all()
+            self.assertIsNone(sessions[-2].projected_elbow_angle_data_json)
+            self.assertIsNone(sessions[-1].projected_elbow_angle_data_json)
+
+    def test_invalid_projected_elbow_data_is_rejected_without_creating_session(self):
+        valid = self.valid_projected_elbow_angle_data()
+        cases = [
+            ("wrong version", {**valid, "version": 2}),
+            ("boolean version", {**valid, "version": True}),
+            ("wrong coordinate system", {**valid, "coordinate_system": "world"}),
+            ("wrong samples type", {**valid, "samples": {}}),
+            ("missing top-level field", {key: value for key, value in valid.items() if key != "samples"}),
+            ("extra top-level field", {**valid, "patient_id": self.other_patient.id}),
+            ("invalid side", {**valid, "samples": [{**valid["samples"][0], "side": "both"}]}),
+            ("non-finite angle", {**valid, "samples": [{**valid["samples"][0], "angle_deg": float("nan")}]}),
+            ("infinite angle", {**valid, "samples": [{**valid["samples"][0], "angle_deg": float("inf")}]}),
+            ("angle below range", {**valid, "samples": [{**valid["samples"][0], "angle_deg": -0.1}]}),
+            ("angle above range", {**valid, "samples": [{**valid["samples"][0], "angle_deg": 180.1}]}),
+            ("non-finite timestamp", {**valid, "samples": [{**valid["samples"][0], "elapsed_ms": float("nan")}]}),
+            ("infinite timestamp", {**valid, "samples": [{**valid["samples"][0], "elapsed_ms": float("inf")}]}),
+            ("negative timestamp", {**valid, "samples": [{**valid["samples"][0], "elapsed_ms": -0.1}]}),
+            (
+                "decreasing timestamps",
+                {**valid, "samples": [
+                    {"angle_deg": 90, "elapsed_ms": 5, "side": "left"},
+                    {"angle_deg": 90, "elapsed_ms": 4, "side": "left"},
+                ]},
+            ),
+            (
+                "missing sample field",
+                {**valid, "samples": [{key: value for key, value in valid["samples"][0].items() if key != "side"}]},
+            ),
+            (
+                "extra sample field",
+                {**valid, "samples": [{**valid["samples"][0], "session_id": 1}]},
+            ),
+            (
+                "identity fields in request",
+                {**valid, "patient_id": self.other_patient.id, "session_id": 9876},
+            ),
+        ]
+        client = self.login(self.patient)
+        for name, projected_data in cases:
+            with self.subTest(name=name):
+                self.assert_rejected_without_session(
+                    client,
+                    {
+                        **self.valid_session_payload(),
+                        "projected_elbow_angle_data": projected_data,
+                    },
+                )
+
+        excessive = {
+            **valid,
+            "samples": [
+                {"angle_deg": 90, "elapsed_ms": index, "side": "left"}
+                for index in range(MAX_JOINT_ANGLE_SAMPLES + 1)
+            ],
+        }
+        with self.subTest(name="excessive samples"):
+            self.assert_rejected_without_session(
+                client,
+                {
+                    **self.valid_session_payload(),
+                    "projected_elbow_angle_data": excessive,
+                },
+            )
 
     def test_therapist_assigns_exact_email_and_uses_authenticated_identity(self):
         response = self.login(self.therapist).post(

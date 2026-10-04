@@ -6,6 +6,7 @@ from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 from datetime import datetime, timezone
 import json
+import math
 from backend.models import db, ExerciseSession, Exercise, Achievement
 from backend.services.authorization import (
     get_authorized_patient,
@@ -23,6 +24,100 @@ from backend.services.report_generator import generate_session_report
 sessions_bp = Blueprint("sessions", __name__)
 kinematics = UpperLimbKinematics()
 
+SESSION_PAYLOAD_MAX_BYTES = 256 * 1024
+MAX_JOINT_ANGLE_SAMPLES = 60 * 60  # 60 seconds at up to 60 camera frames per second
+SESSION_PAYLOAD_FIELDS = {
+    "exercise_id",
+    "duration_seconds",
+    "avg_accuracy_score",
+    "targets_hit",
+    "total_targets",
+    "joint_angle_data",
+}
+
+
+def _session_payload_error(message, status=400):
+    return jsonify({"error": message}), status
+
+
+def _read_session_payload():
+    if not request.is_json:
+        return None, _session_payload_error("Expected a JSON session payload")
+
+    if request.content_length is not None and request.content_length > SESSION_PAYLOAD_MAX_BYTES:
+        return None, _session_payload_error("Session payload is too large", 413)
+
+    raw_payload = request.stream.read(SESSION_PAYLOAD_MAX_BYTES + 1)
+    if len(raw_payload) > SESSION_PAYLOAD_MAX_BYTES:
+        return None, _session_payload_error("Session payload is too large", 413)
+
+    try:
+        payload = json.loads(raw_payload)
+    except (ValueError, UnicodeDecodeError, RecursionError):
+        return None, _session_payload_error("Invalid JSON session payload")
+
+    if not isinstance(payload, dict):
+        return None, _session_payload_error("Session payload must be a JSON object")
+    return payload, None
+
+
+def _is_json_integer(value):
+    return type(value) is int
+
+
+def _is_finite_json_number(value):
+    return type(value) is int or (type(value) is float and math.isfinite(value))
+
+
+def _validate_session_payload(data):
+    missing_fields = SESSION_PAYLOAD_FIELDS - data.keys()
+    if missing_fields:
+        return f"Missing required session field: {sorted(missing_fields)[0]}"
+
+    if data.keys() - SESSION_PAYLOAD_FIELDS:
+        return "Session payload contains unsupported fields"
+
+    exercise_id = data["exercise_id"]
+    if not _is_json_integer(exercise_id) or not 1 <= exercise_id <= 2_147_483_647:
+        return "exercise_id must be a positive integer"
+
+    duration = data["duration_seconds"]
+    if not _is_json_integer(duration) or duration < 1:
+        return "duration_seconds must be a positive integer"
+
+    accuracy = data["avg_accuracy_score"]
+    if not _is_finite_json_number(accuracy) or not 0 <= accuracy <= 100:
+        return "avg_accuracy_score must be a finite number from 0 to 100"
+
+    targets_hit = data["targets_hit"]
+    if not _is_json_integer(targets_hit) or not 0 <= targets_hit <= 2_147_483_647:
+        return "targets_hit must be a non-negative integer"
+
+    total_targets = data["total_targets"]
+    if not _is_json_integer(total_targets) or not 1 <= total_targets <= 2_147_483_647:
+        return "total_targets must be a positive integer"
+
+    joint_angles = data["joint_angle_data"]
+    if not isinstance(joint_angles, list):
+        return "joint_angle_data must be an array"
+    if len(joint_angles) > MAX_JOINT_ANGLE_SAMPLES:
+        return "joint_angle_data contains too many samples"
+
+    for sample in joint_angles:
+        if not isinstance(sample, list) or len(sample) != 2:
+            return "Each joint_angle_data sample must contain two angle values"
+        if any(
+            not _is_finite_json_number(angle) or not 0 <= angle <= 180
+            for angle in sample
+        ):
+            return "Joint angle values must be finite numbers from 0 to 180"
+
+    if targets_hit > len(joint_angles):
+        return "targets_hit exceeds the recorded movement samples"
+
+    return None
+
+
 @sessions_bp.route("", methods=["POST"])
 @login_required
 def save_session():
@@ -30,18 +125,30 @@ def save_session():
     Saves a completed session, recalculates points, updates patient streak,
     runs Unit 3 velocity/smoothness computations, and checks achievements.
     """
-    data = request.get_json() or {}
-    exercise_id = data.get("exercise_id")
-    duration = data.get("duration_seconds", 0)
-    accuracy = data.get("avg_accuracy_score", 0.0)
-    targets_hit = data.get("targets_hit", 0)
-    total_targets = data.get("total_targets", 0)
-    joint_angles = data.get("joint_angle_data", []) # list of [theta1, theta2]
+    data, error_response = _read_session_payload()
+    if error_response:
+        return error_response
 
-    if not exercise_id:
-        return jsonify({"error": "Missing exercise_id"}), 400
+    validation_error = _validate_session_payload(data)
+    if validation_error:
+        return _session_payload_error(validation_error)
 
+    exercise_id = data["exercise_id"]
     exercise = Exercise.query.get_or_404(exercise_id)
+
+    duration = data["duration_seconds"]
+    if duration > exercise.duration_seconds:
+        return _session_payload_error("duration_seconds exceeds the exercise duration")
+
+    target_positions = exercise.target_positions
+    expected_total_targets = len(target_positions) if target_positions else data["targets_hit"] + 1
+    if data["total_targets"] != expected_total_targets:
+        return _session_payload_error("total_targets does not match the exercise targets")
+
+    accuracy = data["avg_accuracy_score"]
+    targets_hit = data["targets_hit"]
+    total_targets = data["total_targets"]
+    joint_angles = data["joint_angle_data"]  # list of [theta1, theta2]
 
     # 1. Run Unit 3 kinematics quality metrics
     smoothness_results = kinematics.compute_movement_smoothness(joint_angles)

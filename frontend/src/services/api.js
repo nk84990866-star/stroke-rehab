@@ -39,6 +39,7 @@ export const getAchievements = () => api.get('/sessions/achievements').then(res 
 
 // Therapist endpoints
 export const getAssignedPatients = () => api.get('/patients').then(res => res.data);
+export const assignPatient = (email) => api.post('/patients/assign', { email }).then(res => res.data);
 export const getPatientSessions = (patientId) => api.get(`/patients/${patientId}/sessions`).then(res => res.data);
 export const updatePatientSeverity = (patientId, severityLevel) => api.put(`/patients/${patientId}/severity`, { severity_level: severityLevel }).then(res => res.data);
 

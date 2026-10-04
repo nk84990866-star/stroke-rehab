@@ -14,7 +14,7 @@ import {
   User,
   Waves,
 } from 'lucide-react';
-import { getAssignedPatients, getPatientSessions, updatePatientSeverity } from '../services/api';
+import { assignPatient, getAssignedPatients, getPatientSessions, updatePatientSeverity } from '../services/api';
 import {
   Badge,
   Button,
@@ -217,6 +217,9 @@ const TherapistDashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [search, setSearch] = useState('');
+  const [patientEmail, setPatientEmail] = useState('');
+  const [assignmentSubmitting, setAssignmentSubmitting] = useState(false);
+  const [assignmentFeedback, setAssignmentFeedback] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [savingSeverityIds, setSavingSeverityIds] = useState(() => new Set());
   const savingSeverityIdsRef = useRef(new Set());
@@ -249,6 +252,36 @@ const TherapistDashboardPage = () => {
   useEffect(() => {
     loadPatients();
   }, []);
+
+  const handleAssignPatient = async (event) => {
+    event.preventDefault();
+    if (assignmentSubmitting) return;
+
+    setAssignmentSubmitting(true);
+    setAssignmentFeedback(null);
+    try {
+      const result = await assignPatient(patientEmail);
+      setPatientEmail('');
+      setAssignmentFeedback({
+        status: 'success',
+        message: result.already_assigned
+          ? 'This patient is already on your assigned list.'
+          : 'Patient assigned successfully.',
+      });
+      await loadPatients();
+    } catch (err) {
+      console.error('Error assigning patient:', err);
+      const status = err.response?.status;
+      setAssignmentFeedback({
+        status: 'error',
+        message: status === 404
+          ? 'No assignment was made. Check the registered patient email; this workflow cannot transfer a patient from another therapist.'
+          : err.response?.data?.error || 'Patient could not be assigned. Please try again.',
+      });
+    } finally {
+      setAssignmentSubmitting(false);
+    }
+  };
 
   const handleSeverityChange = async (patientId, newLevel) => {
     const patient = patients.find((item) => item.id === patientId);
@@ -351,11 +384,62 @@ const TherapistDashboardPage = () => {
           }
         />
 
+        <Card className="p-5 sm:p-6">
+          <form onSubmit={handleAssignPatient} className="flex flex-col sm:flex-row sm:items-end gap-3">
+            <div className="flex-1 space-y-1.5">
+              <label
+                htmlFor="patient-assignment-email"
+                className="text-sm font-semibold text-slate-700 dark:text-slate-200"
+              >
+                Assign an existing patient
+              </label>
+              <input
+                id="patient-assignment-email"
+                type="email"
+                autoComplete="email"
+                maxLength={254}
+                required
+                value={patientEmail}
+                onChange={(event) => {
+                  setPatientEmail(event.target.value);
+                  setAssignmentFeedback(null);
+                }}
+                placeholder="patient@example.com"
+                aria-describedby="patient-assignment-help"
+                disabled={assignmentSubmitting}
+                className="block w-full px-3 py-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:opacity-60"
+              />
+              <p id="patient-assignment-help" className="text-xs text-slate-500 dark:text-slate-400">
+                Enter the email address the patient used to register. Patients assigned to another therapist cannot be transferred here.
+              </p>
+            </div>
+            <Button type="submit" disabled={assignmentSubmitting || !patientEmail}>
+              {assignmentSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Assigning…
+                </>
+              ) : 'Assign patient'}
+            </Button>
+          </form>
+          {assignmentFeedback && (
+            <p
+              role={assignmentFeedback.status === 'error' ? 'alert' : 'status'}
+              className={`mt-3 text-sm ${
+                assignmentFeedback.status === 'success'
+                  ? 'text-emerald-700 dark:text-emerald-300'
+                  : 'text-red-700 dark:text-red-300'
+              }`}
+            >
+              {assignmentFeedback.message}
+            </p>
+          )}
+        </Card>
+
         {patients.length === 0 ? (
           <EmptyState
             icon={User}
             title="No patients assigned"
-            description="Connect patient profiles using your clinician license identifier."
+            description="Enter a patient's registered email above to add them to your assigned list."
           />
         ) : (
           <>

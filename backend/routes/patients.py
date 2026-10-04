@@ -4,6 +4,7 @@ Patient Management Routes for Therapists/Clinicians
 from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 from backend.models import db, User, ExerciseSession
+from backend.services.authorization import get_authorized_patient, patient_not_found
 
 patients_bp = Blueprint("patients", __name__)
 
@@ -24,8 +25,10 @@ def get_patient_sessions(patient_id):
     if current_user.role != "therapist":
         return jsonify({"error": "Unauthorized"}), 403
 
-    # Verify patient assignment
-    patient = User.query.filter_by(id=patient_id, assigned_therapist_id=current_user.id).first_or_404()
+    patient = get_authorized_patient(patient_id)
+    if patient is None:
+        return patient_not_found()
+
     sessions = ExerciseSession.query.filter_by(patient_id=patient.id).order_by(ExerciseSession.started_at.desc()).all()
     return jsonify([s.to_dict() for s in sessions])
 
@@ -36,7 +39,10 @@ def update_patient_severity(patient_id):
     if current_user.role != "therapist":
         return jsonify({"error": "Unauthorized"}), 403
 
-    patient = User.query.filter_by(id=patient_id, assigned_therapist_id=current_user.id).first_or_404()
+    patient = get_authorized_patient(patient_id)
+    if patient is None:
+        return patient_not_found()
+
     data = request.get_json() or {}
     
     new_severity = data.get("severity_level")

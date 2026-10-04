@@ -6,7 +6,12 @@ from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 from datetime import datetime, timezone
 import json
-from backend.models import db, ExerciseSession, Exercise, User, Achievement
+from backend.models import db, ExerciseSession, Exercise, Achievement
+from backend.services.authorization import (
+    get_authorized_patient,
+    patient_not_found,
+    requested_patient_id,
+)
 from backend.services.kinematics_engine import UpperLimbKinematics
 from backend.services.gamification import (
     calculate_session_points,
@@ -100,17 +105,26 @@ def save_session():
 @sessions_bp.route("", methods=["GET"])
 @login_required
 def get_sessions():
-    """Returns patient's session logs, sorted newest first."""
-    patient_id = request.args.get("patient_id", type=int) or current_user.id
-    sessions = ExerciseSession.query.filter_by(patient_id=patient_id).order_by(ExerciseSession.started_at.desc()).all()
+    """Returns authorized patient session logs, sorted newest first."""
+    patient = get_authorized_patient(requested_patient_id())
+    if patient is None:
+        return patient_not_found()
+
+    sessions = ExerciseSession.query.filter_by(patient_id=patient.id).order_by(ExerciseSession.started_at.desc()).all()
     return jsonify([s.to_dict() for s in sessions])
 
 @sessions_bp.route("/<int:session_id>/report", methods=["GET"])
 @login_required
 def get_report(session_id):
-    """Generates detailed AI analysis report for the session."""
-    session = ExerciseSession.query.get_or_404(session_id)
-    patient = User.query.get(session.patient_id)
+    """Generates a report only after authorizing access to its patient."""
+    session = ExerciseSession.query.filter_by(id=session_id).first()
+    if session is None:
+        return patient_not_found()
+
+    patient = get_authorized_patient(session.patient_id)
+    if patient is None:
+        return patient_not_found()
+
     exercise = Exercise.query.get(session.exercise_id)
     
     report = generate_session_report(session, patient, exercise)
@@ -120,8 +134,11 @@ def get_report(session_id):
 @login_required
 def get_progress():
     """Returns aggregated time series of scores and ROM for progress graphs."""
-    patient_id = request.args.get("patient_id", type=int) or current_user.id
-    sessions = ExerciseSession.query.filter_by(patient_id=patient_id).order_by(ExerciseSession.started_at.asc()).all()
+    patient = get_authorized_patient(requested_patient_id())
+    if patient is None:
+        return patient_not_found()
+
+    sessions = ExerciseSession.query.filter_by(patient_id=patient.id).order_by(ExerciseSession.started_at.asc()).all()
     
     progress_data = []
     for s in sessions:
@@ -158,9 +175,11 @@ def get_achievements():
 @login_required
 def get_stats():
     """Returns patient summary statistics."""
-    patient_id = request.args.get("patient_id", type=int) or current_user.id
-    sessions = ExerciseSession.query.filter_by(patient_id=patient_id).all()
-    user = User.query.get(patient_id)
+    patient = get_authorized_patient(requested_patient_id())
+    if patient is None:
+        return patient_not_found()
+
+    sessions = ExerciseSession.query.filter_by(patient_id=patient.id).all()
 
     total = len(sessions)
     if total == 0:
@@ -169,9 +188,9 @@ def get_stats():
             "avg_score": 0.0,
             "best_score": 0.0,
             "best_session": None,
-            "streak": user.streak_count,
-            "points": user.points,
-            "badges": user.badges
+            "streak": patient.streak_count,
+            "points": patient.points,
+            "badges": patient.badges
         })
 
     scores = [s.overall_score for s in sessions]
@@ -180,7 +199,7 @@ def get_stats():
 
     # Highest real session score with its exercise, for the Personal Best card.
     best_session = (
-        ExerciseSession.query.filter_by(patient_id=patient_id)
+        ExerciseSession.query.filter_by(patient_id=patient.id)
         .order_by(ExerciseSession.overall_score.desc())
         .first()
     )
@@ -198,10 +217,10 @@ def get_stats():
             "overall_score": best_session.overall_score,
             "started_at": best_session.started_at.isoformat() if best_session.started_at else None,
         } if best_session else None,
-        "streak": user.streak_count,
-        "points": user.points,
+        "streak": patient.streak_count,
+        "points": patient.points,
         # Badges are already persisted per patient at session-save time
         # (gamification.check_achievements); expose them here so the
         # achievements page uses one consistent source.
-        "badges": user.badges
+        "badges": patient.badges
     })

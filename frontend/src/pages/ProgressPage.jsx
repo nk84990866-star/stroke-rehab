@@ -284,7 +284,7 @@ const ProgressPage = () => {
             {progressLoadError && (
               <PartialLoadState
                 title="Progress chart data is unavailable"
-                message="Score, range-of-motion, and smoothness trend data could not be loaded."
+                message="Score, movement-range estimate, and smoothness trend data could not be loaded."
                 loading={retryingSources.progress}
                 loadingMessage="Retrying progress chart data…"
                 onRetry={() => loadSource('progress', true)}
@@ -372,25 +372,28 @@ const ProgressPage = () => {
           )}
         </Card>
 
-        {/* ============ ROM & SMOOTHNESS ============ */}
+        {/* ============ MOVEMENT ESTIMATES & SMOOTHNESS ============ */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Range of motion — real values from saved sessions */}
+          {/* App-specific movement-range estimates from saved sessions */}
           <Card className="p-5 sm:p-6">
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2 mb-4">
-              <Waves className="h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" /> Range of Motion
+              <Waves className="h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" /> Movement Range Estimate
             </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+              App-specific screen-space estimates from 2D webcam pose coordinates. Degree-scaled values are not calibrated anatomical range of motion.
+            </p>
             {sessionsLoadError && (
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Session metrics could not be loaded.</p>
             )}
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Max ROM in range</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Maximum estimate in range</p>
                 <p className="text-xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">
                   {!sessionsLoadError && summary.maxRom != null ? `${Math.round(summary.maxRom * 100) / 100}°` : '—'}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Avg ROM in range</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Average estimate in range</p>
                 <p className="text-xl font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">
                   {!sessionsLoadError && summary.avgRom != null ? `${Math.round(summary.avgRom * 100) / 100}°` : '—'}
                 </p>
@@ -398,33 +401,33 @@ const ProgressPage = () => {
             </div>
             {progressLoadError ? (
               <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center">
-                Range-of-motion chart data could not be loaded.
+                Movement-range estimate chart data could not be loaded.
               </p>
             ) : filteredProgressData.some((p) => Number(p.rom) > 0) ? (
               <figure className="m-0">
-                <div className="h-56 w-full" role="img" aria-label="Line chart of maximum range of motion reached per session.">
+                <div className="h-56 w-full" role="img" aria-label="Line chart of maximum app-specific movement estimate per session.">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={filteredProgressData} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                       <XAxis dataKey="date" tickFormatter={tickDate} tick={{ fontSize: 12, fill: axisColor }} minTickGap={24} />
                       <YAxis domain={[0, 180]} tick={{ fontSize: 12, fill: axisColor }} width={36} />
-                      <Tooltip labelFormatter={(l) => `Date: ${tickDate(l)}`} formatter={(v) => [`${v}°`, 'Max ROM']} />
-                      <Line type="monotone" dataKey="rom" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 6 }} name="Max ROM" />
+                      <Tooltip labelFormatter={(l) => `Date: ${tickDate(l)}`} formatter={(v) => [`${v}°`, 'Movement estimate']} />
+                      <Line type="monotone" dataKey="rom" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 6 }} name="Movement estimate" />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
                 <figcaption className="sr-only">
-                  Maximum range of motion per session in degrees, from saved session data.
+                  Maximum app-specific screen-space movement estimate per session, displayed on a degree-like scale.
                 </figcaption>
               </figure>
             ) : (
               <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center">
-                No ROM values recorded in this period yet.
+                No movement estimates recorded in this period yet.
               </p>
             )}
             {summary.romRecorded > 0 && (
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                Averaged over {summary.romRecorded} session{summary.romRecorded !== 1 ? 's' : ''} with a recorded ROM value.
+                Averaged over {summary.romRecorded} session{summary.romRecorded !== 1 ? 's' : ''} with a recorded movement estimate.
               </p>
             )}
           </Card>
@@ -434,6 +437,9 @@ const ProgressPage = () => {
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2 mb-4">
               <Gauge className="h-5 w-5 text-purple-600 dark:text-purple-400" aria-hidden="true" /> Movement Smoothness
             </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+              App-specific score from a model trajectory generated with screen-space estimates; not a direct measurement of the observed hand path.
+            </p>
             {sessionsLoadError && (
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Session metrics could not be loaded.</p>
             )}
@@ -461,7 +467,7 @@ const ProgressPage = () => {
                   </ResponsiveContainer>
                 </div>
                 <figcaption className="sr-only">
-                  Movement smoothness score per session, as calculated by the backend kinematics engine.
+                  App-specific movement smoothness score per session, derived from screen-space movement estimates.
                 </figcaption>
               </figure>
             ) : (

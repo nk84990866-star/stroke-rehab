@@ -1,12 +1,12 @@
 """
 Report Generator Service for NeuroMotion AI
-Generates clinical reports and AI recommendations.
+Generates session reports and rule-based training suggestions.
 """
 from datetime import datetime
 
 def generate_session_report(session, user, exercise):
     """
-    Evaluates session data and generates clinical AI recommendations.
+    Evaluates session metrics and generates rule-based training suggestions.
     """
     accuracy = session.avg_accuracy_score
     rom = session.max_rom_achieved
@@ -23,13 +23,13 @@ def generate_session_report(session, user, exercise):
     else:
         recommendations.append("Session accuracy was below 70%. Consider reaching slowly and holding steady at each target as instructed.")
 
-    # Analyze range of motion (ROM)
+    # Analyze the app-specific movement-range estimate.
     if rom >= 135:
-        recommendations.append("The app recorded a maximum arm-angle estimate of 135° or more in this session. Continue following the exercise instructions.")
+        recommendations.append("The app recorded a maximum screen-space movement estimate of 135 or more on its degree-like scale in this session. Continue following the exercise instructions.")
     elif rom >= 90:
-        recommendations.append("The app recorded a maximum arm-angle estimate from 90° to under 135° in this session. Follow the exercise instructions and any guidance from your therapist.")
+        recommendations.append("The app recorded a maximum screen-space movement estimate from 90 to under 135 on its degree-like scale in this session. Follow the exercise instructions and any guidance from your therapist.")
     else:
-        recommendations.append("The app recorded a maximum arm-angle estimate below 90° in this session. Follow the exercise instructions and ask your therapist for guidance if needed.")
+        recommendations.append("The app recorded a maximum screen-space movement estimate below 90 on its degree-like scale in this session. Follow the exercise instructions and ask your therapist for guidance if needed.")
 
     # Analyze movement smoothness
     if smoothness >= 80:

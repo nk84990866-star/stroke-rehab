@@ -141,7 +141,7 @@ const PatientDetails = ({ patientId }) => {
           </p>
         </div>
         <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Max ROM</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Movement range estimate</p>
           <p className="text-lg font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">
             {s.maxRom != null ? `${Math.round(s.maxRom * 100) / 100}°` : '—'}
           </p>
@@ -151,6 +151,9 @@ const PatientDetails = ({ patientId }) => {
           <p className="text-lg font-extrabold text-slate-900 dark:text-slate-50 tabular-nums">{fmtDuration(s.totalSeconds)}</p>
         </div>
       </div>
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        App-specific screen-space estimate from webcam pose coordinates; degree-scaled values are not calibrated anatomical measurements.
+      </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
         <div className="lg:col-span-2">

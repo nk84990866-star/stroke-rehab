@@ -87,16 +87,16 @@ const ReportDetailPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           <StatCard
             icon={Waves}
-            label="Max ROM Achieved"
+            label="Movement Range Estimate"
             value={`${fmt(report.metrics?.max_rom_achieved)}°`}
-            footer="Highest arm-angle estimate recorded by the app from tracked movement in this session."
+            footer="Highest app-specific screen-space movement estimate in this session, displayed on a degree-like scale; not calibrated anatomical range of motion."
           />
           <StatCard
             icon={Gauge}
             color="purple"
             label="Movement Smoothness"
             value={`${fmt(report.metrics?.smoothness_score, 1)}/100`}
-            footer="Based on changes in tracked hand position during active reaches; higher values mean smoother paths."
+            footer="App-specific score from a model trajectory generated with screen-space estimates; it is not a direct measurement of the observed hand path."
           />
           <StatCard
             icon={Crosshair}
@@ -117,6 +117,9 @@ const ReportDetailPage = () => {
             }
           />
         </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Movement range is an app-specific estimate derived from 2D webcam pose coordinates. Its degree-scaled value is not a calibrated anatomical measurement.
+        </p>
 
         {/* Rule-based recommendations panel */}
         <Card className="bg-primary-50/60 border-primary-100 dark:border-primary-900 p-6 space-y-4">

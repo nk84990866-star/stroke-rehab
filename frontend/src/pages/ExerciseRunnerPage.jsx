@@ -404,10 +404,8 @@ const ExerciseRunnerPage = () => {
             ctx.beginPath(); ctx.moveTo(mappedElbowX, mappedElbowY); ctx.lineTo(handX, handY); ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 6; ctx.stroke();
             ctx.beginPath(); ctx.arc(handX, handY, 8, 0, 2 * Math.PI); ctx.fillStyle = '#10b981'; ctx.fill();
 
-            // Convert normalized landmark offsets to approximate joint angles
-            // (degrees). Only the magnitude matters for ROM/smoothness metrics;
-            // scaling keeps values in a realistic 0-180° clinical range instead
-            // of raw pixel-space numbers like 178.1310772640824.
+            // Convert normalized landmark offsets to capped, degree-like
+            // screen-space estimates for the existing session metrics.
             const toDeg = (v) => Math.min(180, Math.abs(v) * 0.6);
             anglesHistory.current.push([toDeg(dx), toDeg(dy)]);
 
@@ -679,7 +677,7 @@ const ExerciseRunnerPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <StatCard
               icon={Timer}
-              label="Max ROM"
+              label="Movement Range Estimate"
               value={saveResult.maxRom != null ? `${fmt(saveResult.maxRom, 2)}°` : '—'}
             />
             <StatCard
@@ -689,11 +687,14 @@ const ExerciseRunnerPage = () => {
             />
             <StatCard
               icon={Timer}
-              label="Avg Joint Velocity"
+              label="Estimated Movement Speed"
               value={saveResult.avgVelocity != null ? `${fmt(saveResult.avgVelocity, 2)}` : '—'}
-              sub="deg/s"
+              sub="scaled estimate units/s"
             />
           </div>
+          <p className="text-xs text-center text-slate-500 dark:text-slate-400">
+            Movement range and speed are app-specific estimates from 2D webcam pose coordinates; degree-scaled values are not calibrated anatomical measurements. Smoothness is an app-specific score from a model trajectory generated with these estimates.
+          </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-3">
             {saveResult.sessionId && (

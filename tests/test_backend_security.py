@@ -5,7 +5,7 @@ import json
 import unittest
 from unittest.mock import patch
 
-from sqlalchemy import create_engine, inspect, text
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.exc import SQLAlchemyError
 
 # backend.app creates an application during import. Force its database URL to
@@ -16,6 +16,7 @@ from backend.app import (  # noqa: E402
     PROJECTED_ELBOW_ANGLE_COLUMN,
     _RequiredSchemaMigrationError,
     _ensure_projected_elbow_angle_column,
+    _ensure_projected_elbow_angle_column_or_defer,
     app,
     create_app,
 )
@@ -365,6 +366,30 @@ class BackendSecurityTests(unittest.TestCase):
         ):
             with self.assertRaises(_RequiredSchemaMigrationError):
                 create_app()
+
+    def test_reachable_ddl_failure_is_not_treated_as_database_outage(self):
+        engine = create_engine("sqlite://")
+
+        def reject_migration_ddl(connection, cursor, statement, parameters, context, executemany):
+            if statement.startswith("ALTER TABLE exercise_sessions"):
+                raise SQLAlchemyError("DDL permission denied")
+
+        try:
+            with engine.begin() as connection:
+                connection.execute(text(
+                    "CREATE TABLE exercise_sessions "
+                    "(id INTEGER PRIMARY KEY, joint_angle_data_json TEXT)"
+                ))
+            event.listen(engine, "before_cursor_execute", reject_migration_ddl)
+
+            with self.assertRaises(_RequiredSchemaMigrationError):
+                _ensure_projected_elbow_angle_column_or_defer(engine)
+
+            columns = {column["name"] for column in inspect(engine).get_columns("exercise_sessions")}
+            self.assertNotIn(PROJECTED_ELBOW_ANGLE_COLUMN, columns)
+        finally:
+            event.remove(engine, "before_cursor_execute", reject_migration_ddl)
+            engine.dispose()
 
     def test_unavailable_database_keeps_degraded_startup_behavior(self):
         with (

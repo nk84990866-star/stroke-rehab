@@ -100,6 +100,11 @@ const ExerciseRunnerPage = () => {
   const projectedElbowDiagnosticsRef = useRef([]);
   const targetOpportunityStateRef = useRef(createTargetOpportunityState());
   const saveRequestIdRef = useRef(null);
+  const sessionSavePayloadRef = useRef(null);
+  const completionStartedRef = useRef(false);
+  const saveInFlightRef = useRef(false);
+  const elapsedRef = useRef(0);
+  const timerIntervalRef = useRef(null);
   const frameIdRef = useRef(null);
   const currentTargetIndex = useRef(0);
   const holdStartTime = useRef(null);
@@ -192,6 +197,10 @@ const ExerciseRunnerPage = () => {
         setStatus('in_progress');
         setCoachHint("Raise your arm toward the green target!");
         saveRequestIdRef.current = null;
+        sessionSavePayloadRef.current = null;
+        completionStartedRef.current = false;
+        elapsedRef.current = 0;
+        setElapsed(0);
         currentTargetIndex.current = 0;
         targetOpportunityStateRef.current = createTargetOpportunityState();
         if (exercise?.target_positions?.length) {
@@ -615,46 +624,32 @@ const ExerciseRunnerPage = () => {
   // Session timer: a single interval drives both remaining and elapsed so the
   // two can never disagree. Auto-completes when the prescribed duration ends.
   useEffect(() => {
-    let interval = null;
     if (running && timeLeft > 0) {
-      interval = setInterval(() => {
+      const interval = setInterval(() => {
+        if (completionStartedRef.current) return;
+        elapsedRef.current += 1;
         setTimeLeft(prev => prev - 1);
-        setElapsed(prev => prev + 1);
+        setElapsed(elapsedRef.current);
       }, 1000);
+      timerIntervalRef.current = interval;
     } else if (timeLeft === 0 && running) {
       handleFinish();
     }
-    return () => clearInterval(interval);
+    return () => {
+      if (timerIntervalRef.current !== null) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    };
   }, [running, timeLeft]);
 
   const persistSession = async () => {
+    if (saveInFlightRef.current || !sessionSavePayloadRef.current) return;
+    saveInFlightRef.current = true;
     setSaving(true);
     setSaveFailed(false);
     try {
-      if (!saveRequestIdRef.current) {
-        saveRequestIdRef.current = window.crypto.randomUUID();
-      }
-      const finalAccuracy =
-        accuracyCountRef.current > 0
-          ? Number((accuracySumRef.current / accuracyCountRef.current).toFixed(2))
-          : 100;
-
-      const result = await saveSession({
-        idempotency_key: saveRequestIdRef.current,
-        exercise_id: Number(id),
-        duration_seconds: Math.max(1, elapsed),
-        avg_accuracy_score: finalAccuracy,
-        targets_hit: targetOpportunityStateRef.current.targetsHit,
-        total_targets:
-          targetOpportunityStateRef.current.totalTargets ||
-          targetOpportunityStateRef.current.targetsHit + 1,
-        joint_angle_data: anglesHistory.current,
-        projected_elbow_angle_data: {
-          version: 2,
-          coordinate_system: 'mediapipe_normalized_image_xy',
-          samples: projectedElbowAnglesHistory.current,
-        }
-      });
+      const result = await saveSession(sessionSavePayloadRef.current);
       setSaveResult({
         sessionId: result?.session?.id || null,
         repetitions: repCountRef.current,
@@ -694,13 +689,42 @@ const ExerciseRunnerPage = () => {
         setError('Your session could not be saved. Your exercise data is kept — please try again.');
       }
     } finally {
+      saveInFlightRef.current = false;
       setSaving(false);
     }
   };
 
-  // Finish = stop camera + save. Guarded against double clicks via `saving`.
+  // Freeze the completed session once before stopping the timer and camera.
   const handleFinish = () => {
-    if (saving) return;
+    if (completionStartedRef.current) return;
+    completionStartedRef.current = true;
+    if (!saveRequestIdRef.current) {
+      saveRequestIdRef.current = window.crypto.randomUUID();
+    }
+    const finalAccuracy =
+      accuracyCountRef.current > 0
+        ? Number((accuracySumRef.current / accuracyCountRef.current).toFixed(2))
+        : 100;
+    sessionSavePayloadRef.current = {
+      idempotency_key: saveRequestIdRef.current,
+      exercise_id: Number(id),
+      duration_seconds: Math.max(1, elapsedRef.current),
+      avg_accuracy_score: finalAccuracy,
+      targets_hit: targetOpportunityStateRef.current.targetsHit,
+      total_targets:
+        targetOpportunityStateRef.current.totalTargets ||
+        targetOpportunityStateRef.current.targetsHit + 1,
+      joint_angle_data: anglesHistory.current.map((sample) => [...sample]),
+      projected_elbow_angle_data: {
+        version: 2,
+        coordinate_system: 'mediapipe_normalized_image_xy',
+        samples: projectedElbowAnglesHistory.current.map((sample) => ({ ...sample })),
+      },
+    };
+    if (timerIntervalRef.current !== null) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
     stopCamera();
     setStatus('completing');
     persistSession();
@@ -715,10 +739,14 @@ const ExerciseRunnerPage = () => {
     setSaveResult(null);
     setSaveFailed(false);
     saveRequestIdRef.current = null;
+    sessionSavePayloadRef.current = null;
+    completionStartedRef.current = false;
+    saveInFlightRef.current = false;
     setError('');
     setStatus('ready');
     setTimeLeft(exercise.duration_seconds);
     setElapsed(0);
+    elapsedRef.current = 0;
     setRepCount(0);
     setCoachHint('Camera ready. Press Start Exercise when you are.');
     currentTargetIndex.current = 0;

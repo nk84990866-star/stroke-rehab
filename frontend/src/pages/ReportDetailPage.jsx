@@ -106,7 +106,7 @@ const ReportDetailPage = () => {
             footer={
               <span className="block space-y-1">
                 <span className="block">
-                  Targets hit / targets in the exercise. A hit counts when the tracked hand stays within the target's on-screen range for its required hold.
+                  Targets successfully hit / presented target opportunities. A hit counts when the tracked hand stays within the target's on-screen range for its required hold.
                 </span>
                 {report.metrics?.accuracy_score != null && (
                   <span className="block">

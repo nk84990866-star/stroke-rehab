@@ -187,7 +187,11 @@ const DashboardPage = () => {
     ? Math.round(lastScores.reduce((sum, p) => sum + (p.score || 0), 0) / lastScores.length)
     : null;
 
-  const earnedBadges = Array.isArray(user?.badges) ? user.badges : [];
+  const earnedBadges = Array.isArray(stats?.badges)
+    ? stats.badges
+    : Array.isArray(user?.badges)
+      ? user.badges
+      : [];
   const lockedBadgeKeys = Object.keys(BADGE_META).filter((k) => !earnedBadges.includes(k));
   const badgePreview = [
     ...earnedBadges.slice(0, 3).map((k) => ({ key: k, earned: true })),
@@ -314,7 +318,7 @@ const DashboardPage = () => {
             label="Average Score"
             value={stats?.avg_score ?? 0}
             sub="%"
-            footer="Mean accuracy across sessions"
+            footer="Mean of app-calculated overall session scores"
           />
           <StatCard
             icon={Zap}

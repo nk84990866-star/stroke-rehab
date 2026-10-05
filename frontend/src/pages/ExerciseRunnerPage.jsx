@@ -29,6 +29,11 @@ import {
   calculateProjectedElbowAngle,
   calculateProjectedElbowDiagnostic,
 } from '../lib/poseGeometry';
+import {
+  createTargetOpportunityState,
+  recordTargetHit,
+  recordTargetPresentation,
+} from '../lib/targetOpportunities';
 import { PoseLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 
 const PROJECTED_ELBOW_DIAGNOSTICS_KEY = '__neuroMotionProjectedElbowDiagnostics';
@@ -67,7 +72,6 @@ const ExerciseRunnerPage = () => {
   const [score, setScore] = useState(100.0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [elapsed, setElapsed] = useState(0);
-  const [targetsHit, setTargetsHit] = useState(0);
   const [repCount, setRepCount] = useState(0); // mirrored from ref; updates only when a rep completes
 
   // Voice assistance: supported = browser capability; on = user opt-in (persisted, default OFF)
@@ -94,6 +98,7 @@ const ExerciseRunnerPage = () => {
   // Persisted separately from legacy displacement and excluded from scoring.
   const projectedElbowAnglesHistory = useRef([]);
   const projectedElbowDiagnosticsRef = useRef([]);
+  const targetOpportunityStateRef = useRef(createTargetOpportunityState());
   const frameIdRef = useRef(null);
   const currentTargetIndex = useRef(0);
   const holdStartTime = useRef(null);
@@ -186,6 +191,13 @@ const ExerciseRunnerPage = () => {
         setStatus('in_progress');
         setCoachHint("Raise your arm toward the green target!");
         currentTargetIndex.current = 0;
+        targetOpportunityStateRef.current = createTargetOpportunityState();
+        if (exercise?.target_positions?.length) {
+          targetOpportunityStateRef.current = recordTargetPresentation(
+            targetOpportunityStateRef.current,
+            currentTargetIndex.current,
+          );
+        }
         anglesHistory.current = [];
         projectedElbowAnglesHistory.current = [];
         if (import.meta.env.DEV) {
@@ -199,7 +211,6 @@ const ExerciseRunnerPage = () => {
         smoothedStateRef.current = null;   // fresh smoothing per session
         activeSideRef.current = null;      // re-select tracked arm
         lastVideoTime.current = -1;
-        setTargetsHit(0);
         // Fresh repetition tracking per session
         repCountRef.current = 0;
         setRepCount(0);
@@ -291,6 +302,10 @@ const ExerciseRunnerPage = () => {
       }
 
       if (currentTarget) {
+        targetOpportunityStateRef.current = recordTargetPresentation(
+          targetOpportunityStateRef.current,
+          currentTargetIndex.current,
+        );
         const targetX = shoulderX + (currentTarget.x * 4);
         const targetY = shoulderY - (currentTarget.y * 4);
 
@@ -552,8 +567,11 @@ const ExerciseRunnerPage = () => {
                 const holdDuration = (Date.now() - holdStartTime.current) / 1000;
 
                 if (holdDuration >= (currentTarget.hold_sec || 1.0)) {
+                  targetOpportunityStateRef.current = recordTargetHit(
+                    targetOpportunityStateRef.current,
+                    currentTargetIndex.current,
+                  );
                   currentTargetIndex.current += 1;
-                  setTargetsHit(prev => prev + 1);
                   setCoachHint("Target Hit! Move to the next target.");
                   holdStartTime.current = null;
                 } else {
@@ -620,8 +638,10 @@ const ExerciseRunnerPage = () => {
         exercise_id: Number(id),
         duration_seconds: Math.max(1, elapsed),
         avg_accuracy_score: finalAccuracy,
-        targets_hit: targetsHit,
-        total_targets: exercise?.target_positions?.length || (targetsHit + 1),
+        targets_hit: targetOpportunityStateRef.current.targetsHit,
+        total_targets:
+          targetOpportunityStateRef.current.totalTargets ||
+          targetOpportunityStateRef.current.targetsHit + 1,
         joint_angle_data: anglesHistory.current,
         projected_elbow_angle_data: {
           version: 2,
@@ -644,8 +664,11 @@ const ExerciseRunnerPage = () => {
         maxRom: result?.session?.max_rom_achieved ?? null,
         smoothness: result?.session?.movement_smoothness_score ?? null,
         avgVelocity: result?.session?.avg_joint_velocity ?? null,
-        targetsHit: result?.session?.targets_hit ?? targetsHit,
-        totalTargets: result?.session?.total_targets ?? (exercise?.target_positions?.length || (targetsHit + 1)),
+        targetsHit: result?.session?.targets_hit ?? targetOpportunityStateRef.current.targetsHit,
+        totalTargets:
+          result?.session?.total_targets ??
+          (targetOpportunityStateRef.current.totalTargets ||
+            targetOpportunityStateRef.current.targetsHit + 1),
         duration: result?.session?.duration_seconds ?? Math.max(1, elapsed),
       });
       setStatus('completed');
@@ -689,10 +712,10 @@ const ExerciseRunnerPage = () => {
     setStatus('ready');
     setTimeLeft(exercise.duration_seconds);
     setElapsed(0);
-    setTargetsHit(0);
     setRepCount(0);
     setCoachHint('Camera ready. Press Start Exercise when you are.');
     currentTargetIndex.current = 0;
+    targetOpportunityStateRef.current = createTargetOpportunityState();
     anglesHistory.current = [];
     projectedElbowAnglesHistory.current = [];
     if (import.meta.env.DEV) {

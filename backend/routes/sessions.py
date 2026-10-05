@@ -109,6 +109,8 @@ def _validate_session_payload(data):
     total_targets = data["total_targets"]
     if not _is_json_integer(total_targets) or not 1 <= total_targets <= 2_147_483_647:
         return "total_targets must be a positive integer"
+    if targets_hit > total_targets:
+        return "targets_hit cannot exceed total_targets"
 
     joint_angles = data["joint_angle_data"]
     if not isinstance(joint_angles, list):
@@ -196,9 +198,10 @@ def save_session():
         return _session_payload_error("duration_seconds exceeds the exercise duration")
 
     target_positions = exercise.target_positions
-    expected_total_targets = len(target_positions) if target_positions else data["targets_hit"] + 1
-    if data["total_targets"] != expected_total_targets:
-        return _session_payload_error("total_targets does not match the exercise targets")
+    if not target_positions and data["total_targets"] != data["targets_hit"] + 1:
+        return _session_payload_error(
+            "total_targets must preserve the fallback count for exercises without targets"
+        )
 
     accuracy = data["avg_accuracy_score"]
     targets_hit = data["targets_hit"]

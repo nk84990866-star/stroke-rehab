@@ -275,12 +275,66 @@ class BackendSecurityTests(unittest.TestCase):
             ("negative targets hit", {**valid, "targets_hit": -1}),
             ("zero total targets", {**valid, "total_targets": 0}),
             ("hits exceed samples", {**valid, "targets_hit": 2}),
-            ("incorrect target total", {**valid, "total_targets": len(self.exercise.target_positions) + 1}),
             ("zero exercise id", {**valid, "exercise_id": 0}),
         ]
         for name, payload in cases:
             with self.subTest(name=name):
                 self.assert_rejected_without_session(client, payload)
+
+    def test_opportunity_based_total_and_score_accept_multiple_cycles(self):
+        payload = {
+            **self.valid_session_payload(),
+            "avg_accuracy_score": 100,
+            "targets_hit": 8,
+            "total_targets": 9,
+            "joint_angle_data": [[10, 20]] * 8,
+        }
+        response = self.login(self.patient).post("/api/sessions", json=payload)
+
+        self.assertEqual(response.status_code, 201, response.get_data(as_text=True))
+        saved = response.get_json()["session"]
+        self.assertEqual(saved["targets_hit"], 8)
+        self.assertEqual(saved["total_targets"], 9)
+        self.assertEqual(saved["targets_hit"] / saved["total_targets"], 8 / 9)
+        expected_score = round(
+            (payload["avg_accuracy_score"] * 0.4)
+            + ((8 / 9) * 30.0)
+            + (saved["movement_smoothness_score"] * 0.3),
+            1,
+        )
+        self.assertEqual(saved["overall_score"], expected_score)
+        self.assertLessEqual(saved["overall_score"], 100)
+
+    def test_backend_rejects_hits_exceeding_presented_opportunities(self):
+        payload = {
+            **self.valid_session_payload(),
+            "targets_hit": 2,
+            "total_targets": 1,
+            "joint_angle_data": [[10, 20], [11, 21]],
+        }
+        self.assert_rejected_without_session(self.login(self.patient), payload)
+
+    def test_no_target_exercise_preserves_fallback_total(self):
+        with self.app.app_context():
+            exercise = db.session.get(Exercise, self.exercise.id)
+            original_targets = exercise.target_positions_json
+            exercise.target_positions_json = "[]"
+            db.session.commit()
+
+        try:
+            payload = {
+                **self.valid_session_payload(),
+                "targets_hit": 0,
+                "total_targets": 1,
+            }
+            response = self.login(self.patient).post("/api/sessions", json=payload)
+            self.assertEqual(response.status_code, 201, response.get_data(as_text=True))
+            self.assertEqual(response.get_json()["session"]["total_targets"], 1)
+        finally:
+            with self.app.app_context():
+                exercise = db.session.get(Exercise, self.exercise.id)
+                exercise.target_positions_json = original_targets
+                db.session.commit()
 
     def test_invalid_joint_angle_samples_are_rejected(self):
         client = self.login(self.patient)

@@ -14,9 +14,12 @@ os.environ["DATABASE_URL"] = "sqlite://"
 
 from backend.app import (  # noqa: E402
     PROJECTED_ELBOW_ANGLE_COLUMN,
+    SESSION_IDEMPOTENCY_COLUMNS,
+    SESSION_IDEMPOTENCY_INDEX,
     _RequiredSchemaMigrationError,
     _ensure_projected_elbow_angle_column,
     _ensure_projected_elbow_angle_column_or_defer,
+    _ensure_session_idempotency_schema,
     app,
     create_app,
 )
@@ -335,6 +338,156 @@ class BackendSecurityTests(unittest.TestCase):
                 exercise = db.session.get(Exercise, self.exercise.id)
                 exercise.target_positions_json = original_targets
                 db.session.commit()
+
+    def test_session_idempotency_migration_is_additive_and_idempotent(self):
+        engine = create_engine("sqlite://")
+        try:
+            with engine.begin() as connection:
+                connection.execute(text(
+                    "CREATE TABLE exercise_sessions "
+                    "(id INTEGER PRIMARY KEY, patient_id INTEGER NOT NULL)"
+                ))
+                connection.execute(text(
+                    "INSERT INTO exercise_sessions (id, patient_id) VALUES (1, 7)"
+                ))
+
+            self.assertTrue(_ensure_session_idempotency_schema(engine))
+            self.assertFalse(_ensure_session_idempotency_schema(engine))
+            columns = {
+                column["name"]: column
+                for column in inspect(engine).get_columns("exercise_sessions")
+            }
+            self.assertTrue(set(SESSION_IDEMPOTENCY_COLUMNS).issubset(columns))
+            self.assertTrue(all(
+                columns[name]["nullable"] for name in SESSION_IDEMPOTENCY_COLUMNS
+            ))
+            indexes = {
+                index["name"]: index
+                for index in inspect(engine).get_indexes("exercise_sessions")
+            }
+            self.assertIn(SESSION_IDEMPOTENCY_INDEX, indexes)
+            self.assertTrue(indexes[SESSION_IDEMPOTENCY_INDEX]["unique"])
+            self.assertEqual(
+                indexes[SESSION_IDEMPOTENCY_INDEX]["column_names"],
+                ["patient_id", "idempotency_key"],
+            )
+            with engine.connect() as connection:
+                self.assertEqual(
+                    connection.execute(text(
+                        "SELECT id, patient_id FROM exercise_sessions WHERE id = 1"
+                    )).one(),
+                    (1, 7),
+                )
+        finally:
+            engine.dispose()
+
+    def test_idempotent_session_save_replays_original_result_once(self):
+        client = self.login(self.patient)
+        payload = {
+            **self.valid_session_payload(),
+            "idempotency_key": "d5c5f290-49ab-41b1-a1a1-01ba0ab2f300",
+        }
+        first = client.post("/api/sessions", json=payload)
+        self.assertEqual(first.status_code, 201, first.get_data(as_text=True))
+        first_result = first.get_json()
+        first_points = first_result["points_earned"]
+        with self.app.app_context():
+            points_after_first = db.session.get(User, self.patient.id).points
+            achievements_after_first = Achievement.query.filter_by(
+                patient_id=self.patient.id
+            ).count()
+        self.assertEqual(self.session_count(), 1)
+
+        retry = client.post("/api/sessions", json=payload)
+        self.assertEqual(retry.status_code, 201, retry.get_data(as_text=True))
+        self.assertEqual(retry.get_json(), first_result)
+        self.assertEqual(self.session_count(), 1)
+        with self.app.app_context():
+            self.assertEqual(db.session.get(User, self.patient.id).points, points_after_first)
+            self.assertEqual(
+                Achievement.query.filter_by(patient_id=self.patient.id).count(),
+                achievements_after_first,
+            )
+        self.assertEqual(first_points, first_result["points_earned"])
+
+    def test_same_idempotency_key_is_scoped_to_authenticated_user(self):
+        key = "c8823d9a-7320-42dc-a41b-4b2d3f216a6d"
+        first = self.login(self.patient).post(
+            "/api/sessions",
+            json={**self.valid_session_payload(), "idempotency_key": key},
+        )
+        second = self.login(self.other_patient).post(
+            "/api/sessions",
+            json={**self.valid_session_payload(), "idempotency_key": key},
+        )
+        self.assertEqual(first.status_code, 201, first.get_data(as_text=True))
+        self.assertEqual(second.status_code, 201, second.get_data(as_text=True))
+        self.assertNotEqual(
+            first.get_json()["session"]["id"],
+            second.get_json()["session"]["id"],
+        )
+        self.assertEqual(first.get_json()["session"]["patient_id"], self.patient.id)
+        self.assertEqual(second.get_json()["session"]["patient_id"], self.other_patient.id)
+        self.assertEqual(self.session_count(), 2)
+
+    def test_different_idempotency_key_creates_another_session(self):
+        client = self.login(self.patient)
+        base = self.valid_session_payload()
+        first = client.post(
+            "/api/sessions",
+            json={**base, "idempotency_key": "74f95293-cb28-409d-87de-bfe799248102"},
+        )
+        second = client.post(
+            "/api/sessions",
+            json={**base, "idempotency_key": "02af2e20-2cb9-493b-aa35-126f5f4a35b5"},
+        )
+        self.assertEqual(first.status_code, 201)
+        self.assertEqual(second.status_code, 201)
+        self.assertNotEqual(
+            first.get_json()["session"]["id"],
+            second.get_json()["session"]["id"],
+        )
+        self.assertEqual(self.session_count(), 2)
+
+    def test_session_save_without_idempotency_key_remains_compatible(self):
+        response = self.login(self.patient).post(
+            "/api/sessions",
+            json=self.valid_session_payload(),
+        )
+        self.assertEqual(response.status_code, 201, response.get_data(as_text=True))
+        self.assertEqual(self.session_count(), 1)
+        with self.app.app_context():
+            saved = ExerciseSession.query.one()
+            self.assertIsNone(saved.idempotency_key)
+
+    def test_session_idempotency_key_must_be_a_uuid(self):
+        client = self.login(self.patient)
+        for key in ("", "not-a-uuid", "x" * 37, 123, None):
+            with self.subTest(key=key):
+                self.assert_rejected_without_session(
+                    client,
+                    {**self.valid_session_payload(), "idempotency_key": key},
+                )
+
+    def test_reusing_session_idempotency_key_with_different_payload_conflicts(self):
+        client = self.login(self.patient)
+        key = "b2c8a1d3-e945-41c9-a625-624743281643"
+        first_payload = {
+            **self.valid_session_payload(),
+            "idempotency_key": key,
+        }
+        first = client.post("/api/sessions", json=first_payload)
+        self.assertEqual(first.status_code, 201, first.get_data(as_text=True))
+
+        conflict = client.post(
+            "/api/sessions",
+            json={**first_payload, "avg_accuracy_score": 80},
+        )
+        self.assertEqual(conflict.status_code, 409)
+        self.assertEqual(self.session_count(), 1)
+        with self.app.app_context():
+            self.assertEqual(db.session.get(User, self.patient.id).points,
+                             first.get_json()["points_earned"])
 
     def test_invalid_joint_angle_samples_are_rejected(self):
         client = self.login(self.patient)

@@ -158,6 +158,5 @@ def check_achievements(user, session, db, Achievement):
     if unlocked_keys:
         new_badges = list(set(existing_badges + unlocked_keys))
         user.badges = new_badges
-        db.session.commit()
-        
+
     return unlocked_keys

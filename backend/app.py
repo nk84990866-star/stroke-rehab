@@ -20,6 +20,12 @@ from backend.routes.patients import patients_bp
 
 
 PROJECTED_ELBOW_ANGLE_COLUMN = "projected_elbow_angle_data_json"
+SESSION_IDEMPOTENCY_COLUMNS = {
+    "idempotency_key": "VARCHAR(36) NULL",
+    "idempotency_request_hash": "VARCHAR(64) NULL",
+    "idempotency_response_json": "TEXT NULL",
+}
+SESSION_IDEMPOTENCY_INDEX = "uq_exercise_sessions_patient_idempotency_key"
 
 
 class _RequiredSchemaMigrationError(RuntimeError):
@@ -71,6 +77,63 @@ def _ensure_projected_elbow_angle_column_or_defer(engine):
         if _database_is_available(engine):
             raise _RequiredSchemaMigrationError(
                 "Required projected elbow-angle database migration failed"
+            ) from exc
+        raise
+
+
+def _ensure_session_idempotency_schema(engine):
+    """Add nullable idempotency metadata and its user-scoped unique index."""
+    try:
+        with engine.begin() as connection:
+            columns = {
+                column["name"]
+                for column in inspect(connection).get_columns("exercise_sessions")
+            }
+            for name, sql_type in SESSION_IDEMPOTENCY_COLUMNS.items():
+                if name not in columns:
+                    connection.execute(
+                        db.text(
+                            "ALTER TABLE exercise_sessions "
+                            f"ADD COLUMN {name} {sql_type}"
+                        )
+                    )
+            indexes = {
+                index["name"]
+                for index in inspect(connection).get_indexes("exercise_sessions")
+            }
+            if SESSION_IDEMPOTENCY_INDEX not in indexes:
+                connection.execute(
+                    db.text(
+                        f"CREATE UNIQUE INDEX {SESSION_IDEMPOTENCY_INDEX} "
+                        "ON exercise_sessions (patient_id, idempotency_key)"
+                    )
+                )
+                return True
+            return any(name not in columns for name in SESSION_IDEMPOTENCY_COLUMNS)
+    except SQLAlchemyError:
+        columns = {
+            column["name"]
+            for column in inspect(engine).get_columns("exercise_sessions")
+        }
+        indexes = {
+            index["name"]
+            for index in inspect(engine).get_indexes("exercise_sessions")
+        }
+        if (
+            set(SESSION_IDEMPOTENCY_COLUMNS).issubset(columns)
+            and SESSION_IDEMPOTENCY_INDEX in indexes
+        ):
+            return False
+        raise
+
+
+def _ensure_session_idempotency_schema_or_defer(engine):
+    try:
+        return _ensure_session_idempotency_schema(engine)
+    except SQLAlchemyError as exc:
+        if _database_is_available(engine):
+            raise _RequiredSchemaMigrationError(
+                "Required session idempotency database migration failed"
             ) from exc
         raise
 
@@ -146,6 +209,7 @@ def create_app():
         try:
             db.create_all()
             _ensure_projected_elbow_angle_column_or_defer(db.engine)
+            _ensure_session_idempotency_schema_or_defer(db.engine)
             seed_exercises(db, Exercise)
         except _RequiredSchemaMigrationError:
             raise

@@ -152,6 +152,14 @@ class Exercise(db.Model):
 class ExerciseSession(db.Model):
     """Records a completed exercise session for a patient."""
     __tablename__ = "exercise_sessions"
+    __table_args__ = (
+        db.Index(
+            "uq_exercise_sessions_patient_idempotency_key",
+            "patient_id",
+            "idempotency_key",
+            unique=True,
+        ),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
@@ -173,6 +181,9 @@ class ExerciseSession(db.Model):
     # --- Time-series data ---
     joint_angle_data_json = db.Column(db.Text, default="[]")
     projected_elbow_angle_data_json = db.Column(db.Text, nullable=True)
+    idempotency_key = db.Column(db.String(36), nullable=True)
+    idempotency_request_hash = db.Column(db.String(64), nullable=True)
+    idempotency_response_json = db.Column(db.Text, nullable=True)
     notes = db.Column(db.Text)
 
     # --- Relationship ---

@@ -5,8 +5,11 @@ Handles saving completed exercises, retrieving logs, progress charts, and clinic
 from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 from datetime import datetime, timezone
+import hashlib
 import json
 import math
+import re
+from sqlalchemy.exc import IntegrityError
 from backend.models import db, ExerciseSession, Exercise, Achievement
 from backend.services.authorization import (
     get_authorized_patient,
@@ -34,6 +37,11 @@ SESSION_PAYLOAD_FIELDS = {
     "total_targets",
     "joint_angle_data",
 }
+IDEMPOTENCY_KEY_FIELD = "idempotency_key"
+IDEMPOTENCY_KEY_PATTERN = re.compile(
+    r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+)
 PROJECTED_ELBOW_ANGLE_FIELD = "projected_elbow_angle_data"
 PROJECTED_ELBOW_ANGLE_FIELDS = {
     "version",
@@ -86,9 +94,17 @@ def _validate_session_payload(data):
     if missing_fields:
         return f"Missing required session field: {sorted(missing_fields)[0]}"
 
-    allowed_fields = SESSION_PAYLOAD_FIELDS | {PROJECTED_ELBOW_ANGLE_FIELD}
+    allowed_fields = SESSION_PAYLOAD_FIELDS | {
+        PROJECTED_ELBOW_ANGLE_FIELD,
+        IDEMPOTENCY_KEY_FIELD,
+    }
     if data.keys() - allowed_fields:
         return "Session payload contains unsupported fields"
+
+    if IDEMPOTENCY_KEY_FIELD in data:
+        key = data[IDEMPOTENCY_KEY_FIELD]
+        if not isinstance(key, str) or not IDEMPOTENCY_KEY_PATTERN.fullmatch(key):
+            return "idempotency_key must be a UUID string"
 
     exercise_id = data["exercise_id"]
     if not _is_json_integer(exercise_id) or not 1 <= exercise_id <= 2_147_483_647:
@@ -137,6 +153,17 @@ def _validate_session_payload(data):
             return projected_error
 
     return None
+
+
+def _idempotent_replay_response(session, request_hash):
+    if session.idempotency_request_hash != request_hash:
+        return _session_payload_error(
+            "idempotency_key was already used for a different session request",
+            409,
+        )
+    if not session.idempotency_response_json:
+        return _session_payload_error("Saved session response is unavailable", 500)
+    return jsonify(json.loads(session.idempotency_response_json)), 201
 
 
 def _validate_projected_elbow_angle_data(data):
@@ -190,6 +217,30 @@ def save_session():
     if validation_error:
         return _session_payload_error(validation_error)
 
+    patient_id = current_user.id
+    idempotency_key = data.get(IDEMPOTENCY_KEY_FIELD)
+    request_hash = None
+    if idempotency_key is not None:
+        request_content = {
+            field: value
+            for field, value in data.items()
+            if field != IDEMPOTENCY_KEY_FIELD
+        }
+        request_hash = hashlib.sha256(
+            json.dumps(
+                request_content,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+        ).hexdigest()
+        existing = ExerciseSession.query.filter_by(
+            patient_id=patient_id,
+            idempotency_key=idempotency_key,
+        ).first()
+        if existing is not None:
+            return _idempotent_replay_response(existing, request_hash)
+
     exercise_id = data["exercise_id"]
     exercise = Exercise.query.get_or_404(exercise_id)
 
@@ -232,7 +283,7 @@ def save_session():
     overall_score = round((accuracy * 0.4) + (hit_ratio * 30.0) + (smoothness_score * 0.3), 1)
 
     session = ExerciseSession(
-        patient_id=current_user.id,
+        patient_id=patient_id,
         exercise_id=exercise_id,
         duration_seconds=duration,
         avg_accuracy_score=accuracy,
@@ -249,28 +300,44 @@ def save_session():
             if data.get(PROJECTED_ELBOW_ANGLE_FIELD) is not None
             else None
         ),
+        idempotency_key=idempotency_key,
+        idempotency_request_hash=request_hash,
         ended_at=datetime.utcnow()
     )
 
     db.session.add(session)
+    if idempotency_key is not None:
+        try:
+            db.session.flush()
+        except IntegrityError:
+            db.session.rollback()
+            existing = ExerciseSession.query.filter_by(
+                patient_id=patient_id,
+                idempotency_key=idempotency_key,
+            ).first()
+            if existing is None:
+                raise
+            return _idempotent_replay_response(existing, request_hash)
 
-    # 2. Gamification logic
+    # Keep the session, point award, streak, achievements, and replay response
+    # in one transaction so the idempotency key is never committed separately.
     check_and_update_streak(current_user)
     pts = calculate_session_points(session)
     current_user.points += pts
-
-    db.session.commit()
-
-    # 3. Check for achievements
     unlocked_badges = check_achievements(current_user, session, db, Achievement)
 
-    return jsonify({
+    response_data = {
         "message": "Session saved successfully",
         "session": session.to_dict(),
         "points_earned": pts,
         "new_streak": current_user.streak_count,
         "unlocked_badges": unlocked_badges
-    }), 201
+    }
+    if idempotency_key is not None:
+        session.idempotency_response_json = json.dumps(response_data)
+    db.session.commit()
+
+    return jsonify(response_data), 201
 
 @sessions_bp.route("", methods=["GET"])
 @login_required

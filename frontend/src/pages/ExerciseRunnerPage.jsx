@@ -99,6 +99,7 @@ const ExerciseRunnerPage = () => {
   const projectedElbowAnglesHistory = useRef([]);
   const projectedElbowDiagnosticsRef = useRef([]);
   const targetOpportunityStateRef = useRef(createTargetOpportunityState());
+  const saveRequestIdRef = useRef(null);
   const frameIdRef = useRef(null);
   const currentTargetIndex = useRef(0);
   const holdStartTime = useRef(null);
@@ -190,6 +191,7 @@ const ExerciseRunnerPage = () => {
         runningRef.current = true;
         setStatus('in_progress');
         setCoachHint("Raise your arm toward the green target!");
+        saveRequestIdRef.current = null;
         currentTargetIndex.current = 0;
         targetOpportunityStateRef.current = createTargetOpportunityState();
         if (exercise?.target_positions?.length) {
@@ -629,12 +631,16 @@ const ExerciseRunnerPage = () => {
     setSaving(true);
     setSaveFailed(false);
     try {
+      if (!saveRequestIdRef.current) {
+        saveRequestIdRef.current = window.crypto.randomUUID();
+      }
       const finalAccuracy =
         accuracyCountRef.current > 0
           ? Number((accuracySumRef.current / accuracyCountRef.current).toFixed(2))
           : 100;
 
       const result = await saveSession({
+        idempotency_key: saveRequestIdRef.current,
         exercise_id: Number(id),
         duration_seconds: Math.max(1, elapsed),
         avg_accuracy_score: finalAccuracy,
@@ -708,6 +714,7 @@ const ExerciseRunnerPage = () => {
   const handlePracticeAgain = () => {
     setSaveResult(null);
     setSaveFailed(false);
+    saveRequestIdRef.current = null;
     setError('');
     setStatus('ready');
     setTimeLeft(exercise.duration_seconds);

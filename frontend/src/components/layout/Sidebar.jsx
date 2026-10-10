@@ -33,10 +33,6 @@ const Sidebar = ({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobile }) =>
   const navigate = useNavigate();
   const closeButtonRef = useRef(null);
 
-  // The shell only renders for authenticated users, but stay defensive so the
-  // sidebar can never flash for a logged-out visitor.
-  if (!user) return null;
-
   // Keep keyboard focus within the mobile drawer while it is open.
   useEffect(() => {
     if (!mobileOpen) return undefined;
@@ -76,6 +72,10 @@ const Sidebar = ({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobile }) =>
       if (previouslyFocused?.isConnected) previouslyFocused.focus();
     };
   }, [mobileOpen]);
+
+  // The shell only renders for authenticated users, but stay defensive so the
+  // sidebar can never flash for a logged-out visitor.
+  if (!user) return null;
 
   const links = getNavItems(user.role);
 

@@ -77,7 +77,7 @@ const ScoreSparkline = ({ data }) => (
 const ActivityRow = ({ session }) => (
   <Link
     to={`/reports/${session.id}`}
-    className="flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+    className="flex min-h-11 items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500 transition-colors cursor-pointer"
   >
     <div className="flex items-center gap-3 min-w-0">
       <span className="inline-flex items-center justify-center p-2.5 rounded-lg bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 border border-primary-100 dark:border-primary-900 shrink-0">
@@ -107,7 +107,7 @@ const ActivityRow = ({ session }) => (
 const QuickAction = ({ to, icon: Icon, label }) => (
   <Link
     to={to}
-    className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-card hover:shadow-card-hover hover:border-primary-200 dark:hover:border-primary-800 hover:-translate-y-0.5 transition-all text-slate-700 dark:text-slate-200 hover:text-primary-700 cursor-pointer"
+    className="flex min-h-28 flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-card hover:shadow-card-hover hover:border-primary-200 dark:hover:border-primary-800 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 transition-all text-slate-700 dark:text-slate-200 hover:text-primary-700 cursor-pointer"
   >
     <span className="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 border border-primary-100 dark:border-primary-900">
       <Icon className="h-5 w-5" aria-hidden="true" />

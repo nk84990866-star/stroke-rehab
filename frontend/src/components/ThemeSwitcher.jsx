@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { cn } from '../lib/cn';
@@ -16,15 +16,21 @@ const OPTIONS = [
  */
 const ThemeSwitcher = ({ className }) => {
   const { theme, setTheme } = useTheme();
+  const optionRefs = useRef([]);
 
   const onKeyDown = (e) => {
-    const idx = OPTIONS.findIndex((o) => o.value === theme);
+    const current = optionRefs.current.indexOf(document.activeElement);
+    const idx = current >= 0 ? current : OPTIONS.findIndex((o) => o.value === theme);
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
       e.preventDefault();
-      setTheme(OPTIONS[(idx + 1) % OPTIONS.length].value);
+      const next = (idx + 1) % OPTIONS.length;
+      setTheme(OPTIONS[next].value);
+      optionRefs.current[next]?.focus();
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
       e.preventDefault();
-      setTheme(OPTIONS[(idx - 1 + OPTIONS.length) % OPTIONS.length].value);
+      const next = (idx - 1 + OPTIONS.length) % OPTIONS.length;
+      setTheme(OPTIONS[next].value);
+      optionRefs.current[next]?.focus();
     }
   };
 
@@ -43,6 +49,7 @@ const ThemeSwitcher = ({ className }) => {
         return (
           <button
             key={value}
+            ref={(element) => { optionRefs.current[OPTIONS.findIndex((option) => option.value === value)] = element; }}
             type="button"
             role="radio"
             aria-checked={selected}

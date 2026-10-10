@@ -62,7 +62,7 @@ const Navbar = ({ onOpenMobileNav, mobileNavOpen }) => {
     );
 
   return (
-    <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200 dark:border-slate-700 dark:bg-slate-900/90 dark:border-slate-700">
+    <nav aria-label="Top navigation" className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200 dark:border-slate-700 dark:bg-slate-900/90 dark:border-slate-700">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex justify-between h-16 items-center">
           {/* Brand */}

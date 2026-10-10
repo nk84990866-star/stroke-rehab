@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Activity,
@@ -31,6 +31,47 @@ const Sidebar = ({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobile }) =>
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const closeButtonRef = useRef(null);
+
+  // Keep keyboard focus within the mobile drawer while it is open.
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+
+    const previouslyFocused = document.activeElement;
+    const drawer = closeButtonRef.current?.closest('aside');
+    const getFocusable = () => drawer?.querySelectorAll(
+      'a[href]:not([tabindex="-1"]), button:not([disabled]):not([tabindex="-1"]), [tabindex]:not([tabindex="-1"])',
+    ) ?? [];
+
+    closeButtonRef.current?.focus();
+
+    const onKeyDown = (event) => {
+      if (event.key !== 'Tab') return;
+      const focusable = Array.from(getFocusable()).filter((element) => (
+        element.getClientRects().length > 0
+      ));
+      if (focusable.length === 0) {
+        event.preventDefault();
+        closeButtonRef.current?.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !drawer?.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !drawer?.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      if (previouslyFocused?.isConnected) previouslyFocused.focus();
+    };
+  }, [mobileOpen]);
 
   // The shell only renders for authenticated users, but stay defensive so the
   // sidebar can never flash for a logged-out visitor.
@@ -112,6 +153,7 @@ const Sidebar = ({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobile }) =>
           <button
             type="button"
             onClick={onCloseMobile}
+            ref={closeButtonRef}
             aria-label="Close navigation menu"
             className="inline-flex shrink-0 items-center justify-center rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 lg:hidden cursor-pointer"
           >

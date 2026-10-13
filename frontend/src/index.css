@@ -124,3 +124,65 @@
     scroll-behavior: auto !important;
   }
 }
+
+@media print {
+  @page {
+    margin: 16mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #111827 !important;
+    font-size: 10pt;
+  }
+
+  #root {
+    display: block !important;
+    min-height: 0 !important;
+    background: #fff !important;
+  }
+
+  nav,
+  aside,
+  button,
+  input,
+  select,
+  textarea,
+  .report-screen-only {
+    display: none !important;
+  }
+
+  .report-print-content {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    color: #111827 !important;
+  }
+
+  .report-print-content * {
+    color: #111827 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+
+  .report-print-content .report-card {
+    background: #fff !important;
+    border: 1px solid #9ca3af !important;
+    border-radius: 0 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report-print-content h1,
+  .report-print-content h2,
+  .report-print-content h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .report-print-content li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

@@ -79,6 +79,7 @@ function App() {
             }
           >
             <Route path="/therapist" element={<TherapistDashboardPage />} />
+            <Route path="/therapist/reports/:id" element={<ReportDetailPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -331,7 +331,7 @@ Summary of the key working items:
 | Admin panel / user management | ❌ Not implemented |
 | Exercise customization by therapist | ❌ Not implemented |
 | Push notifications / reminders | ❌ Not implemented |
-| Export reports to PDF | ❌ Not implemented |
+| Export reports to PDF | ⚠️ CP11.3A single-session browser print-to-PDF implemented locally; not production-verified |
 | Multiplayer / caregiver view | ❌ Not implemented |
 | Real AI/ML recommendations (LLM or model) | ❌ Report generator is rule-based |
 | Calling unused kinematics methods from API | ❌ Jacobian / ellipsoid / torque routes not exposed |
@@ -383,9 +383,16 @@ No `DATABASE_URL` needed locally — the app auto-uses `backend/rehab_system.db`
 
 ### Latest confirmed checkpoint
 
-- **CP10.11 — Clarify dashboard and report session metrics**
-- Commit: `511edf0ed215cc3aa11c0ebd93f3b03c9031fcbd`
-- Updated dashboard wording to identify the displayed average as the app-calculated overall session score, report wording to identify presented target opportunities, and dashboard badge preview to prefer fresh stats badge data with an AuthContext fallback.
+- **CP11.2 — Modernize UI and improve visual consistency**
+- Commit: `41bdaeaba9fe8409fdbdbc0be6bf0dcc71633c88`
+- Modernized shared frontend styling and major patient/therapist UI surfaces while preserving application and rehabilitation behavior.
+- **CP11.3A — Secure single-session PDF export** is implemented in the current uncommitted worktree and is not yet a committed checkpoint.
+- Patient and therapist report pages provide a user-triggered browser print action, allowing Save as PDF. The browser print dialog is required; the app does not create or silently download a PDF file.
+- Therapist report access uses a therapist-role-protected route, links only from sessions fetched for assigned patients, and the existing server-side session-report authorization. No backend route, data contract, or schema was changed.
+- Reports use existing single-session fields, label exercise level as the current exercise-template level, preserve presented target opportunity counts, omit repetitions, show unavailable values explicitly, and qualify possible legacy zero smoothness values.
+- Frontend lint passed with existing warnings; the production build passed with the existing large-chunk warning. Frontend Node tests: **17 passed**; backend security/API tests: **40 passed**.
+- **Local browser verification:** Chrome generated and visually rendered a one-page PDF using isolated mocked report data, including unavailable metrics and a legacy zero smoothness value. The print action was hidden and the report page had no browser errors. This does not verify the live backend, real authenticated workflows, or production behavior; those remain unverified.
+- The preceding session-metric clarification checkpoint was CP10.11 (`511edf0ed215cc3aa11c0ebd93f3b03c9031fcbd`); earlier session-save references include CP10.10 payload freezing (`71caad0d2fb5a09e65891c0a02dd229ac5c91c57`), CP10.6-FIX idempotent saves (`847715471a582a0e4a054f88cf459014dacdc64e`), and CP10.2 target-opportunity counting (`495a5e7`).
 - The preceding confirmed session-save checkpoints include CP10.10 payload freezing (`71caad0d2fb5a09e65891c0a02dd229ac5c91c57`), CP10.6-FIX idempotent saves (`847715471a582a0e4a054f88cf459014dacdc64e`), and CP10.2 target-opportunity counting (`495a5e7`).
 
 ### 2026-10-13 read-only audit results
@@ -399,7 +406,7 @@ No `DATABASE_URL` needed locally — the app auto-uses `backend/rehab_system.db`
 
 ### CP10.12 documentation refresh
 
-CP10.12 is a **proposed documentation-refresh checkpoint** until this update is reviewed and committed. It is not yet a completed checkpoint.
+CP10.12 project status documentation refresh was committed as `da2d719f4032821cc9b5d0056a31df17bc8acaf3`.
 
 ---
 

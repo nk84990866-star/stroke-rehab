@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 import {
   Activity,
@@ -184,7 +185,11 @@ const PatientDetails = ({ patientId }) => {
         <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Recent sessions</p>
         <div className="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           {recent.map((session) => (
-            <div key={session.id} className="flex items-center justify-between gap-3 px-4 py-3 bg-white dark:bg-slate-900">
+            <Link
+              key={session.id}
+              to={`/therapist/reports/${session.id}`}
+              className="flex items-center justify-between gap-3 px-4 py-3 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            >
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 truncate">
                   {session.exercise_name || 'Exercise session'}
@@ -201,7 +206,7 @@ const PatientDetails = ({ patientId }) => {
               <Badge variant={(session.overall_score || 0) >= 70 ? 'success' : 'default'}>
                 {session.overall_score ?? 0}%
               </Badge>
-            </div>
+            </Link>
           ))}
         </div>
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">

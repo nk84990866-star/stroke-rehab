@@ -1,8 +1,8 @@
 # NeuroMotion AI — Project Status Document
 
-> **Last updated:** 2026-09-28
+> **Last updated:** 2026-10-13
 > **Purpose of this file:** Accurate handoff document for AI coding agents and human developers.
-> Based on a full read-only inspection of the repository. Nothing in this file is assumed — every claim maps to actual code.
+> Current implementation notes below reflect targeted source inspection. The validation results in Section 15 are from the 2026-10-13 read-only audit; production and live database behavior were not verified.
 
 ---
 
@@ -10,7 +10,7 @@
 
 **NeuroMotion AI** — A gesture-based stroke rehabilitation web application.
 
-Patients use their webcam to perform prescribed upper-limb exercises while a browser-side AI model (MediaPipe PoseLandmarker) tracks their arm in real time. A 2-DOF kinematic model (shoulder → elbow → wrist) maps pose landmarks to joint angles, scores movement quality, and stores session metrics in a database. Therapists can monitor assigned patients' progress and adjust their difficulty level.
+Patients use their webcam to perform prescribed upper-limb exercises while a browser-side AI model (MediaPipe PoseLandmarker) tracks their arm in real time. The frontend derives screen-space pose and reaching metrics; the backend calculates and stores session metrics. These app-specific values are not calibrated clinical measurements. Therapists can monitor assigned patients' progress and adjust their difficulty level.
 
 Academic alignment: covers **Unit 1** (Vectors, Matrices, Rigid Body Transformations, HTM) and **Unit 2** (D-H Parameters, Forward Kinematics, Inverse Kinematics) and **Unit 3** (Jacobian, Velocity Analysis, Manipulability).
 
@@ -30,7 +30,7 @@ Academic alignment: covers **Unit 1** (Vectors, Matrices, Rigid Body Transformat
 | HTTP client | Axios v1.19 (`withCredentials: true`) |
 | Voice | Browser Web Speech Synthesis API (no package, opt-in only) |
 | Linter | OxLint |
-| Testing | Playwright (devDependency installed, but **no test files exist**) |
+| Testing | Node test runner for frontend utility tests; Playwright is a devDependency, but **no Playwright test files exist** |
 | PWA | `manifest.json` + `favicon.svg` in `/public` |
 
 **Entry point:** `frontend/index.html` → `src/main.jsx` → `src/App.jsx`
@@ -186,7 +186,9 @@ All features listed here are verifiably implemented in the codebase:
 `id`, `name`, `description`, `category`, `level`, `level_name`, `target_positions_json`, `duration_seconds`, `instructions`, `suitable_stroke_types_json`, `min_severity`, `max_severity`, `icon_name`, `target_radius`, `speed_requirement`
 
 ### `exercise_sessions`
-`id`, `patient_id` (FK), `exercise_id` (FK), `started_at`, `ended_at`, `duration_seconds`, `avg_accuracy_score`, `max_rom_achieved`, `targets_hit`, `total_targets`, `avg_joint_velocity`, `movement_smoothness_score`, `overall_score`, `level_played`, `joint_angle_data_json`, `notes`
+`id`, `patient_id` (FK), `exercise_id` (FK), `started_at`, `ended_at`, `duration_seconds`, `avg_accuracy_score`, `max_rom_achieved`, `targets_hit`, `total_targets`, `avg_joint_velocity`, `movement_smoothness_score`, `overall_score`, `level_played`, `joint_angle_data_json`, `projected_elbow_angle_data_json` (nullable), `idempotency_key` (nullable), `idempotency_request_hash` (nullable), `idempotency_response_json` (nullable), `notes`
+
+The model defines a unique index on `(patient_id, idempotency_key)` for keyed save replay; nullable idempotency fields preserve compatibility with older rows.
 
 ### `achievements`
 `id`, `patient_id` (FK), `badge_name`, `badge_description`, `earned_at`
@@ -258,7 +260,7 @@ AI_HealthCare_Stroke_Rehab/
             ├── RegisterPage.jsx             # 2-step registration form (patient or therapist)
             ├── DashboardPage.jsx            # Patient home dashboard
             ├── ExercisesPage.jsx            # Exercise library browser
-            ├── ExerciseRunnerPage.jsx       # ⭐ Main exercise runner (941 lines — webcam + pose + twin + game logic)
+            ├── ExerciseRunnerPage.jsx       # Main exercise runner (webcam + pose + twin + game and save logic)
             ├── ProgressPage.jsx             # Progress charts and session history
             ├── ReportsPage.jsx              # Session report list
             ├── ReportDetailPage.jsx         # Single session report with recommendations
@@ -271,27 +273,23 @@ AI_HealthCare_Stroke_Rehab/
 
 ## 10. Known Issues and Technical Debt
 
-### Bug-level issues
+### Verified limitations and maintenance notes
 
 | Severity | Location | Issue |
 |---|---|---|
-| 🔴 High | `ExerciseRunnerPage.jsx:498` | `avg_accuracy_score` sent to backend is the `score` state variable which **defaults to 100 and is never updated**. Real IK-based accuracy is never computed on the frontend. All sessions are saved with accuracy ≈ 100%. |
-| 🔴 High | `ExerciseRunnerPage.jsx:500` | `total_targets` sent as `targetsHit + 1` — an approximation. If a patient hits 0 targets, `total_targets = 1`. Actual target count should come from `exercise.target_positions.length`. |
-| 🟡 Medium | `backend/routes/auth.py:66` | `datetime.utcnow()` is deprecated since Python 3.12. Should use `datetime.now(timezone.utc)`. |
-| 🟡 Medium | `backend/routes/sessions.py:77` | Same `datetime.utcnow()` deprecation. |
-| 🟡 Medium | `backend/routes/exercises.py:28`, `sessions.py:112` | `Exercise.query.get_or_404()` and `User.query.get()` are deprecated in SQLAlchemy 2.x. Should use `db.session.get()`. |
-| 🟡 Medium | `backend/services/gamification.py:126-128` | Double `if "rom_milestone_90" not in existing_badges` — redundant nested check. |
+| Informational | `frontend/src/pages/ExerciseRunnerPage.jsx` | When frame samples are available, `avg_accuracy_score` is their mean screen-space hand-to-target distance score while a target is active. If none are available, the runner uses a 100 fallback. This is not IK-based or a calibrated clinical accuracy measurement. |
+| Informational | `frontend/src/lib/targetOpportunities.js`, `backend/routes/sessions.py` | `total_targets` counts presented target opportunities, including repeated presentations; the backend applies a fallback rule for exercises without configured target positions. It is not necessarily the number of unique configured positions. |
+| Maintenance | `backend/routes/auth.py`, `backend/routes/sessions.py`, `backend/app.py` | The 2026-10-13 backend test run emitted Python `datetime.utcnow()` and SQLAlchemy legacy `Query.get()` deprecation warnings. These did not fail the tests. |
 
 ### Missing features (not a bug, just not built)
 
-- No therapist ↔ patient **assignment** UI or API endpoint. The `assigned_therapist_id` foreign key exists in the DB schema but no route or UI page sets it. Therapists see zero patients unless the DB is manually edited.
 - No **password reset** / forgot-password flow.
 - No **email verification** on registration.
-- No **Playwright tests** — the dependency is installed but no test files exist.
+- No **Playwright end-to-end tests** — Playwright is installed as a frontend devDependency, but no Playwright test files or frontend `test` script are present.
 
 ### Architecture notes
 
-- `ExerciseRunnerPage.jsx` is **941 lines** — camera setup, MediaPipe integration, canvas drawing, target hit logic, rep counting, session timer, voice calls, and session save are all in one component. Strong refactoring candidate.
+- `ExerciseRunnerPage.jsx` keeps camera setup, MediaPipe integration, canvas drawing, target-hit logic, rep counting, timer, voice calls, and session-save logic in one large component.
 - `report_generator.py` is rule-based (if/else thresholds) — despite the "AI" framing, no ML model is involved. This is intentional for the current academic scope.
 - The kinematic math in `kinematics_engine.py` is correct and academically complete, but several methods (Jacobian velocity, manipulability ellipsoid, joint torques, velocity profile) are **never called from any route**. Only `compute_movement_smoothness()` is used.
 
@@ -305,8 +303,11 @@ Summary of the key working items:
 - Full auth lifecycle (register, login, logout, session persistence, role-gated routes)
 - MediaPipe browser-side pose tracking with skeleton overlay and digital twin
 - Target hit detection with hold-time gating
+- Target-opportunity counting: the denominator tracks presented opportunities (including repeated presentations), not just unique configured positions
 - Repetition counting with adaptive hysteresis
-- Session save + backend kinematics post-processing (smoothness, ROM, velocity, score)
+- Session save with a frozen completion payload for retries and backend idempotency; backend post-processes smoothness, ROM, velocity, and overall score
+- Frame-level screen-space reaching accuracy scores while a target is active (not IK-based or calibrated clinical accuracy)
+- Separate projected elbow-angle data persistence alongside legacy joint-angle data
 - Gamification (11 badges, points, daily streak)
 - Daily rehabilitation plan (deterministic, no DB storage)
 - Progress charts with date range filters
@@ -322,12 +323,11 @@ Summary of the key working items:
 
 | Feature | Status |
 |---|---|
-| Therapist → Patient assignment (UI + API) | ❌ Not implemented |
-| Patient can view their assigned therapist | ❌ Not implemented |
+| Patient can view their assigned therapist | Unverified — no patient-facing view confirmed in this audit |
 | Password reset / forgot password | ❌ Not implemented |
 | Email verification at registration | ❌ Not implemented |
-| Real accuracy score (IK-based, per frame) | ❌ Frontend sends hardcoded 100 |
-| Playwright / automated tests | ❌ Dependency installed, no tests |
+| IK-based or clinically calibrated accuracy score | ❌ Current frame-level screen-space score is not an anatomical/clinical measure |
+| Playwright end-to-end tests | ❌ Dependency installed, but no Playwright test files or frontend `test` script |
 | Admin panel / user management | ❌ Not implemented |
 | Exercise customization by therapist | ❌ Not implemented |
 | Push notifications / reminders | ❌ Not implemented |
@@ -379,7 +379,31 @@ No `DATABASE_URL` needed locally — the app auto-uses `backend/rehab_system.db`
 
 ---
 
-## 14. Important Warnings for Future AI Agents
+## 14. Checkpoint History and Validation
+
+### Latest confirmed checkpoint
+
+- **CP10.11 — Clarify dashboard and report session metrics**
+- Commit: `511edf0ed215cc3aa11c0ebd93f3b03c9031fcbd`
+- Updated dashboard wording to identify the displayed average as the app-calculated overall session score, report wording to identify presented target opportunities, and dashboard badge preview to prefer fresh stats badge data with an AuthContext fallback.
+- The preceding confirmed session-save checkpoints include CP10.10 payload freezing (`71caad0d2fb5a09e65891c0a02dd229ac5c91c57`), CP10.6-FIX idempotent saves (`847715471a582a0e4a054f88cf459014dacdc64e`), and CP10.2 target-opportunity counting (`495a5e7`).
+
+### 2026-10-13 read-only audit results
+
+- Local `main` matched `origin/main` at CP10.11; the working tree was clean before the CP10.12 documentation work.
+- Frontend lint passed with existing Oxlint warnings; the production build passed with the existing large-chunk warning.
+- Frontend Node tests: **13 passed** across the two available test files.
+- Backend security/API tests: **40 passed**. Existing Python/SQLAlchemy deprecation warnings and a simulated database-startup warning appeared in test output; the suite passed.
+- No Playwright E2E test files or frontend `test` script were found.
+- **Not verified:** the live production site, production database, and authenticated production workflows were not tested in this audit.
+
+### CP10.12 documentation refresh
+
+CP10.12 is a **proposed documentation-refresh checkpoint** until this update is reviewed and committed. It is not yet a completed checkpoint.
+
+---
+
+## 15. Important Warnings for Future AI Agents
 
 > Read these before making any changes to this project.
 
@@ -395,11 +419,11 @@ No `DATABASE_URL` needed locally — the app auto-uses `backend/rehab_system.db`
 
 6. **Exercise seeding is idempotent** (`seed_exercises()` checks `Exercise.query.count() > 0`). Safe to call on every startup. If you add new exercises, you must either clear the table or write a migration — the seed function will not add them to an already-populated table.
 
-7. **The `score` state variable in `ExerciseRunnerPage.jsx` is broken** — it defaults to 100 and is never reduced by incorrect movements. `avg_accuracy_score` sent to the backend is always ≈ 100. Fix this before using accuracy in any clinical context.
+7. **Interpret accuracy fields carefully.** When frame samples are available, `avg_accuracy_score` is the average of frame-level screen-space hand-to-target distance scores while a target is active; if there are no eligible samples, the runner uses a 100 fallback. This is not an IK-based or calibrated clinical measure.
 
-8. **`total_targets` in the session POST is `targetsHit + 1`**, not the actual count from the exercise definition. The correct value is `exercise.target_positions.length`.
+8. **`total_targets` is an opportunity count.** It counts presented opportunities, including repeated presentations. Do not reinterpret it as a unique-target count; the backend retains a fallback rule for exercises without target positions.
 
-9. **There is no therapist-patient assignment endpoint.** Any feature that relies on `assigned_therapist_id` (e.g., the therapist dashboard patient list) will show empty results unless you first implement the assignment API and UI.
+9. **Therapist-patient assignment exists.** The assignment route and therapist-dashboard workflow are implemented; access to patient records must continue to follow the existing assignment authorization checks.
 
 10. **Render free tier spins down after 15 minutes of inactivity.** The first request after wake-up will be slow (~30s). This is expected. Neon also closes idle connections, handled by `pool_pre_ping`.
 

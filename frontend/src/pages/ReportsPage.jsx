@@ -227,7 +227,7 @@ const ReportsPage = () => {
                   aria-pressed={isSelected}
                   className={cn(
                     'relative h-14 rounded-lg text-sm font-semibold transition-colors',
-                    isSelected ? 'bg-primary-600 text-white shadow-sm' :
+                    isSelected ? 'bg-primary-700 text-white shadow-sm' :
                       hasSessions ? 'bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800 text-primary-900 hover:bg-primary-100 cursor-pointer' :
                       'text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800/60',
                     isToday && !isSelected ? 'ring-2 ring-primary-300' : '',
@@ -237,7 +237,7 @@ const ReportsPage = () => {
                   {hasSessions && (
                     <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
                       {daySessions.slice(0, 3).map((_, j) => (
-                        <span key={j} className={cn('h-1.5 w-1.5 rounded-full', isSelected ? 'bg-white dark:bg-slate-900' : 'bg-primary-50 dark:bg-primary-950/400')} />
+                      <span key={j} className={cn('h-1.5 w-1.5 rounded-full', isSelected ? 'bg-white' : 'bg-primary-600 dark:bg-primary-400')} />
                       ))}
                       {daySessions.length > 1 && (
                         <span className={cn('text-[10px] font-bold', isSelected ? 'text-white' : 'text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200')}>

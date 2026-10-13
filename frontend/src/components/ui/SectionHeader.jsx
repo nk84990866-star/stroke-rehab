@@ -25,7 +25,7 @@ const SectionHeader = ({
         'flex flex-col justify-between',
         isHero
           ? 'lg:flex-row lg:items-center gap-5'
-          : 'sm:flex-row sm:items-end gap-3',
+          : 'sm:flex-row sm:items-end gap-4',
         className,
       )}
     >
@@ -36,7 +36,7 @@ const SectionHeader = ({
           </p>
         )}
 
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 flex items-center gap-2.5">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2.5">
           {Icon && (
             <span className="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 border border-primary-100 dark:border-primary-900">
               <Icon className="h-5 w-5" aria-hidden="true" />
@@ -66,7 +66,7 @@ const SectionHeader = ({
   );
 
   return isHero ? (
-    <Card className="p-6 sm:p-7">{heading}</Card>
+    <Card className="p-6 sm:p-8">{heading}</Card>
   ) : (
     heading
   );

@@ -906,7 +906,7 @@ const ExerciseRunnerPage = () => {
         </Modal>
 
         {/* ============ HEADER ============ */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-card p-5 sm:p-6 space-y-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-card p-5 sm:p-6 space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="min-w-0">
               <BackLink to="/exercises" className="mb-1.5">
@@ -1006,7 +1006,7 @@ const ExerciseRunnerPage = () => {
               <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover transform -scale-x-100" />
               <canvas ref={overlayRef} className="absolute inset-0 w-full h-full transform -scale-x-100 pointer-events-none" />
               {status === 'ready' && !running && (
-                <button onClick={() => setSafetyPromptOpen(true)} disabled={!modelReady || cameraStarting} className="absolute px-6 py-3.5 bg-primary-600 text-white font-bold text-base rounded-xl shadow-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center cursor-pointer z-10 transition-colors">
+                <button onClick={() => setSafetyPromptOpen(true)} disabled={!modelReady || cameraStarting} className="absolute px-6 py-3.5 bg-primary-700 text-white font-bold text-base rounded-xl shadow-lg hover:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center cursor-pointer z-10 transition-colors">
                   <Play className="h-5 w-5 mr-2 fill-current" aria-hidden="true" />
                   {cameraStarting ? 'Starting camera…' : modelReady ? 'Start Exercise' : 'Loading AI model…'}
                 </button>
@@ -1113,7 +1113,7 @@ const ExerciseRunnerPage = () => {
                 className={cn(
                   'inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border transition-colors cursor-pointer',
                   voiceOn
-                    ? 'bg-primary-600 text-white border-primary-600 hover:bg-primary-700'
+                    ? 'bg-primary-700 text-white border-primary-700 hover:bg-primary-800'
                     : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800',
                 )}
               >

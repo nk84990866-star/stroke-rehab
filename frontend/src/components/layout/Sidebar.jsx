@@ -107,7 +107,7 @@ const Sidebar = ({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobile }) =>
         className={cn(
           // Position: fixed, full height, slides over the content on mobile.
           'fixed inset-y-0 left-0 z-50 flex w-72 flex-col',
-          'border-r border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900',
+          'border-r border-slate-800 bg-slate-950 text-white',
           'transition-[width,transform] duration-200 ease-in-out',
           // Desktop width follows the collapsed preference.
           collapsed ? 'lg:w-20' : 'lg:w-64',
@@ -116,15 +116,15 @@ const Sidebar = ({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobile }) =>
         )}
       >
         {/* ---------------- Header ---------------- */}
-        <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-slate-200 px-3 dark:border-slate-700">
+        <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-slate-800 px-3">
           {/* Mobile drawer: brand mark, so the drawer identifies itself. */}
           <div className="flex min-w-0 items-center gap-2 lg:hidden">
             <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-white shadow-sm">
               <Activity className="h-4 w-4" aria-hidden="true" />
             </span>
-            <span className="truncate text-sm font-bold text-slate-900 dark:text-slate-50">
+            <span className="truncate text-sm font-bold text-white">
               NeuroMotion{' '}
-              <span className="text-primary-700 dark:text-primary-300">AI</span>
+              <span className="text-primary-300">AI</span>
             </span>
           </div>
 
@@ -137,7 +137,7 @@ const Sidebar = ({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobile }) =>
             aria-expanded={!collapsed}
             className={cn(
               'hidden shrink-0 items-center justify-center rounded-lg p-2 transition-colors lg:flex',
-              'text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100',
+              'text-slate-400 hover:bg-slate-800 hover:text-white',
               'cursor-pointer',
             )}
             style={collapsed ? { marginLeft: 'auto' } : undefined}
@@ -183,14 +183,14 @@ const Sidebar = ({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobile }) =>
                       'relative flex items-center rounded-lg text-sm font-semibold transition-colors',
                       itemLayout,
                       active
-                        ? 'bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50',
+                        ? 'bg-primary-800 text-white'
+                        : 'text-slate-300 hover:bg-slate-800 hover:text-white',
                     )}
                   >
                     {/* Active rail — stays visible at the collapsed width. */}
                     {active && (
                       <span
-                        className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-primary-600 dark:bg-primary-400"
+                        className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-primary-300"
                         aria-hidden="true"
                       />
                     )}
@@ -204,22 +204,22 @@ const Sidebar = ({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobile }) =>
         </nav>
 
         {/* ---------------- User + logout ---------------- */}
-        <div className="shrink-0 space-y-1 border-t border-slate-200 p-3 dark:border-slate-700">
+        <div className="shrink-0 space-y-1 border-t border-slate-800 p-3">
           <div
             className={cn(
-              'flex items-center rounded-lg bg-slate-50 dark:bg-slate-800/60',
+              'flex items-center rounded-lg bg-slate-900',
               collapsed ? 'justify-center p-2' : 'gap-2.5 px-3 py-2',
             )}
           >
-            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-bold uppercase text-primary-700 dark:bg-primary-900/50 dark:bg-primary-800 dark:text-primary-100">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-800 text-xs font-bold uppercase text-primary-100">
               {(user.full_name || '?').trim().charAt(0)}
             </span>
             {!collapsed && (
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
+                <p className="truncate text-sm font-semibold text-white">
                   {user.full_name}
                 </p>
-                <p className="truncate text-xs capitalize text-slate-500 dark:text-slate-400">
+                <p className="truncate text-xs capitalize text-slate-400">
                   {user.role}
                 </p>
               </div>
@@ -239,7 +239,7 @@ const Sidebar = ({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobile }) =>
             className={cn(
               'flex w-full items-center rounded-lg text-sm font-semibold transition-colors',
               itemLayout,
-              'text-left text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40 dark:hover:text-red-300',
+              'text-left text-red-300 hover:bg-red-950/60 hover:text-red-200',
               'cursor-pointer',
             )}
           >

@@ -99,7 +99,7 @@ const ExercisesPage = () => {
   };
 
   const selectClass =
-    'block w-full sm:w-52 pl-3 pr-10 py-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 cursor-pointer';
+    'block w-full sm:w-52 min-h-11 pl-3 pr-10 py-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700 focus:border-primary-600 cursor-pointer';
 
   return (
     <div className="bg-surface dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
@@ -124,7 +124,7 @@ const ExercisesPage = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search exercises…"
-              className="block w-full pl-10 pr-10 py-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 shadow-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="block w-full min-h-11 pl-10 pr-10 py-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 shadow-sm placeholder-slate-400 dark:placeholder-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700 focus:border-primary-600"
             />
             {search && (
               <button

@@ -8,19 +8,19 @@
    NeuroMotion AI — Design System (Tailwind CSS v4, CSS-first)
    ============================================================ */
 @theme {
-  --color-primary-50:  oklch(0.971 0.014 254.6);
-  --color-primary-100: oklch(0.932 0.032 255.6);
-  --color-primary-200: oklch(0.882 0.059 254.1);
-  --color-primary-300: oklch(0.809 0.114 250.6);
-  --color-primary-400: oklch(0.685 0.157 249.3);
-  --color-primary-500: oklch(0.623 0.188 259.8); /* ≈ blue-600 */
-  --color-primary-600: oklch(0.546 0.215 262.9); /* ≈ blue-700 */
-  --color-primary-700: oklch(0.488 0.217 264.4);
-  --color-primary-800: oklch(0.424 0.199 265.6);
-  --color-primary-900: oklch(0.379 0.146 265.5);
-  --color-primary-950: oklch(0.282 0.091 267.9);
+  --color-primary-50:  oklch(0.984 0.014 180);
+  --color-primary-100: oklch(0.953 0.051 180);
+  --color-primary-200: oklch(0.91 0.096 180);
+  --color-primary-300: oklch(0.855 0.138 180);
+  --color-primary-400: oklch(0.777 0.152 180);
+  --color-primary-500: oklch(0.704 0.14 180);
+  --color-primary-600: oklch(0.6 0.118 180);
+  --color-primary-700: oklch(0.511 0.096 180);
+  --color-primary-800: oklch(0.437 0.078 180);
+  --color-primary-900: oklch(0.386 0.063 180);
+  --color-primary-950: oklch(0.277 0.046 180);
 
-  --color-surface: oklch(0.985 0.002 247.8);      /* page background */
+  --color-surface: oklch(0.978 0.009 190);      /* soft neutral page background */
   --color-surface-card: #ffffff;
   --color-border-subtle: oklch(0.922 0.004 255.5);
 
@@ -29,8 +29,8 @@
 
   --radius-xl2: 1rem;
 
-  --shadow-card: 0 1px 2px 0 rgb(16 24 40 / 0.04), 0 1px 3px 0 rgb(16 24 40 / 0.06);
-  --shadow-card-hover: 0 4px 12px -2px rgb(16 24 40 / 0.1), 0 2px 6px -2px rgb(16 24 40 / 0.06);
+  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.035), 0 4px 12px -3px rgb(15 23 42 / 0.07);
+  --shadow-card-hover: 0 8px 24px -8px rgb(15 23 42 / 0.16), 0 3px 8px -4px rgb(15 23 42 / 0.08);
 
   --animate-pulse-slow: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -45,6 +45,10 @@
   html {
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
   }
   body {
     @apply bg-surface text-slate-900 font-sans antialiased;
@@ -59,6 +63,13 @@
   h1, h2 {
     @apply tracking-tight;
   }
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
 
   :focus-visible {
     outline: 2px solid var(--color-primary-500);
@@ -67,7 +78,7 @@
   }
   .dark :focus-visible {
     /* Brighter ring on dark backgrounds */
-    outline-color: oklch(0.809 0.114 250.6); /* primary-300 */
+    outline-color: oklch(0.855 0.138 180); /* primary-300 */
   }
 
   ::selection {

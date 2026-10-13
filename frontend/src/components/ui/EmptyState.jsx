@@ -11,7 +11,7 @@ import Button from './Button';
  */
 const EmptyState = ({ icon: Icon = Inbox, title, description, action, className }) => (
   <Card className={cn('p-8 sm:p-12 text-center', className)}>
-    <span className="inline-flex items-center justify-center p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 mb-4">
+    <span className="inline-flex items-center justify-center p-4 rounded-2xl bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 mb-4">
       <Icon className="h-8 w-8" aria-hidden="true" />
     </span>
     <h3 className="text-lg font-bold text-slate-900 dark:text-slate-50">{title}</h3>

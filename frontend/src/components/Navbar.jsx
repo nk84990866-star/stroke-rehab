@@ -57,12 +57,12 @@ const Navbar = ({ onOpenMobileNav, mobileNavOpen }) => {
     cn(
       'inline-flex items-center px-3 py-2 rounded-lg text-sm font-semibold transition-colors gap-1.5 cursor-pointer',
       active
-        ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-700'
-        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-50',
+        ? 'bg-primary-800 text-white'
+        : 'text-slate-300 hover:bg-slate-800 hover:text-white',
     );
 
   return (
-    <nav aria-label="Top navigation" className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200 dark:border-slate-700 dark:bg-slate-900/90 dark:border-slate-700">
+    <nav aria-label="Top navigation" className="sticky top-0 z-40 bg-slate-950 text-white border-b border-slate-800 shadow-sm">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex justify-between h-16 items-center">
           {/* Brand */}
@@ -71,8 +71,8 @@ const Navbar = ({ onOpenMobileNav, mobileNavOpen }) => {
               <span className="inline-flex items-center justify-center h-9 w-9 rounded-xl bg-primary-600 text-white shadow-sm">
                 <Activity className="h-5 w-5" aria-hidden="true" />
               </span>
-              <span className="font-bold text-lg text-slate-900 dark:text-slate-50 dark:text-slate-50 whitespace-nowrap">
-                NeuroMotion <span className="text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200">AI</span>
+              <span className="font-bold text-lg text-white whitespace-nowrap">
+                NeuroMotion <span className="text-primary-300">AI</span>
               </span>
             </Link>
             {/* Desktop links — the Sidebar owns navigation inside AppShell. */}
@@ -117,7 +117,7 @@ const Navbar = ({ onOpenMobileNav, mobileNavOpen }) => {
                 // explicitly here. Standalone mode leaves it undefined and
                 // falls back to the visible name, exactly as before.
                 aria-label={inShell ? `Account menu for ${user.full_name || 'user'}` : undefined}
-                className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer dark:border-slate-700 dark:hover:bg-slate-800"
+                className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border border-slate-700 hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-700 text-xs font-bold uppercase dark:bg-primary-800 dark:text-primary-100">
                   {(user.full_name || '?').trim().charAt(0)}
@@ -173,7 +173,7 @@ const Navbar = ({ onOpenMobileNav, mobileNavOpen }) => {
               onClick={inShell ? onOpenMobileNav : () => setMobileOpen((v) => !v)}
               aria-expanded={inShell ? Boolean(mobileNavOpen) : mobileOpen}
               aria-label={inShell ? 'Open navigation menu' : mobileOpen ? 'Close menu' : 'Open menu'}
-              className="inline-flex items-center justify-center p-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              className="inline-flex items-center justify-center p-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer"
             >
               {mobileOpen && !inShell ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
@@ -184,7 +184,7 @@ const Navbar = ({ onOpenMobileNav, mobileNavOpen }) => {
       {/* Mobile menu — standalone mode only; inside AppShell the Sidebar
           drawer is the mobile navigation system. */}
       {!inShell && mobileOpen && (
-        <div className="lg:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 px-3 pt-2 pb-4 space-y-1 shadow-lg dark:bg-slate-900 dark:border-slate-700">
+        <div className="lg:hidden bg-slate-950 border-t border-slate-800 px-3 pt-2 pb-4 space-y-1 shadow-lg">
           {links.map((link) => {
             const Icon = link.icon;
             const active = isActive(link.path, location.pathname);
@@ -194,7 +194,7 @@ const Navbar = ({ onOpenMobileNav, mobileNavOpen }) => {
                 to={link.path}
                 className={cn(
                   'flex items-center px-3 py-2.5 rounded-lg text-base font-semibold gap-2.5',
-                  active ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-700' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800',
+                  active ? 'bg-primary-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white',
                 )}
                 aria-current={active ? 'page' : undefined}
               >
@@ -203,10 +203,10 @@ const Navbar = ({ onOpenMobileNav, mobileNavOpen }) => {
               </Link>
             );
           })}
-          <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="pt-2 mt-2 border-t border-slate-800 flex items-center justify-between">
             <div className="px-3 py-2 min-w-0">
-              <p className="text-sm font-bold text-slate-900 dark:text-slate-50 truncate dark:text-slate-50">{user.full_name}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate dark:text-slate-400">{user.email}</p>
+              <p className="text-sm font-bold text-white truncate">{user.full_name}</p>
+              <p className="text-xs text-slate-400 truncate">{user.email}</p>
             </div>
             <button
               type="button"

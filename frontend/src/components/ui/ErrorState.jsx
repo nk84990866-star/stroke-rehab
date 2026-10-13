@@ -10,7 +10,7 @@ import Button from './Button';
 const ErrorState = ({ title = 'Something went wrong', message, onRetry, className }) => (
   <div
     role="alert"
-    className={cn('bg-white dark:bg-slate-900 rounded-xl border border-red-200 dark:border-red-800 shadow-card p-8 text-center', className)}
+    className={cn('bg-white dark:bg-slate-900 rounded-2xl border border-red-200 dark:border-red-800 shadow-card p-8 text-center', className)}
   >
     <span className="inline-flex items-center justify-center p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 text-red-500 mb-4">
       <AlertTriangle className="h-8 w-8" aria-hidden="true" />

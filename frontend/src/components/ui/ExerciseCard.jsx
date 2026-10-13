@@ -20,7 +20,7 @@ const ExerciseCard = ({ exercise, to, cta = 'Start Training', statusBadge, meta,
   const href = to || `/exercise/${exercise.id}`;
 
   return (
-    <Card className={cn('p-5 sm:p-6 flex flex-col', className)}>
+    <Card className={cn('p-5 sm:p-6 flex flex-col min-h-full', className)}>
       <div className="flex items-start justify-between gap-3 mb-4">
         <span className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 border border-primary-100 dark:border-primary-900">
           <Icon className="h-5.5 w-5.5" aria-hidden="true" />
@@ -33,7 +33,7 @@ const ExerciseCard = ({ exercise, to, cta = 'Start Training', statusBadge, meta,
         </div>
       </div>
 
-      <h3 className="text-lg font-bold text-slate-900 dark:text-slate-50">{exercise.name}</h3>
+      <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50">{exercise.name}</h3>
       {exercise.category && (
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mt-0.5">
           {EXERCISE_CATEGORY_LABELS[exercise.category] || exercise.category}
@@ -55,7 +55,7 @@ const ExerciseCard = ({ exercise, to, cta = 'Start Training', statusBadge, meta,
         {meta}
       </div>
 
-      <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
+      <div className="mt-auto pt-5">
         <Button asChild variant="primary" className="w-full">
           <Link to={href}>
             <Play className="h-4 w-4 fill-current" aria-hidden="true" /> {cta}

@@ -8,8 +8,8 @@ import { cn } from '../../lib/cn';
 const Card = ({ hoverable = false, className, children, ...props }) => (
   <div
     className={cn(
-      'bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-card',
-      hoverable && 'transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 hover:border-primary-200 dark:hover:border-primary-800',
+      'bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-card',
+      hoverable && 'transition-[box-shadow,border-color] duration-200 hover:shadow-card-hover hover:border-primary-200 dark:hover:border-primary-800',
       className,
     )}
     {...props}

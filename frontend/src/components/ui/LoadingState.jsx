@@ -8,12 +8,12 @@ const LoadingState = ({ message, fullPage = false, className }) => (
     aria-live="polite"
     className={cn(
       'flex flex-col items-center justify-center gap-3',
-      fullPage ? 'min-h-screen' : 'py-16',
+      fullPage ? 'min-h-[60vh]' : 'py-16',
       className,
     )}
   >
     <span
-      className="inline-block h-10 w-10 rounded-full border-[3px] border-primary-100 dark:border-primary-900 border-t-primary-600 animate-spin"
+      className="inline-block h-10 w-10 rounded-full border-[3px] border-primary-100 dark:border-primary-900 border-t-primary-700 animate-spin motion-reduce:animate-none"
       aria-hidden="true"
     />
     {message && <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{message}</p>}

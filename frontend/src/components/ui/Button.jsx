@@ -4,7 +4,7 @@ import { cn } from '../../lib/cn';
 
 const VARIANTS = {
   primary:
-    'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 shadow-sm',
+    'bg-primary-700 text-white hover:bg-primary-800 active:bg-primary-900 shadow-sm',
   secondary:
     'bg-primary-50 dark:bg-primary-950/40 text-primary-700 hover:bg-primary-100 active:bg-primary-200 border border-primary-200 dark:border-primary-800',
   outline:
@@ -37,7 +37,7 @@ const Button = ({
   const classes = cn(
     'inline-flex items-center justify-center font-semibold rounded-lg',
     'transition-colors duration-150 cursor-pointer',
-    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600',
+    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700',
     'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
     VARIANTS[variant] || VARIANTS.primary,
     SIZES[size] || SIZES.md,

@@ -407,7 +407,7 @@ const TherapistDashboardPage = () => {
                 placeholder="patient@example.com"
                 aria-describedby="patient-assignment-help"
                 disabled={assignmentSubmitting}
-                className="block w-full px-3 py-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:opacity-60"
+                className="block w-full min-h-11 px-3.5 py-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700 focus:border-primary-600 disabled:opacity-60"
               />
               <p id="patient-assignment-help" className="text-xs text-slate-500 dark:text-slate-400">
                 Enter the email address the patient used to register. Patients assigned to another therapist cannot be transferred here.
@@ -488,7 +488,7 @@ const TherapistDashboardPage = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search patients…"
-                className="block w-full pl-10 pr-4 py-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 shadow-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="block w-full min-h-11 pl-10 pr-4 py-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 shadow-sm placeholder-slate-400 dark:placeholder-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700 focus:border-primary-600"
               />
             </div>
 
@@ -575,7 +575,7 @@ const TherapistDashboardPage = () => {
                               aria-describedby={`severity-help-${patient.id}`}
                               disabled={savingSeverityIds.has(patient.id)}
                               onChange={(e) => handleSeverityChange(patient.id, Number(e.target.value))}
-                              className="py-2 px-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm font-semibold cursor-pointer disabled:opacity-60"
+                              className="min-h-11 py-2 px-3.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-xl shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700 focus:border-primary-600 text-sm font-semibold cursor-pointer disabled:opacity-60"
                             >
                               {[1, 2, 3, 4, 5].map((lvl) => (
                                 <option key={lvl} value={lvl}>

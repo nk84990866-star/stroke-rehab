@@ -69,8 +69,18 @@ class BackendSecurityTests(unittest.TestCase):
         super().tearDownClass()
 
     @classmethod
-    def _create_user(cls, email, full_name, role):
-        user = User(email=email, full_name=full_name, role=role)
+    def _create_user(cls, email, full_name, role, stroke_type=None, severity_level=None):
+        if role == "patient" and stroke_type is None:
+            stroke_type = "ischemic"
+        if role == "patient" and severity_level is None:
+            severity_level = 3
+        user = User(
+            email=email,
+            full_name=full_name,
+            role=role,
+            stroke_type=stroke_type,
+            severity_level=severity_level,
+        )
         user.set_password(cls.PASSWORD)
         db.session.add(user)
         db.session.flush()

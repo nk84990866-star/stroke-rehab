@@ -86,12 +86,15 @@ def update_profile():
     data = request.get_json() or {}
     user = current_user
 
+    if user.role == "patient" and {"stroke_type", "severity_level"}.intersection(data):
+        return jsonify({
+            "error": "Stroke type and severity cannot be changed from the patient profile"
+        }), 403
+
     user.full_name = data.get("full_name", user.full_name)
 
     if user.role == "patient":
-        user.stroke_type = data.get("stroke_type", user.stroke_type)
         user.affected_side = data.get("affected_side", user.affected_side)
-        user.severity_level = int(data.get("severity_level", user.severity_level))
         
         date_str = data.get("date_of_stroke")
         if date_str:

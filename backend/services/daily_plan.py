@@ -26,6 +26,10 @@ data that could drift out of sync with the prescribed program.
 from datetime import datetime, timedelta, timezone
 
 from backend.models import ExerciseSession
+from backend.services.exercise_programs import (
+    get_unambiguous_exercises_by_normalized_name,
+    normalize_exercise_name,
+)
 
 # Keep daily plans light: patients do at most a handful of exercises per day.
 DAILY_PLAN_SIZE = 4
@@ -81,7 +85,7 @@ def get_daily_plan(patient, Exercise, get_exercise_program):
 
     # Map program entries (keyed by name) to database exercises for stable ids.
     db_exercises = Exercise.query.all()
-    name_to_exercise = {ex.name: ex for ex in db_exercises}
+    name_to_exercise = get_unambiguous_exercises_by_normalized_name(db_exercises)
 
     # Completion: any saved session for that exercise today (UTC date).
     today_start = datetime(today.year, today.month, today.day, tzinfo=timezone.utc)
@@ -98,7 +102,8 @@ def get_daily_plan(patient, Exercise, get_exercise_program):
 
     plan_exercises = []
     for item in selected:
-        db_ex = name_to_exercise.get(item.get("name"))
+        normalized_name = normalize_exercise_name(item.get("name"))
+        db_ex = name_to_exercise.get(normalized_name)
         if not db_ex:
             continue  # skip program entries that are not in the DB (shouldn't happen)
 

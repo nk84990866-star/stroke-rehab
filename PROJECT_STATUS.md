@@ -331,7 +331,7 @@ Summary of the key working items:
 | Admin panel / user management | ❌ Not implemented |
 | Exercise customization by therapist | ❌ Not implemented |
 | Push notifications / reminders | ❌ Not implemented |
-| Export reports to PDF | ⚠️ CP11.3A single-session browser print-to-PDF implemented locally; not production-verified |
+| Export reports to PDF | ⚠️ CP11.3A single-session browser print-to-PDF implemented and committed; not production-verified |
 | Multiplayer / caregiver view | ❌ Not implemented |
 | Real AI/ML recommendations (LLM or model) | ❌ Report generator is rule-based |
 | Calling unused kinematics methods from API | ❌ Jacobian / ellipsoid / torque routes not exposed |
@@ -383,15 +383,21 @@ No `DATABASE_URL` needed locally — the app auto-uses `backend/rehab_system.db`
 
 ### Latest confirmed checkpoint
 
-- **CP11.2 — Modernize UI and improve visual consistency**
-- Commit: `41bdaeaba9fe8409fdbdbc0be6bf0dcc71633c88`
-- Modernized shared frontend styling and major patient/therapist UI surfaces while preserving application and rehabilitation behavior.
-- **CP11.3A — Secure single-session PDF export** is implemented in the current uncommitted worktree and is not yet a committed checkpoint.
+- **CP11.3A — Secure single-session PDF export**
+- Commit: `f2c193bbde1dd953e1dde614d9c2f0f897c3d75a`
 - Patient and therapist report pages provide a user-triggered browser print action, allowing Save as PDF. The browser print dialog is required; the app does not create or silently download a PDF file.
 - Therapist report access uses a therapist-role-protected route, links only from sessions fetched for assigned patients, and the existing server-side session-report authorization. No backend route, data contract, or schema was changed.
 - Reports use existing single-session fields, label exercise level as the current exercise-template level, preserve presented target opportunity counts, omit repetitions, show unavailable values explicitly, and qualify possible legacy zero smoothness values.
-- Frontend lint passed with existing warnings; the production build passed with the existing large-chunk warning. Frontend Node tests: **17 passed**; backend security/API tests: **40 passed**.
-- **Local browser verification:** Chrome generated and visually rendered a one-page PDF using isolated mocked report data, including unavailable metrics and a legacy zero smoothness value. The print action was hidden and the report page had no browser errors. This does not verify the live backend, real authenticated workflows, or production behavior; those remain unverified.
+- Local Chrome generated and visually rendered a one-page PDF using isolated mocked report data, including unavailable metrics and a legacy zero smoothness value. Production, live authenticated workflows, and production data remain unverified.
+- **CP11.4B — Exercise catalog and server-side eligibility protection** is implemented in the current uncommitted worktree. The existing 12 catalog entries are unchanged; incremental seeding now inserts missing entries by normalized name without overwriting existing rows. Patient exercise listings, detail requests, and session saves apply the shared existing stroke/severity eligibility policy; ineligible detail/save requests return 404, and non-patient session saves return 403.
+- Patient profile updates reject patient attempts to modify `stroke_type` or `severity_level` with 403 while preserving other profile changes; existing therapist severity adjustment remains supported. Missing, null, malformed, or unsupported stroke types or severities fail closed across all exercise routes and session saves.
+- Incremental seeding is serialized across processes using `BEGIN IMMEDIATE` on SQLite and `pg_advisory_xact_lock` on PostgreSQL; unsupported dialects fail explicitly. No schema mutation or deletion of existing duplicate/variant rows is performed. Normalized exercise names (collapsed whitespace and case-folded) detect ambiguity; multiple rows matching the same normalized name are omitted from resolution to avoid arbitrary selection.
+- No schema or frontend changes were made for CP11.4B. The eight proposed exercise templates remain deferred; no unverified exercises were activated.
+- CP11.4B focused tests (`tests/test_exercise_eligibility.py`): **19 passed**. Backend security/API tests (`tests/test_backend_security.py`): **40 passed**. Full backend unittest suite: **59 passed**. Frontend Node tests: **17 passed**. Frontend lint passed with 30 existing warnings (0 errors) and build succeeded. `git diff --check` passed.
+- **Not verified:** production database compatibility, live production endpoint behavior, and concurrent multi-process first-time seeding against external live databases. No production data was accessed or changed.
+- **CP11.2 — Modernize UI and improve visual consistency**
+- Commit: `41bdaeaba9fe8409fdbdbc0be6bf0dcc71633c88`
+- Modernized shared frontend styling and major patient/therapist UI surfaces while preserving application and rehabilitation behavior.
 - The preceding session-metric clarification checkpoint was CP10.11 (`511edf0ed215cc3aa11c0ebd93f3b03c9031fcbd`); earlier session-save references include CP10.10 payload freezing (`71caad0d2fb5a09e65891c0a02dd229ac5c91c57`), CP10.6-FIX idempotent saves (`847715471a582a0e4a054f88cf459014dacdc64e`), and CP10.2 target-opportunity counting (`495a5e7`).
 - The preceding confirmed session-save checkpoints include CP10.10 payload freezing (`71caad0d2fb5a09e65891c0a02dd229ac5c91c57`), CP10.6-FIX idempotent saves (`847715471a582a0e4a054f88cf459014dacdc64e`), and CP10.2 target-opportunity counting (`495a5e7`).
 

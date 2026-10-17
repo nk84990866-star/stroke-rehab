@@ -2,7 +2,7 @@
 Session Routes for NeuroMotion AI
 Handles saving completed exercises, retrieving logs, progress charts, and clinical analysis.
 """
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, abort, jsonify, request
 from flask_login import login_required, current_user
 from datetime import datetime, timezone
 import hashlib
@@ -15,6 +15,11 @@ from backend.services.authorization import (
     get_authorized_patient,
     patient_not_found,
     requested_patient_id,
+)
+from backend.services.exercise_programs import (
+    get_unambiguous_exercises_by_normalized_name,
+    is_exercise_eligible,
+    normalize_exercise_name,
 )
 from backend.services.kinematics_engine import UpperLimbKinematics
 from backend.services.gamification import (
@@ -209,6 +214,9 @@ def save_session():
     Saves a completed session, recalculates points, updates patient streak,
     runs Unit 3 velocity/smoothness computations, and checks achievements.
     """
+    if current_user.role != "patient":
+        return jsonify({"error": "Only patients can save sessions"}), 403
+
     data, error_response = _read_session_payload()
     if error_response:
         return error_response
@@ -243,6 +251,17 @@ def save_session():
 
     exercise_id = data["exercise_id"]
     exercise = Exercise.query.get_or_404(exercise_id)
+    unambiguous = get_unambiguous_exercises_by_normalized_name(Exercise.query.all())
+    normalized_name = normalize_exercise_name(exercise.name)
+    if (
+        unambiguous.get(normalized_name) is not exercise
+        or not is_exercise_eligible(
+            exercise,
+            current_user.stroke_type,
+            current_user.severity_level,
+        )
+    ):
+        abort(404)
 
     duration = data["duration_seconds"]
     if duration > exercise.duration_seconds:

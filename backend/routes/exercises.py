@@ -2,10 +2,16 @@
 Exercise Routes for NeuroMotion AI
 Handles fetching exercises and disease-specific programs.
 """
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, abort, jsonify, request
 from flask_login import login_required, current_user
 from backend.models import Exercise
-from backend.services.exercise_programs import get_exercise_program
+from backend.services.exercise_programs import (
+    get_exercise_program,
+    normalize_exercise_name,
+    get_unambiguous_exercises_by_normalized_name,
+    is_valid_patient_profile,
+    is_exercise_eligible,
+)
 from backend.services.daily_plan import get_daily_plan
 
 exercises_bp = Blueprint("exercises", __name__)
@@ -15,10 +21,24 @@ exercises_bp = Blueprint("exercises", __name__)
 def get_exercises():
     """Returns all exercises, optionally filtered by level."""
     level = request.args.get("level", type=int)
-    query = Exercise.query
-    if level is not None:
-        query = query.filter_by(level=level)
-    exercises = query.all()
+    if current_user.role == "patient":
+        exercises = Exercise.query.all()
+        unambiguous = get_unambiguous_exercises_by_normalized_name(exercises)
+        exercises = [
+            exercise for exercise in exercises
+            if unambiguous.get(normalize_exercise_name(exercise.name)) is exercise
+            and (level is None or exercise.level == level)
+            and is_exercise_eligible(
+                exercise,
+                current_user.stroke_type,
+                current_user.severity_level,
+            )
+        ]
+    else:
+        query = Exercise.query
+        if level is not None:
+            query = query.filter_by(level=level)
+        exercises = query.all()
     return jsonify([ex.to_dict() for ex in exercises])
 
 @exercises_bp.route("/<int:exercise_id>", methods=["GET"])
@@ -26,6 +46,18 @@ def get_exercises():
 def get_exercise_detail(exercise_id):
     """Returns detail of a single exercise."""
     exercise = Exercise.query.get_or_404(exercise_id)
+    if current_user.role == "patient":
+        unambiguous = get_unambiguous_exercises_by_normalized_name(Exercise.query.all())
+        normalized_name = normalize_exercise_name(exercise.name)
+        if (
+            unambiguous.get(normalized_name) is not exercise
+            or not is_exercise_eligible(
+                exercise,
+                current_user.stroke_type,
+                current_user.severity_level,
+            )
+        ):
+            abort(404)
     return jsonify(exercise.to_dict())
 
 @exercises_bp.route("/daily-plan", methods=["GET"])
@@ -40,7 +72,10 @@ def get_today_daily_plan():
     if current_user.role != "patient":
         return jsonify({"error": "Only patients have a daily plan"}), 400
 
-    if not current_user.stroke_type or not current_user.severity_level:
+    if not is_valid_patient_profile(
+        current_user.stroke_type,
+        current_user.severity_level,
+    ):
         return jsonify({
             "error": "Patient profile is incomplete — no plan can be generated",
             "plan": None,
@@ -57,15 +92,34 @@ def get_recommended_program():
     if current_user.role != "patient":
         return jsonify({"error": "Only patients have recommended programs"}), 400
 
+    if not is_valid_patient_profile(
+        current_user.stroke_type,
+        current_user.severity_level,
+    ):
+        return jsonify({
+            "error": "Patient profile is incomplete — no program can be generated",
+            "program": None,
+        }), 409
+
     program = get_exercise_program(
         stroke_type=current_user.stroke_type,
         severity_level=current_user.severity_level
     )
     
-    # Inject database IDs by matching exercise names
     all_exercises = Exercise.query.all()
-    name_to_id = {ex.name: ex.id for ex in all_exercises}
-    for ex in program.get("exercises", []):
-        ex["id"] = name_to_id.get(ex.get("name"))
+    unambiguous = get_unambiguous_exercises_by_normalized_name(all_exercises)
+    resolved_program = []
+    for exercise in program.get("exercises", []):
+        db_exercise = unambiguous.get(
+            normalize_exercise_name(exercise.get("name"))
+        )
+        if db_exercise is not None:
+            resolved_program.append({**exercise, "id": db_exercise.id})
+
+    program["exercises"] = resolved_program
+    program["total_exercises"] = len(resolved_program)
+    program["unlocked_levels"] = sorted(
+        {exercise["level"] for exercise in resolved_program}
+    )
         
     return jsonify(program)

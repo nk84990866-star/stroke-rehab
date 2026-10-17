@@ -15,6 +15,8 @@ Each exercise is mapped to suitable stroke types and severity ranges.
 """
 
 import json
+from collections import defaultdict
+from sqlalchemy import text
 
 # ==============================================================================
 # EXERCISE DEFINITIONS — Organized by Level
@@ -295,6 +297,86 @@ EXERCISE_LIBRARY = [
 ]
 
 
+VALID_STROKE_TYPES = frozenset({"ischemic", "hemorrhagic", "tia", "brainstem"})
+
+
+def is_valid_patient_profile(stroke_type, severity_level):
+    """Return whether stored profile values are complete and supported."""
+    return (
+        isinstance(stroke_type, str)
+        and stroke_type.lower() in VALID_STROKE_TYPES
+        and type(severity_level) is int
+        and 1 <= severity_level <= 5
+    )
+
+
+def normalize_exercise_name(name):
+    """Normalize catalog names consistently without changing stored names."""
+    if not isinstance(name, str):
+        return ""
+    return " ".join(name.split()).casefold()
+
+
+def get_unambiguous_exercises_by_normalized_name(exercises):
+    """Map normalized names only when exactly one database row has that name."""
+    matches = defaultdict(list)
+    for exercise in exercises:
+        normalized_name = normalize_exercise_name(getattr(exercise, "name", None))
+        if normalized_name:
+            matches[normalized_name].append(exercise)
+    return {
+        name: rows[0]
+        for name, rows in matches.items()
+        if len(rows) == 1
+    }
+
+
+def get_unlocked_levels(stroke_type, severity_level):
+    """Return the established level policy for a patient's stored profile."""
+    if not is_valid_patient_profile(stroke_type, severity_level):
+        return []
+    stroke_type = stroke_type.lower()
+
+    if severity_level <= 1:
+        unlocked_levels = [1]
+    elif severity_level in (2, 3):
+        unlocked_levels = [1, 2]
+    else:
+        unlocked_levels = [1, 2, 3]
+
+    if stroke_type == "hemorrhagic" and severity_level < 5:
+        unlocked_levels = [level for level in unlocked_levels if level <= 2]
+    elif stroke_type == "brainstem" and severity_level < 4:
+        unlocked_levels = [level for level in unlocked_levels if level <= 2]
+
+    return unlocked_levels
+
+
+def is_exercise_eligible(exercise, stroke_type, severity_level):
+    """Apply the shared level, stroke-type, and severity policy to a template."""
+    if not is_valid_patient_profile(stroke_type, severity_level):
+        return False
+    if isinstance(exercise, dict):
+        get_value = exercise.get
+    else:
+        get_value = lambda name, default=None: getattr(exercise, name, default)
+
+    stroke_type = stroke_type.lower()
+    level = get_value("level")
+    minimum_severity = get_value("min_severity", 1)
+    maximum_severity = get_value("max_severity", 5)
+    suitable_stroke_types = get_value("suitable_stroke_types", [])
+
+    return (
+        level in get_unlocked_levels(stroke_type, severity_level)
+        and isinstance(suitable_stroke_types, (list, tuple))
+        and stroke_type in suitable_stroke_types
+        and isinstance(minimum_severity, int)
+        and isinstance(maximum_severity, int)
+        and minimum_severity <= severity_level <= maximum_severity
+    )
+
+
 # ==============================================================================
 # EXERCISE PROGRAM GENERATOR — Disease-Specific Recommendations
 # ==============================================================================
@@ -323,45 +405,27 @@ def get_exercise_program(stroke_type, severity_level):
     Returns:
         dict with recommended exercises, program name, and description
     """
-    stroke_type = (stroke_type or "ischemic").lower()
-    severity_level = max(1, min(5, severity_level or 3))
-
-    # Determine which levels are unlocked based on severity
-    if severity_level <= 1:
-        unlocked_levels = [1]
-    elif severity_level == 2:
-        unlocked_levels = [1, 2]
-    elif severity_level == 3:
-        unlocked_levels = [1, 2]
-    elif severity_level == 4:
-        unlocked_levels = [1, 2, 3]
-    else:  # 5
-        unlocked_levels = [1, 2, 3]
-
-    # Further restrict based on stroke type
-    if stroke_type == "hemorrhagic":
-        # Conservative — cap at Level 2 unless severity is 5
-        if severity_level < 5:
-            unlocked_levels = [l for l in unlocked_levels if l <= 2]
-    elif stroke_type == "brainstem":
-        # Bilateral focus — mostly Level 1-2
-        if severity_level < 4:
-            unlocked_levels = [l for l in unlocked_levels if l <= 2]
+    if not is_valid_patient_profile(stroke_type, severity_level):
+        return {
+            "program_name": "No rehabilitation program available",
+            "program_description": "A complete, supported patient profile is required.",
+            "stroke_type": None,
+            "severity_level": None,
+            "unlocked_levels": [],
+            "exercises": [],
+            "total_exercises": 0,
+        }
+    stroke_type = stroke_type.lower()
 
     # Filter exercises by stroke type, severity range, and unlocked levels
     recommended = []
     for ex in EXERCISE_LIBRARY:
-        if ex["level"] not in unlocked_levels:
-            continue
-        if stroke_type not in ex["suitable_stroke_types"]:
-            continue
-        if severity_level < ex["min_severity"] or severity_level > ex["max_severity"]:
-            continue
-        recommended.append(ex)
+        if is_exercise_eligible(ex, stroke_type, severity_level):
+            recommended.append(ex)
 
     # Program metadata
     level_names = {1: "Basic", 2: "Moderate", 3: "High (Advanced)"}
-    available_levels = sorted(set(ex["level"] for ex in recommended)) if recommended else [1]
+    available_levels = sorted(set(ex["level"] for ex in recommended))
     program_levels_str = " → ".join(level_names.get(l, str(l)) for l in available_levels)
 
     stroke_names = {
@@ -399,34 +463,68 @@ def get_exercise_program(stroke_type, severity_level):
 
 def seed_exercises(db, Exercise):
     """
-    Seeds the database with all 12 exercises if the table is empty.
-    Call this on first app startup.
-    
+    Insert missing catalog templates while serializing seeders across processes.
+
+    SQLite uses a database write reservation; PostgreSQL uses a transaction-
+    scoped advisory lock. Other database dialects fail explicitly rather than
+    claiming a concurrency guarantee they do not provide.
+
     Parameters:
         db: SQLAlchemy database instance
         Exercise: Exercise model class
+
+    Returns:
+        Number of catalog rows inserted.
     """
-    if Exercise.query.count() > 0:
-        return  # Already seeded
+    try:
+        connection = db.session.connection()
+        dialect_name = db.engine.dialect.name
+        if dialect_name == "sqlite":
+            connection.exec_driver_sql("BEGIN IMMEDIATE")
+        elif dialect_name == "postgresql":
+            db.session.execute(text("SELECT pg_advisory_xact_lock(1146110514)"))
+        else:
+            raise RuntimeError(
+                f"Exercise seeding has no cross-process lock for {dialect_name}"
+            )
 
-    for ex_data in EXERCISE_LIBRARY:
-        exercise = Exercise(
-            name=ex_data["name"],
-            description=ex_data["description"],
-            category=ex_data["category"],
-            level=ex_data["level"],
-            level_name=ex_data["level_name"],
-            target_positions_json=json.dumps(ex_data["target_positions"]),
-            duration_seconds=ex_data["duration_seconds"],
-            instructions=ex_data["instructions"],
-            suitable_stroke_types_json=json.dumps(ex_data["suitable_stroke_types"]),
-            min_severity=ex_data["min_severity"],
-            max_severity=ex_data["max_severity"],
-            icon_name=ex_data["icon_name"],
-            target_radius=ex_data["target_radius"],
-            speed_requirement=ex_data["speed_requirement"],
-        )
-        db.session.add(exercise)
+        existing_names = {
+            normalize_exercise_name(exercise.name)
+            for exercise in Exercise.query.all()
+            if exercise.name
+        }
+        registry_names = set()
+        missing_exercises = []
 
-    db.session.commit()
-    print(f"Seeded {len(EXERCISE_LIBRARY)} exercises into database.")
+        for ex_data in EXERCISE_LIBRARY:
+            normalized_name = normalize_exercise_name(ex_data["name"])
+            if normalized_name in registry_names:
+                raise ValueError(f"Duplicate exercise name in registry: {ex_data['name']}")
+            registry_names.add(normalized_name)
+            if normalized_name in existing_names:
+                continue
+
+            missing_exercises.append(Exercise(
+                name=ex_data["name"],
+                description=ex_data["description"],
+                category=ex_data["category"],
+                level=ex_data["level"],
+                level_name=ex_data["level_name"],
+                target_positions_json=json.dumps(ex_data["target_positions"]),
+                duration_seconds=ex_data["duration_seconds"],
+                instructions=ex_data["instructions"],
+                suitable_stroke_types_json=json.dumps(ex_data["suitable_stroke_types"]),
+                min_severity=ex_data["min_severity"],
+                max_severity=ex_data["max_severity"],
+                icon_name=ex_data["icon_name"],
+                target_radius=ex_data["target_radius"],
+                speed_requirement=ex_data["speed_requirement"],
+            ))
+            existing_names.add(normalized_name)
+
+        db.session.add_all(missing_exercises)
+        db.session.commit()
+        return len(missing_exercises)
+    except Exception:
+        db.session.rollback()
+        raise

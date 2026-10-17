@@ -9,6 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { cn } from '../lib/cn';
 import {
   Activity,
   BarChart2,

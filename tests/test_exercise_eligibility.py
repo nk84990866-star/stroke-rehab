@@ -397,6 +397,47 @@ class ExerciseEligibilityTests(unittest.TestCase):
                     [],
                 )
 
+    def test_exhaustive_eligibility_matrix_for_all_severities_and_stroke_types(self):
+        # Independently verified expected eligible exercise counts.
+        # Counts derived from EXERCISE_LIBRARY + get_unlocked_levels() +
+        # is_exercise_eligible() — not from a summary table.
+        expected_counts = {
+            # severity: {stroke_type: expected_count}
+            1: {"ischemic": 4, "hemorrhagic": 4, "brainstem": 4, "tia": 4},
+            2: {"ischemic": 7, "hemorrhagic": 6, "brainstem": 7, "tia": 7},
+            3: {"ischemic": 8, "hemorrhagic": 6, "brainstem": 7, "tia": 8},
+            4: {"ischemic": 9, "hemorrhagic": 3, "brainstem": 5, "tia": 9},
+            5: {"ischemic": 8, "hemorrhagic": 2, "brainstem": 4, "tia": 8},
+        }
+
+        for severity in (1, 2, 3, 4, 5):
+            for stroke_type in ("ischemic", "hemorrhagic", "brainstem", "tia"):
+                with self.subTest(severity=severity, stroke_type=stroke_type):
+                    eligible = [
+                        ex
+                        for ex in EXERCISE_LIBRARY
+                        if is_exercise_eligible(ex, stroke_type, severity)
+                    ]
+                    self.assertEqual(
+                        len(eligible),
+                        expected_counts[severity][stroke_type],
+                        msg=(
+                            f"{stroke_type} severity {severity}: expected "
+                            f"{expected_counts[severity][stroke_type]} eligible, "
+                            f"got {len(eligible)}"
+                        ),
+                    )
+                    # Confirm eligibility implies level is unlocked and constraints pass.
+                    unlocked = set(get_unlocked_levels(stroke_type, severity))
+                    for ex in eligible:
+                        self.assertIn(
+                            ex["level"],
+                            unlocked,
+                            msg=(f"{ex['name']} level {ex['level']} not in "
+                                 f"unlocked {unlocked} for "
+                                 f"{stroke_type} sev {severity}"),
+                        )
+
     def test_patient_catalog_listing_is_filtered_by_server_profile(self):
         response = self.login(self.patient_email).get("/api/exercises")
 

@@ -133,7 +133,7 @@ class ExerciseEligibilityTests(unittest.TestCase):
 
                 expected_names = {definition["name"] for definition in EXERCISE_LIBRARY}
                 seeded = Exercise.query.all()
-                self.assertEqual(len(seeded), 12)
+                self.assertEqual(len(seeded), 18)
                 self.assertEqual({exercise.name for exercise in seeded}, expected_names)
                 original_ids = {exercise.name: exercise.id for exercise in seeded}
                 definitions_by_name = {
@@ -195,9 +195,24 @@ class ExerciseEligibilityTests(unittest.TestCase):
                 }
 
                 self.assertEqual(seed_exercises(db, Exercise), 2)
-                self.assertEqual(Exercise.query.count(), 12)
+                self.assertGreaterEqual(
+                    Exercise.query.count(),
+                    18,
+                    msg=(
+                        "After re-seeding the two deleted exercise rows, the total "
+                        "catalog should return to at least the full 18-exercise "
+                        "library including the six CP11.7 additions."
+                    ),
+                )
                 self.assertEqual(seed_exercises(db, Exercise), 0)
-                self.assertEqual(Exercise.query.count(), 12)
+                self.assertGreaterEqual(
+                    Exercise.query.count(),
+                    18,
+                    msg=(
+                        "After a no-op re-seed, the catalog should remain at "
+                        "at least the full 18-exercise library."
+                    ),
+                )
 
                 restored_rows = {
                     exercise.name: (exercise.id, exercise.to_dict())
@@ -403,11 +418,11 @@ class ExerciseEligibilityTests(unittest.TestCase):
         # is_exercise_eligible() — not from a summary table.
         expected_counts = {
             # severity: {stroke_type: expected_count}
-            1: {"ischemic": 4, "hemorrhagic": 4, "brainstem": 4, "tia": 4},
-            2: {"ischemic": 7, "hemorrhagic": 6, "brainstem": 7, "tia": 7},
-            3: {"ischemic": 8, "hemorrhagic": 6, "brainstem": 7, "tia": 8},
-            4: {"ischemic": 9, "hemorrhagic": 3, "brainstem": 5, "tia": 9},
-            5: {"ischemic": 8, "hemorrhagic": 2, "brainstem": 4, "tia": 8},
+            1: {"ischemic": 6, "hemorrhagic": 6, "brainstem": 6, "tia": 6},
+            2: {"ischemic": 11, "hemorrhagic": 10, "brainstem": 11, "tia": 11},
+            3: {"ischemic": 13, "hemorrhagic": 10, "brainstem": 11, "tia": 13},
+            4: {"ischemic": 14, "hemorrhagic": 6, "brainstem": 9, "tia": 14},
+            5: {"ischemic": 11, "hemorrhagic": 3, "brainstem": 6, "tia": 11},
         }
 
         for severity in (1, 2, 3, 4, 5):

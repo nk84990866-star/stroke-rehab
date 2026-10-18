@@ -124,6 +124,7 @@ export const EXERCISE_ICONS = {
   zap: Zap,
   target: Target,
   heart: HeartPulse,
+  crosshair: Crosshair,
 };
 
 export const getExerciseIcon = (iconName) => EXERCISE_ICONS[iconName] || Activity;

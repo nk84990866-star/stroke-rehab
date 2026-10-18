@@ -44,11 +44,11 @@ export const AFFECTED_SIDE_LABELS = {
 };
 
 export const SEVERITY_LABELS = {
-  1: 'Severe paralysis',
-  2: 'Moderate-severe',
-  3: 'Moderate',
-  4: 'Mild',
-  5: 'Recovery phase',
+  1: 'Severity 1 — Severe paralysis',
+  2: 'Severity 2 — Moderate-severe',
+  3: 'Severity 3 — Moderate',
+  4: 'Severity 4 — Mild',
+  5: 'Severity 5 — Recovery phase',
 };
 
 /** Exercise difficulty levels (1-3) → Badge variant + display name. */

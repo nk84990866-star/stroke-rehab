@@ -10,9 +10,9 @@ import {
 } from '../config/labels';
 
 const LEVEL_TABS = [
-  { label: 'Basic (Level 1)', value: 1 },
-  { label: 'Moderate (Level 2)', value: 2 },
-  { label: 'High (Level 3)', value: 3 },
+  { label: 'Exercise Program Level 1: Basic', value: 1 },
+  { label: 'Exercise Program Level 2: Moderate', value: 2 },
+  { label: 'Exercise Program Level 3: High', value: 3 },
 ];
 
 const SEVERITY_OPTIONS = [
@@ -167,7 +167,7 @@ const ExercisesPage = () => {
 
             <div className="flex items-center gap-2">
               <label htmlFor="severityFilter" className="text-sm font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
-                <SlidersHorizontal className="inline h-4 w-4 mr-1 -mt-0.5" aria-hidden="true" />Severity:
+                <SlidersHorizontal className="inline h-4 w-4 mr-1 -mt-0.5" aria-hidden="true" />Patient Recovery Severity:
               </label>
               <select
                 id="severityFilter"
@@ -182,6 +182,11 @@ const ExercisesPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Severity vs. Level clarification */}
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+          Recovery Severity (1-5) affects which exercises your profile can access. Exercise Program Level (1-3) indicates exercise difficulty. These are separate dimensions.
+        </p>
 
         {/* Results meta / grid with inline loading state */}
         {loading ? (
